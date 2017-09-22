@@ -1,12 +1,18 @@
 SHEDS Stream Temperature Model
 ==============================
 
-Jeffrey D. Walker, PhD
+Jeffrey D. Walker, PhD  
 [Walker Environmental Research LLC](https://walkerenvres.com)
+
+Ben Letcher, PhD  
+[USGS, Conte Ecology Lab](https://www.lsc.usgs.gov/?q=cafb-research)
+
+Dan Hocking, PhD  
+[Frostburg State University, Hocking Lab of Herpetology & Conservation](http://hockinglab.weebly.com/)
 
 ## About
 
-This repo contains the production version of the SHEDS Stream Temperature Model, which is based on the Northeast Temperature Model originally developed by Dan Hocking.
+This repo contains the production version of the SHEDS Stream Temperature Model, which is based on the [Northeast Temperature Model](https://github.com/Conte-Ecology/conteStreamTemperature_northeast) originally developed by Dan Hocking.
 
 ## Scripts
 
@@ -38,30 +44,50 @@ current_model_run.txt - model run id
 status_log.txt - logfile
 
 id_impoundment_sites.sh - identify impounded locations
-  <- current_model_run.txt
+  db: sheds@felek
   -> impoundment_sites.csv - list of location.id that intersect with impoundments layer
 id_tidal_sites.sh - identify tidal locations
-  <- current_model_run.txt
+  db: sheds@felek
   -> tidal_sites.csv - list of location.id that intersect with tidal layer
 retrieve_db.R - fetch streamtemp data from db (exclude locations, qaqc)
+  db: sheds@felek
+  <- model_config.json
   <- current_model_run.txt
+  <- impoundment_sites.csv
+  <- tidal_sites.csv
+  -> retreive_log.txt
+  -> df_values.RData
+  -> subdaily_flags.csv
+  -> df_values_flags.RData
+  -> diagnostics/plots/series_[id].png
+  -> daily_flags.csv
+  -> series_used.csv
+  -> temp_temp.RData
+  -> code/daymet_query.sql
+  -> featureid_list_20160602.dbf
   -> temperatureData.RData
   -> covariateData.RData
-  -> climateData.RData
 daymet_query.sql - fetch daymet data
-  <- current_model_run.txt
+  db: sheds@felek
   -> daymet_results.csv
 breakpoints.R - determine breakpoints
+  db: sheds@felek
   <- current_model_run.txt
   <- temperatureData.RData
   <- daymet_results.csv
   -> springFallBPs.RData
 prepare_model_data.R - prepare input data
+  db: sheds@felek
+  <- model_config.json
   <- current_model_run.txt
   <- temperatureData.RData
   <- daymet_results.csv
   <- covariateData.RData
   <- springFallBPs.RData
+  <- series_used.csv
+  -> warm_sites/series[id].png
+  -> location_use.csv
+  -> location_use.dbf
   -> tempDataSync.RData
 run_model.R - run model
   <- current_model_run.txt
@@ -71,15 +97,24 @@ run_model.R - run model
 mcmc_diagnostics.R - generate MCMC diagnostics
   <- current_model_run.txt
   -> jags.RData
+  -> figures/ggmcmc-B0.pdf
+  -> figures/ggmcmc-mu-huc.pdf
+  -> figures/ggmcmc-mu-year.pdf
+  -> figures/ggmcmc-sigma-site.pdf
+  -> figures/ggmcmc-sigma-huc.pdf
+  -> figures/ggmcmc-sigma-year.pdf
+  -> figures/ggmcmc-ar1-rho-huc.pdf
+  -> figures/ggmcmc-ar1-B-ar1.pdf
 summarize_iterations.R - generate model summary
   <- current_model_run.txt
   <- tempDataSync.RData
   <- jags.RData
   <- covariate_list.RData
   -> coef.RData
+  -> coef_iters.RData
 validate_model.R - validate model
-  <- current_model_run.txt
   <- model_config.json
+  <- current_model_run.txt
   <- tempDataSync.RData
   <- covariate_list.RData
   <- coef.RData
