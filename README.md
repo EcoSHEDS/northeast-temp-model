@@ -37,6 +37,22 @@ Identify locations near impoundments and in the tidal zone, which need to be exc
 ./locations-exclude.sh # -> locations-exclude.txt
 ```
 
+**TODO**: `filter(AreaSqKM >= 0.01 & AreaSqKM < 200 & allonnet < 50)`
+
+### Retrieve Data
+
+```bash
+Rscript r/retrieve-db.R
+```
+
+### Time Series QAQC
+
+For each series:
+
+1. GAP - identify gaps and split each series into sub-series
+2. TRIM - trim each sub-series to exclude first/last day if the number of observations is less than the median frequency
+3. FLAG - assign various flags to each sub-series
+
 ## Original Scripts
 
 Summary of scripts and input/output files from [conteStreamTemperature_northeast](https://github.com/Conte-Ecology/conteStreamTemperature_northeast).
