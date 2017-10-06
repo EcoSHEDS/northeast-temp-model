@@ -14,7 +14,32 @@ Dan Hocking, PhD
 
 This repo contains the production version of the SHEDS Stream Temperature Model, which is based on the [Northeast Temperature Model](https://github.com/Conte-Ecology/conteStreamTemperature_northeast) originally developed by Dan Hocking.
 
-## Scripts
+## Dependencies
+
+- `pgsql2shp`: export PostGIS tables to shapefiles
+
+## Configuration
+
+The bash and R scripts require various configurations. Until I can find a better way (**TODO**), the configuration settings are stored in two files (one for bash, one for R).
+
+```bash
+cp config.template.sh config.sh     # bash config
+cp config.template.json config.json # JSON config for R
+```
+
+## Data Processing
+
+### Identify Locations to Exclude
+
+Identify locations near impoundments and in the tidal zone, which need to be excluded. List of location.id's saved to `$WD/locations-exclude.txt`.
+
+```bassh
+locations-exclude.sh # -> locations-exclude.txt
+```
+
+## Original Scripts
+
+Summary of scripts and input/output files from [conteStreamTemperature_northeast](https://github.com/Conte-Ecology/conteStreamTemperature_northeast).
 
 ```txt
 # --------------
@@ -34,7 +59,7 @@ modelRun/modelRun_$(date +"%Y-%m-%d")
 # MAIN SCRIPT --
 # --------------
 
-run_mode.sh - primary script
+run_model.sh - primary script
 
 # --------------
 # SCRIPTS ------
@@ -152,13 +177,13 @@ data_summary.R - calculate summary by state and agency
   -> data_totals.Rds
 ```
 
-## Step-By-Step
+### Step-By-Step
 
-### 1: Identify Impoundment Locations
+#### 1: Identify Impoundment Locations
 
 Creates file `impoundment_sites.csv` containing the id of all `locations` that intersect the `gis.impoundment_zones_100m` table.
 
-```sh
+```bash
 psql -h felek.cns.umass.edu -d $DB -w -c "{SQL}" > $FOLDER/impoundment_sites.csv
 ```
 
@@ -189,11 +214,11 @@ Ideas:
 - Move `locations_tmp` to `gis.locations`
 - Why create buffer (radius = 10?) on `locations_tmp`?
 
-### 2: Identify Tidal Locations
+#### Step 2: Identify Tidal Locations
 
 Creates file `impoundment_sites.csv` containing the id of all `locations` that intersect the `gis.impoundment_zones_100m` table.
 
-```sh
+```bash
 psql -h felek.cns.umass.edu -d $DB -w -c "{SQL}" > $FOLDER/tidal_sites.csv
 ```
 
@@ -219,7 +244,7 @@ Ideas:
 - Creates locations_temp table, could have saved from step 1
 - Combine location.id scripts into one script (or one sql statement, faster by scanning entire table once?)
 
-### Step 3: Retrieve Temperature Data
+#### Step 3: Retrieve Temperature Data
 
 Fetch stream temperature data from database excluding impoundment and tidal locations.
 
@@ -301,3 +326,12 @@ Ideas:
 
 - Use environmental variables for things like current_model_run
 - Faster to get data by first excluding series that have excluded locations, then joining values
+
+
+## Command Line Reference
+
+Create shapefile from database table.
+
+```bash
+pgsql2shp -f <shapefile> -h ecosheds.org -p 5432 -u jeff -P <password> sheds <schema.table>
+```

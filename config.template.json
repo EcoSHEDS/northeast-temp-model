@@ -1,0 +1,15 @@
+{
+  "db": {
+    "host": "ecosheds.org",
+    "port": 5432,
+    "user": "",
+    "password": "",
+    "dbname": "sheds"
+  },
+  "wd": "/Users/jeff/Projects/sheds/model/",
+  "dataset": {
+    "agencies": {
+      "exclude": "TEST"
+    }
+  }
+}
