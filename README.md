@@ -33,8 +33,8 @@ cp config.template.json config.json # JSON config for R
 
 Identify locations near impoundments and in the tidal zone, which need to be excluded. List of location.id's saved to `$WD/locations-exclude.txt`.
 
-```bassh
-locations-exclude.sh # -> locations-exclude.txt
+```bash
+./locations-exclude.sh # -> locations-exclude.txt
 ```
 
 ## Original Scripts
