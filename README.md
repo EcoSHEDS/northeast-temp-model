@@ -14,10 +14,6 @@ Dan Hocking, PhD
 
 This repo contains the production version of the SHEDS Stream Temperature Model, which is based on the [Northeast Temperature Model](https://github.com/Conte-Ecology/conteStreamTemperature_northeast) originally developed by Dan Hocking.
 
-## Dependencies
-
-- `pgsql2shp`: export PostGIS tables to shapefiles
-
 ## Configuration
 
 The bash and R scripts require various configurations. Until I can find a better way (**TODO**), the configuration settings are stored in two files (one for bash, one for R).
@@ -29,29 +25,78 @@ cp config.template.json config.json # JSON config for R
 
 ## Data Processing
 
-### Identify Locations to Exclude
-
 Identify locations near impoundments and in the tidal zone, which need to be excluded. List of location.id's saved to `$WD/locations-exclude.txt`.
 
 ```bash
-./locations-exclude.sh # -> locations-exclude.txt
+./scripts/locations-exclude.sh # -> locations-exclude.txt
 ```
 
-**TODO**: `filter(AreaSqKM >= 0.01 & AreaSqKM < 200 & allonnet < 50)`
-
-### Retrieve Data
+Calculate minimum distance of each location from nearest flowline and catchment pour point.
 
 ```bash
-Rscript r/retrieve-db.R
+./scripts/locations-flowlines-distance.sh # -> locations-flowlines-distance.csv
 ```
 
-### Time Series QAQC
+Retrieve stream temperature data from database
 
-For each series:
+```bash
+Rscript r/retrieve-db.R # -> data/db.rds, daymet_featureid_year.csv
+```
 
-1. GAP - identify gaps and split each series into sub-series
-2. TRIM - trim each sub-series to exclude first/last day if the number of observations is less than the median frequency
-3. FLAG - assign various flags to each sub-series
+Retrieve daymet data from database for featureid
+
+```bash
+./scripts/daymet-retrieve.sh # -> daymet.csv
+```
+
+Process data (QAQC, split, filter)
+
+```bash
+Rscript r/data-process.R # -> data/clean.rds
+```
+
+1. Remove values within user-defined flags  
+2. Remove series missing featureid  
+3. Remove series with area_km2 >= 200  
+4. Remove series with allonnet >= 50  
+5. Remove values with mean < -25  
+6. Remove values with mean > 35  
+7. Remove values with max > 35  
+8. Remove series suspected to be air temperature (slope ~ 1, intercept ~ 0, R2 > 0.95)  
+9. Remove series with count < 5  
+10. Remove values with persist(mean) > 5 and mean > 3  
+11. Remove first/last day of each series if n < median(n)  
+12. Remove series with count < 5  
+13. Average duplicate dates at each location (overlapping series)  
+14. Remove series where location > 100 m from main flowline  
+15. Choose location with most summer data in each catchment
+
+Determine spring/fall breakspoints
+
+```bash
+Rscript r/data-breakpoints.R # -> data/breakpoints.rds
+```
+
+Retrieve covariates
+
+```bash
+Rscript r/data-covariates.R # -> data/covariates.rds
+```
+
+Prepare dataset for model input
+
+```bash
+Rscript r/data-prepare.R # -> model-input.rds
+```
+
+## Run Model
+
+Run the model
+
+```bash
+Rscript r/run-model.R # -> model-output.rds
+```
+
 
 ## Original Scripts
 
