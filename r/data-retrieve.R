@@ -1,5 +1,5 @@
 # retrieve raw data from database
-# -> {wd}/data-db.rds
+# -> {wd}/data/db.rds
 
 start <- lubridate::now(tzone = "US/Eastern")
 cat("starting data-retrieve:", as.character(start, tz = "US/Eastern"), "\n")
@@ -7,6 +7,7 @@ cat("starting data-retrieve:", as.character(start, tz = "US/Eastern"), "\n")
 suppressPackageStartupMessages(library(RPostgreSQL))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(jsonlite))
+suppressPackageStartupMessages(library(lubridate))
 
 config <- fromJSON("../config.json")
 
@@ -46,7 +47,6 @@ cat("done ( nrow =", nrow(df_locations), ")\n")
 cat("retrieving series...")
 suppressWarnings({
   db_series <- tbl(con, "series") %>%
-    select(-flags) %>%
     filter(
       location_id %in% df_locations$id,
       reviewed == TRUE,
@@ -56,7 +56,7 @@ suppressWarnings({
 })
 cat("done ( nrow =", nrow(df_series), ")\n")
 
-cat("Retrieving values...")
+cat("retrieving values...")
 db_values <- tbl(con, "values") %>%
   filter(
     series_id %in% df_series$id
@@ -96,7 +96,31 @@ cat("disconnecting from db...")
 disconnected <- dbDisconnect(con)
 cat("done\n")
 
+cat("writing featureid/year list to daymet_featureid_year.csv...")
+df_daymet <- df_series %>%
+  select(location_id, start_datetime, end_datetime) %>%
+  mutate(
+    years = map2(start_datetime, end_datetime, function (x, y) {
+      years <- seq(year(x), year(y), by = 1)
+      data_frame(year = years)
+    })
+  ) %>%
+  select(location_id, years) %>%
+  unnest(years) %>%
+  left_join(
+    df_locations %>%
+      select(id, catchment_id),
+    by = c("location_id" = "id")
+  ) %>%
+  select(featureid = catchment_id, year) %>%
+  distinct() %>%
+  mutate(year = as.character(year)) %>%
+  filter(!is.na(featureid))
+df_daymet %>%
+  write_csv(path = file.path(config$wd, "daymet_featureid_year.csv"))
+cat("done\n")
+
 end <- lubridate::now(tzone = "US/Eastern")
 elapsed <- as.numeric(difftime(end, start, tz = "US/Eastern", units = "sec"))
 
-cat("finished data-retrieve:", as.character(end, tz = "US/Eastern"), "( elapsed =", round(elapsed / 60, digits = 1),"min )\n")
+cat("finished data-retrieve:", as.character(end, tz = "US/Eastern"), "( elapsed =", round(elapsed / 60, digits = 1), "min )\n")
