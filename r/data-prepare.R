@@ -97,7 +97,7 @@ df <- df %>%
 cat("done ( nrow =", nrow(df), ")\n")
 
 cat("connecting to db ( host =", config$db$host, ", dbname =", config$db$dbname, ")...")
-con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user)
+con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
 cat("done\n")
 
 cat("fetching featureid-huc12...")
@@ -179,7 +179,7 @@ df <- df_long %>%
     value = (value - mean(value)) / sd(value)
   ) %>%
   spread(var, value) %>%
-  arrange(huc, site, year, date)
+  arrange(huc8, site, year, date)
 cat("done\n")
 
 cat("calculating derived covariates...")
@@ -218,40 +218,40 @@ cat("done\n")
 cat("indexing deployments...")
 df_train <- df_train %>%
   mutate(
-    site_i = as.numeric(as.factor(site)),
-    huc8_i = as.numeric(as.factor(huc8)),
-    year_i = as.numeric(as.factor(year))
+    site_id = as.numeric(as.factor(site)),
+    huc8_id = as.numeric(as.factor(huc8)),
+    year_id = as.numeric(as.factor(year))
   ) %>%
-  arrange(huc8_i, site_i, date) %>%
+  arrange(huc8_id, site_id, date) %>%
   mutate(
     delta_date = as.numeric(difftime(date, lag(date), units = "day")),
     new_series = delta_date != 1,
-    new_site = coalesce(site_i != lag(site_i), TRUE),
+    new_site = coalesce(site_id != lag(site_id), TRUE),
     new_year = coalesce(year != lag(year), TRUE),
     new_deploy = 1 * (new_series | new_site | new_year),
     deploy_id = cumsum(new_deploy),
-    site_i
+    site_id
   )
 df_test <- df_test %>%
   mutate(
-    site_i = as.numeric(as.factor(site)),
-    huc8_i = as.numeric(as.factor(huc8)),
-    year_i = as.numeric(as.factor(year))
+    site_id = as.numeric(as.factor(site)),
+    huc8_id = as.numeric(as.factor(huc8)),
+    year_id = as.numeric(as.factor(year))
   ) %>%
-  arrange(huc8_i, site_i, date) %>%
+  arrange(huc8_id, site_id, date) %>%
   mutate(
     delta_date = as.numeric(difftime(date, lag(date), units = "day")),
     new_series = delta_date != 1,
-    new_site = coalesce(site_i != lag(site_i), TRUE),
+    new_site = coalesce(site_id != lag(site_id), TRUE),
     new_year = coalesce(year != lag(year), TRUE),
     new_deploy = 1 * (new_series | new_site | new_year),
     deploy_id = cumsum(new_deploy)
   )
 
-rand_ids <- list(
-  site = df_train %>% select(site, site_i) %>% distinct(),
-  huc8 = df_train %>% select(huc8, huc8_i) %>% distinct(),
-  year = df_train %>% select(year, year_i) %>% distinct()
+ids <- list(
+  site = df_train %>% select(site, site_id) %>% distinct() %>% arrange(site_id),
+  huc8 = df_train %>% select(huc8, huc8_id) %>% distinct() %>% arrange(huc8_id),
+  year = df_train %>% select(year, year_id) %>% distinct() %>% arrange(year_id)
 )
 
 # J = nrow(rand_ids$site)
@@ -261,6 +261,11 @@ rand_ids <- list(
 list(
   train = df_train,
   test = df_test,
-  rand_ids = rand_ids
+  ids = ids,
+  std = df_std
 ) %>%
   saveRDS(file.path(config$wd, "model-input.rds"))
+
+end <- lubridate::now(tzone = "US/Eastern")
+elapsed <- as.numeric(difftime(end, start, tz = "US/Eastern", units = "sec"))
+cat("finished data-process:", as.character(end, tz = "US/Eastern"), "( elapsed =", round(elapsed / 60, digits = 1), "min )\n")

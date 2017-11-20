@@ -116,14 +116,14 @@ K.0 <- length(variables.fixed)
 X.site <- df %>%
   select(one_of(cov.list$site.ef))
 variables.site <- names(X.site)
-sites <- df$site_i
+sites <- df$site_id
 J <- length(unique(sites))
 K <- length(variables.site)
 n <- nrow(df)
 W.site <- diag(K)
 
 # RANDOM HUC EFFECTS
-hucs <- df$huc8_i
+hucs <- df$huc8_id
 M <- length(unique(hucs))
 W.huc <- diag(K)
 
@@ -131,7 +131,7 @@ W.huc <- diag(K)
 X.year <- df %>%
   select(one_of(cov.list$year.ef))
 variables.year <- names(X.year)
-years <- df$year_i
+years <- df$year_id
 Ti <- length(unique(years))
 L <- length(variables.year)
 W.year <- diag(L)
@@ -164,15 +164,15 @@ cat(n, J, K, Ti, L, M, K.0, "\n")
 # group ids
 ids <- list(
   site = df %>%
-    select(site, site_id = site_i) %>%
+    select(site, site_id) %>%
     distinct() %>%
     arrange(site_id),
   year = df %>%
-    select(year, year_id = year_i) %>%
+    select(year, year_id) %>%
     distinct() %>%
     arrange(year_id),
   huc8 = df %>%
-    select(huc8, huc8_id = huc8_i) %>%
+    select(huc8, huc8_id) %>%
     distinct() %>%
     arrange(huc8_id)
 )
@@ -197,32 +197,38 @@ ids <- list(
 
 # run model ---------------------------------------------------------------
 
-system.time({
-  jm <- jags(
-    data = data.list,
-    # inits = inits.list,
-    parameters.to.save = params,
-    model.file = file.path(config$wd, "model.txt"),
-    n.chains = 3,
-    n.iter = 6000,
-    n.burnin = 3000,
-    n.thin = 3,
-    parallel = TRUE
-  )
-})
+cat("running model...")
+jm <- jags(
+  data = data.list,
+  # inits = inits.list,
+  parameters.to.save = params,
+  model.file = file.path(config$wd, "model.txt"),
+  n.chains = 3,
+  n.iter = 6000,
+  n.burnin = 3000,
+  n.thin = 3,
+  parallel = TRUE
+)
+cat("done\n")
 
-saveRDS(jm, file.path(config$wd, "model-output.rds"))
+# saveRDS(jm, file.path(config$wd, "model-output.rds"))
 
 # https://www.rdocumentation.org/packages/jagsUI/versions/1.4.4/topics/jags.basic
 
 out <- list(
   df = df,
   ids = ids,
-  data = out$data,
-  params = out$params,
+  data = data.list,
+  params = params,
   covs = cov.list,
-  results = out$results
+  results = jm
 )
 
+cat("saving results to", file.path(config$wd, "model-output.rds"), "...")
 out %>%
   saveRDS(file.path(config$wd, "model-output.rds"))
+cat("done\n")
+
+end <- lubridate::now(tzone = "US/Eastern")
+elapsed <- as.numeric(difftime(end, start, tz = "US/Eastern", units = "sec"))
+cat("finished data-process:", as.character(end, tz = "US/Eastern"), "( elapsed =", round(elapsed / 60, digits = 1), "min )\n")
