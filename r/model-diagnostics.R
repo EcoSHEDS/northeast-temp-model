@@ -13,6 +13,7 @@ suppressPackageStartupMessages(library(lubridate))
 suppressPackageStartupMessages(library(zoo))
 suppressPackageStartupMessages(library(stringr))
 suppressPackageStartupMessages(library(jagsUI))
+suppressPackageStartupMessages(library(coda))
 suppressPackageStartupMessages(library(ggmcmc))
 
 config <- fromJSON("../config.json")
@@ -55,9 +56,46 @@ df_pred <- data_frame(
     resid = temp - pred
   )
 
+df_pred_site <- df_pred %>%
+  group_by(site) %>%
+  nest() %>%
+  mutate(
+    n = map_int(data, nrow),
+    rmse = map_dbl(data, function (x) {
+      sqrt(mean(x$resid^2))
+    }),
+    rmse_Y = map_dbl(data, function (x) {
+      sqrt(mean(x$resid_Y^2))
+    })
+  )
+
+df_pred_huc <- df_pred %>%
+  group_by(huc8) %>%
+  nest() %>%
+  mutate(
+    n = map_int(data, nrow),
+    rmse = map_dbl(data, function (x) {
+      sqrt(mean(x$resid^2))
+    }),
+    rmse_Y = map_dbl(data, function (x) {
+      sqrt(mean(x$resid_Y^2))
+    })
+  )
+
+
+
 # RMSE
 sqrt(mean(df_pred$resid^2))
 sqrt(mean(df_pred$resid_Y^2))
+df_pred_site %>%
+  arrange(desc(rmse))
+df_pred_site %>%
+  arrange(desc(rmse_Y))
+df_pred_huc %>%
+  arrange(desc(rmse))
+df_pred_huc %>%
+  arrange(desc(rmse_Y))
+
 
 df_pred %>%
   ggplot(aes(resid)) +
@@ -87,20 +125,6 @@ df_pred %>%
   ) +
   theme(aspect.ratio = 1)
 
-
-df_pred_site <- df_pred %>%
-  group_by(site) %>%
-  nest() %>%
-  mutate(
-    n = map_int(data, nrow),
-    rmse = map_dbl(data, function (x) {
-      sqrt(mean(x$resid^2))
-    })
-  )
-
-df_pred_site %>%
-  arrange(desc(rmse))
-
 df_pred_site %>%
   arrange(desc(rmse)) %>%
   head(10) %>%
@@ -121,7 +145,7 @@ df_pred_site %>%
 
 # w/o autoregressive term
 df_pred_site %>%
-  arrange(desc(rmse)) %>%
+  arrange(desc(rmse_Y)) %>%
   head(10) %>%
   unnest(data) %>%
   ggplot(aes(date)) +
@@ -130,7 +154,7 @@ df_pred_site %>%
   facet_wrap(~ site, scales = "free")
 
 df_pred_site %>%
-  arrange(rmse) %>%
+  arrange(rmse_Y) %>%
   head(10) %>%
   unnest(data) %>%
   ggplot(aes(date)) +
@@ -140,8 +164,6 @@ df_pred_site %>%
 
 table(df_pred$pred > df_pred$temp) / nrow(df_pred)
 table(df_pred$Y > df_pred$temp) / nrow(df_pred)
-
-
 
 df_pred %>%
   ungroup() %>%
@@ -159,22 +181,6 @@ df_pred %>%
     )
   )
 
-df_pred_huc <- df_pred %>%
-  group_by(huc8) %>%
-  nest() %>%
-  mutate(
-    n = map_int(data, nrow),
-    rmse = map_dbl(data, function (x) {
-      sqrt(mean(x$resid^2))
-    }),
-    rmse_Y = map_dbl(data, function (x) {
-      sqrt(mean(x$resid_Y^2))
-    })
-  )
-
-df_pred_huc %>%
-  arrange(desc(rmse))
-
 df_pred_huc %>%
   arrange(desc(rmse)) %>%
   head(1) %>%
@@ -186,7 +192,7 @@ df_pred_huc %>%
 
 df_pred_huc %>%
   arrange(desc(rmse_Y)) %>%
-  head(6) %>%
+  head(2) %>%
   unnest(data) %>%
   ggplot(aes(date)) +
   geom_line(aes(y = Y)) +
@@ -196,7 +202,7 @@ df_pred_huc %>%
 # validation --------------------------------------------------------------
 
 df_valid <- readRDS(file.path(config$wd, "model-input.rds"))$test %>%
-  select(-site_i, -huc8_i, -year_i) %>%
+  select(-site_id, -huc8_id, -year_id) %>%
   left_join(out$ids$site, by = "site") %>%
   left_join(out$ids$year, by = "year") %>%
   left_join(out$ids$huc8, by = "huc8")
@@ -251,11 +257,28 @@ df_valid <- df_valid %>%
     resid = temp - pred
   ) %>%
   ungroup()
+df_valid_site <- df_valid %>%
+  group_by(site) %>%
+  nest() %>%
+  mutate(
+    n = map_int(data, nrow),
+    rmse = map_dbl(data, function (x) {
+      sqrt(mean(x$resid^2))
+    }),
+    rmse_Y = map_dbl(data, function (x) {
+      sqrt(mean(x$resid_Y^2))
+    })
+  )
+
 
 
 # RMSE
 sqrt(mean(df_valid$resid^2))
 sqrt(mean(df_valid$resid_Y^2))
+df_valid_site %>%
+  arrange(desc(rmse))
+df_valid_site %>%
+  arrange(desc(rmse_Y))
 
 df_valid %>%
   select(resid, resid_Y) %>%
@@ -299,18 +322,6 @@ df_valid %>%
   ) +
   theme(aspect.ratio = 1)
 
-df_valid_site <- df_valid %>%
-  group_by(site) %>%
-  nest() %>%
-  mutate(
-    n = map_int(data, nrow),
-    rmse = map_dbl(data, function (x) {
-      sqrt(mean(x$resid^2))
-    })
-  )
-
-df_valid_site %>%
-  arrange(desc(rmse))
 
 df_valid_site %>%
   arrange(desc(rmse)) %>%
@@ -354,14 +365,142 @@ table(df_valid$Y > df_valid$temp) / nrow(df_valid)
 
 
 
+# parameter labels --------------------------------------------------------
+
+B.0_labels <- data_frame(
+  Parameter = paste0("B.0[", 1:length(out$covs$fixed.ef), "]"),
+  Label = paste0("B.0[", out$covs$fixed.ef, "]"),
+  Group = "fixed"
+)
+
+B.huc_labels <- crossing(
+  huc8_id = out$ids$huc8$huc8_id,
+  cov_id = 1:length(out$covs$huc.ef)
+) %>%
+  left_join(out$ids$huc8, by = "huc8_id") %>%
+  left_join(
+    data_frame(
+      cov_id = 1:length(out$covs$huc.ef),
+      cov = out$covs$huc.ef
+    ),
+    by = "cov_id"
+  ) %>%
+  mutate(
+    Parameter = paste0("B.huc[", huc8_id, ",", cov_id, "]"),
+    Label = paste0("B.huc[", huc8, ",", cov, "]"),
+    Group = "huc"
+  )
+
+B.site_labels <- crossing(
+  site_id = out$ids$site$site_id,
+  cov_id = 1:length(out$covs$site.ef)
+) %>%
+  left_join(out$ids$site, by = "site_id") %>%
+  left_join(
+    data_frame(
+      cov_id = 1:length(out$covs$site.ef),
+      cov = out$covs$site.ef
+    ),
+    by = "cov_id"
+  ) %>%
+  mutate(
+    Parameter = paste0("B.site[", site_id, ",", cov_id, "]"),
+    Label = paste0("B.site[", site, ",", cov, "]"),
+    Group = "site"
+  )
+
+B.year_labels <- crossing(
+  year_id = out$ids$year$year_id,
+  cov_id = 1:length(out$covs$year.ef)
+) %>%
+  left_join(out$ids$year, by = "year_id") %>%
+  left_join(
+    data_frame(
+      cov_id = 1:length(out$covs$year.ef),
+      cov = out$covs$year.ef
+    ),
+    by = "cov_id"
+  ) %>%
+  mutate(
+    Parameter = paste0("B.year[", year_id, ",", cov_id, "]"),
+    Label = paste0("B.year[", year, ",", cov, "]"),
+    Group = "year"
+  )
+
+par_labels <- bind_rows(
+  B.0_labels,
+  B.site_labels,
+  B.huc_labels,
+  B.year_labels
+) %>%
+  select(Parameter, Label, Group)
+
+out_summary <- out$results$summary %>%
+  as_data_frame() %>%
+  mutate(
+    param = rownames(out$results$summary)
+  ) %>%
+  left_join(par_labels, by = c("param" = "Parameter")) %>%
+  rename(label = Label, group = Group) %>%
+  select(group, label, param, everything())
+
+out$results$summary %>%
+  as_data_frame() %>%
+  mutate(
+    param = rownames(out$results$summary)
+  ) %>%
+  inner_join(B.huc_labels, by = c("param" = "Parameter")) %>%
+  ggplot(aes(mean)) +
+  geom_histogram() +
+  facet_wrap(~cov, scales = "free")
+
+
+out$results$summary %>%
+  as_data_frame() %>%
+  mutate(
+    param = rownames(out$results$summary)
+  ) %>%
+  inner_join(B.site_labels, by = c("param" = "Parameter")) %>%
+  ggplot(aes(mean)) +
+  geom_histogram() +
+  facet_wrap(~cov, scales = "free")
+
+out$results$summary %>%
+  as_data_frame() %>%
+  mutate(
+    param = rownames(out$results$summary)
+  ) %>%
+  inner_join(B.site_labels, by = c("param" = "Parameter")) %>%
+  filter(cov == "intercept.site") %>%
+  select(site, intercept_mean = mean) %>%
+  left_join(df_pred_site, by = "site") %>%
+  arrange(desc(intercept_mean)) %>%
+  head(10) %>%
+  unnest(data) %>%
+  ggplot(aes(date)) +
+  geom_line(aes(y = Y)) +
+  geom_point(aes(y = temp), size = 1, color = "orangered") +
+  facet_wrap(~ site, scales = "free")
+
+df_summary <- out$results$summary %>%
+  as_data_frame() %>%
+  mutate(
+    param = rownames(out$results$summary)
+  ) %>%
+  select(param, everything())
+
 # convergence -------------------------------------------------------------
 
 reject <- rejectionRate(out$results$samples)
 reject[reject > 0] # same as 20160715
 
-ggs_out <- ggs(out$results$samples)
+ggs_B <- ggs(out$results$samples, par_labels = par_labels, family = "^B")
 
-ggmcmc(ggs_out, file = file.path(config$wd, "pdf", "ggmcmc-B0.pdf"), family = "B.0", plot = c("ggs_traceplot", "ggs_compare_partial", "ggs_autocorrelation", "ggs_Rhat"), param_page = 4)
+ggs_B %>%
+  filter(Group != "B.0[1]") %>%
+  ggs_caterpillar(family = "B.0")
+
+ggmcmc(ggs_out, file = file.path(config$wd, "pdf", "ggmcmc-B0.pdf"), family = "B.0", plot = c("ggs_caterpillar", "ggs_traceplot", "ggs_compare_partial", "ggs_autocorrelation", "ggs_Rhat"), param_page = 4)
 ggmcmc(ggs_out, file = file.path(config$wd, "pdf", "ggmcmc-mu-huc.pdf"), family = "mu.huc", plot = c("ggs_traceplot", "ggs_compare_partial", "ggs_autocorrelation", "ggs_Rhat"), param_page = 4)
 ggmcmc(ggs_out, file = file.path(config$wd, "pdf", "ggmcmc-mu-year.pdf"), family = "B.year", plot = c("ggs_traceplot", "ggs_compare_partial", "ggs_autocorrelation", "ggs_Rhat"), param_page = 4)
 ggmcmc(ggs_out, file = file.path(config$wd, "pdf", "ggmcmc-sigma-site.pdf"), family = "sigma.b.site", plot = c("ggs_traceplot", "ggs_compare_partial", "ggs_autocorrelation", "ggs_Rhat"), param_page = 4)
@@ -373,11 +512,7 @@ ggmcmc(ggs_out, file = file.path(config$wd, "pdf", "ggmcmc-ar1-B-ar1.pdf"), fami
 
 # coef --------------------------------------------------------------------
 
-library(rjags)
-
-
-M.ar1 <- readRDS("~/models/20160715/jags.rds")
-
+M.ar1 <- readRDS("~/models/20160715/")
 
 mcmc_small <- mcmc.list()
 for(i in 1:length(M.ar1)) {
@@ -408,3 +543,45 @@ ggmcmc(ggs.ar1, file = paste0(data_dir, "/figures/ggmcmc-sigma-huc.pdf"), family
 ggmcmc(ggs.ar1, file = paste0(data_dir, "/figures/ggmcmc-sigma-year.pdf"), family = "sigma.b.year", plot = c("ggs_traceplot", "ggs_compare_partial", "ggs_autocorrelation", "ggs_Rhat"), param_page = 4)
 ggmcmc(ggs.ar1, file = paste0(data_dir, "/figures/ggmcmc-ar1-rho-huc.pdf"), family = "rho.B.huc", plot = c("ggs_traceplot", "ggs_compare_partial", "ggs_autocorrelation", "ggs_Rhat"), param_page = 4)
 ggmcmc(ggs.ar1, file = paste0(data_dir, "/figures/ggmcmc-ar1-B-ar1.pdf"), family = "B.ar1", plot = c("ggs_traceplot", "ggs_compare_partial", "ggs_autocorrelation", "ggs_Rhat"), param_page = 4)
+
+# compare models ----------------------------------------------------------
+
+m1 <- readRDS("~/Projects/sheds/model/20160715/ggs-20160715.rds")
+m1 <- m1 %>%
+  mutate(model = "20160715")
+m2 <- ggs(out$results$samples)
+m2 <- m2 %>%
+  mutate(model = "20171108")
+
+m <- bind_rows(m1, m2)
+
+m_B0 <- m %>%
+  filter(str_detect(Parameter, "^B.0"))
+
+table(m_B0$model, m_B0$Parameter)
+
+m_B0 <- m_B0 %>%
+  left_join(B.0_labels, by = "Parameter")
+m_B0 %>%
+  ggplot(aes(value, color = model)) +
+  geom_density() +
+  facet_wrap(~ Label, scales = "free")
+
+pdf(file.path(config$wd, "pdf", "model-comparison-fixed.pdf"), width = 11, height = 8.5)
+m_B0 %>%
+  ggplot(aes(value, color = model)) +
+  geom_density() +
+  facet_wrap(~ Label, scales = "free") +
+  labs(
+    title = "Density"
+  )
+
+m_B0 %>%
+  ggplot(aes(Iteration, value, color = model, group = interaction(model, Chain))) +
+  geom_line() +
+  facet_wrap(~ Label, scales = "free") +
+  labs(
+    title = "Chains"
+  )
+
+dev.off()
