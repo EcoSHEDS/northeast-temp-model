@@ -122,7 +122,7 @@ df_values <- df_values %>%
   )
 cat("done ( nrow =", nrow(df_values), ")\n")
 
-cat("removing", sum(df_values$flagged),"observations with user flag...")
+cat("removing", sum(df_values$flagged), "observations with user flag...")
 df_values <- df_values %>%
   filter(!flagged) %>%
   select(-flagged, -comment)
@@ -140,7 +140,7 @@ df_values <- df_values %>%
 cat("done ( nrow =", nrow(df_values), ")\n")
 
 cat("connecting to db ( host =", config$db$host, ", dbname =", config$db$dbname, ")...")
-con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user)
+con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
 cat("done\n")
 
 cat("fetching drainage areas...")
@@ -246,6 +246,15 @@ df_values_airtemp %>%
   geom_point() +
   geom_abline(color = "red") +
   facet_wrap(~series_id, scales = "free")
+
+df_values_airtemp %>%
+  head(3) %>%
+  unnest(data) %>%
+  ggplot(aes(date)) +
+  geom_point(aes(y = mean), color = "red") +
+  geom_line(aes(y = airtemp)) +
+  facet_wrap(~series_id, scales = "free", ncol = 1)
+
 
 airtemp_exclude <- df_values_airtemp %>%
   filter(
@@ -626,6 +635,7 @@ cat("done ( nrow =", nrow(df_values), ")\n")
 # filter multiple locations within catchment ------------------------------
 
 df_values_featureid <- df_values %>%
+  unnest(data) %>%
   group_by(featureid) %>%
   nest() %>%
   mutate(
