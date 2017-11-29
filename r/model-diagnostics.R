@@ -16,6 +16,8 @@ suppressPackageStartupMessages(library(jagsUI))
 suppressPackageStartupMessages(library(coda))
 suppressPackageStartupMessages(library(ggmcmc))
 
+theme_set(theme_bw())
+
 config <- fromJSON("../config.json")
 
 out <- readRDS(file.path(config$wd, "model-output.rds"))
@@ -54,6 +56,21 @@ df_pred <- data_frame(
     resid_lag = coalesce(lag(resid_Y), 0),
     pred = if_else(deploy_row == 1, Y, Y + out$results$mean$B.ar1 * resid_lag),
     resid = temp - pred
+  ) %>%
+  ungroup()
+
+
+df_pred_deploy <- df_pred %>%
+  group_by(site, year, deploy_id) %>%
+  nest() %>%
+  mutate(
+    n = map_int(data, nrow),
+    rmse = map_dbl(data, function (x) {
+      sqrt(mean(x$resid^2))
+    }),
+    rmse_Y = map_dbl(data, function (x) {
+      sqrt(mean(x$resid_Y^2))
+    })
   )
 
 df_pred_site <- df_pred %>%
@@ -81,8 +98,6 @@ df_pred_huc <- df_pred %>%
       sqrt(mean(x$resid_Y^2))
     })
   )
-
-
 
 # RMSE
 sqrt(mean(df_pred$resid^2))
@@ -146,20 +161,21 @@ df_pred_site %>%
 # w/o autoregressive term
 df_pred_site %>%
   arrange(desc(rmse_Y)) %>%
-  head(10) %>%
+  head(12) %>%
   unnest(data) %>%
   ggplot(aes(date)) +
-  geom_line(aes(y = Y)) +
-  geom_point(aes(y = temp), size = 1, color = "orangered") +
+  geom_line(aes(y = Y, group = deploy_id)) +
+  geom_point(aes(y = temp), size = 1, color = "orangered", shape = 1) +
   facet_wrap(~ site, scales = "free")
 
 df_pred_site %>%
+  filter(n > 100) %>%
   arrange(rmse_Y) %>%
-  head(10) %>%
+  head(12) %>%
   unnest(data) %>%
   ggplot(aes(date)) +
   geom_line(aes(y = Y)) +
-  geom_point(aes(y = temp), size = 1, color = "orangered") +
+  geom_point(aes(y = temp), size = 1, color = "orangered", shape = 1) +
   facet_wrap(~ site, scales = "free")
 
 table(df_pred$pred > df_pred$temp) / nrow(df_pred)

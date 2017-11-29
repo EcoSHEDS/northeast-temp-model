@@ -1,0 +1,409 @@
+---
+title: "SHEDS Stream Temperature Model - Predictions"
+author: "Jeffrey D Walker, PhD"
+date: "11/20/2017"
+output: html_document
+---
+
+1. Load data, model, covariates, daymet
+2. Extract model coefficients
+3. Compute each term
+4. Compute each group
+5. Compare to observed data
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(lubridate)
+library(jsonlite)
+library(DBI)
+library(RPostgreSQL)
+library(zoo)
+
+theme_set(theme_bw())
+
+
+config <- read_json("../../config.json")
+
+HUC8 <- "01030003"
+SITE <- 201440223L
+YEAR <- 2015
+
+con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
+
+inp <- readRDS(file.path(config$wd, "model-input.rds"))
+m <- readRDS(file.path(config$wd, "model-output.rds"))
+df_obs <- m$df %>% 
+  filter(
+    site == SITE,
+    year == YEAR
+  )
+```
+
+```{r db-cov, cache=TRUE}
+db_covariates_upstream <- tbl(con, "covariates") %>%
+  filter(
+    featureid == SITE,
+    variable %in% c("agriculture", "allonnet", "AreaSqKM", "devel_hi"),
+    zone == "upstream",
+    is.na(riparian_distance_ft)
+  )
+df_covariates_upstream <- db_covariates_upstream %>%
+  collect()
+
+db_covariarates_riparian <- tbl(con, "covariates") %>%
+  filter(
+    featureid == SITE,
+    variable %in% c("forest"),
+    zone == "upstream",
+    riparian_distance_ft == 200
+  )
+df_covariarates_riparian <- db_covariarates_riparian %>%
+  collect()
+
+df_covariates <- df_covariates_upstream %>%
+  select(-zone, -riparian_distance_ft) %>%
+  spread(variable, value) %>%
+  left_join(
+    df_covariarates_riparian %>%
+      select(-zone, -riparian_distance_ft) %>%
+      spread(variable, value),
+    by = "featureid"
+  )
+
+df_covariates <- df_covariates %>% 
+  mutate(impoundArea = AreaSqKM * allonnet / 100) %>% 
+  select(-allonnet) %>% 
+  gather(var, value, -featureid) %>% 
+  left_join(inp$std, by = "var") %>% 
+  mutate(value_std = (value - mean) / sd)
+```
+
+```{r db-daymet, cache=TRUE}
+rs <- dbSendQuery(con, "
+WITH t1 AS (
+  SELECT
+    featureid, year,
+    unnest(tmax) AS tmax,
+    unnest(tmin) AS tmin,
+    unnest(prcp) AS prcp
+  FROM daymet
+  WHERE featureid=$1 AND year=$2
+), t2 AS (
+  SELECT
+    featureid, year,
+    row_number() OVER () as i,
+    tmax, tmin, prcp
+  FROM t1
+)
+SELECT
+  featureid, year,
+  (DATE (year || '-01-01')) + ((row_number() OVER (PARTITION BY featureid, year ORDER BY i)) - 1)::integer AS date,
+  tmax, tmin, prcp
+FROM t2                  
+", list(SITE, YEAR))
+
+df_daymet <- dbFetch(rs)
+dbClearResult(rs)
+```
+
+Standardize coefficients
+
+```{r}
+df_daymet <- df_daymet %>% 
+  arrange(featureid, year, date) %>%
+  mutate(
+    airTemp = (tmin + tmax) / 2
+  ) %>%
+  select(featureid, year, date, airTemp, prcp) %>% 
+  group_by(featureid, year) %>%
+  mutate(
+    airTempLagged1 = lag(airTemp, n = 1, fill = NA),
+    temp7p = rollapply(
+      data = airTempLagged1,
+      width = 7,
+      FUN = mean,
+      align = "right",
+      fill = NA,
+      na.rm = TRUE
+    ),
+    prcp2 = rollsum(x = prcp, 2, align = "right", fill = NA),
+    prcp30 = rollsum(x = prcp, 30, align = "right", fill = NA)
+  ) %>% 
+  ungroup() %>% 
+  select(featureid, year, date, airTemp, prcp2, prcp30, temp7p) %>% 
+  gather(var, value, airTemp, prcp2, prcp30, temp7p) %>% 
+  left_join(inp$std, by = "var") %>% 
+  mutate(
+    value_std = (value - mean) / sd
+  )
+```
+
+```{r}
+df_X <- df_daymet %>% 
+  select(featureid, year, date, var, value_std) %>% 
+  spread(var, value_std) %>% 
+  left_join(
+    df_covariates %>% 
+      select(featureid, var, value_std) %>% 
+      spread(var, value_std),
+    by = "featureid"
+  ) %>% 
+  mutate(
+    intercept = 1,
+    intercept.site = 1,
+    intercept.huc = 1,
+    intercept.year = 1,
+    prcp2.da = prcp2 * AreaSqKM,
+    prcp30.da = prcp30 * AreaSqKM,
+    airTemp.prcp2 = airTemp * prcp2,
+    airTemp.prcp2.da = airTemp * prcp2 * AreaSqKM,
+    airTemp.prcp30 = airTemp * prcp30,
+    airTemp.prcp30.da = airTemp * prcp30 * AreaSqKM,
+    airTemp.forest = airTemp * forest,
+    airTemp.devel_hi = airTemp * devel_hi,
+    airTemp.da = airTemp * AreaSqKM,
+    airTemp.impoundArea = airTemp * impoundArea,
+    airTemp.agriculture = airTemp * agriculture
+  )
+```
+
+
+```{r}
+labels_B_fixed <- data_frame(
+  param = paste0("B.0[", 1:length(m$covs$fixed.ef), "]"),
+  cov = m$covs$fixed.ef,
+  label = paste0("B.0[", m$covs$fixed.ef, "]"),
+  group = "fixed"
+)
+
+labels_B_huc <- crossing(
+  huc8_id = m$ids$huc8$huc8_id,
+  cov_id = 1:length(m$covs$huc.ef)
+) %>%
+  left_join(m$ids$huc8, by = "huc8_id") %>%
+  left_join(
+    data_frame(
+      cov_id = 1:length(m$covs$huc.ef),
+      cov = m$covs$huc.ef
+    ),
+    by = "cov_id"
+  ) %>%
+  mutate(cov = if_else(cov == "intercept.site", "intercept.huc", cov)) %>%
+  mutate(
+    param = paste0("B.huc[", huc8_id, ",", cov_id, "]"),
+    label = paste0("B.huc[", huc8, ",", cov, "]"),
+    group = "huc"
+  ) %>% 
+  filter(huc8 == HUC8)
+
+labels_B_site <- crossing(
+  site_id = m$ids$site$site_id,
+  cov_id = 1:length(m$covs$site.ef)
+) %>%
+  left_join(m$ids$site, by = "site_id") %>%
+  left_join(
+    data_frame(
+      cov_id = 1:length(m$covs$site.ef),
+      cov = m$covs$site.ef
+    ),
+    by = "cov_id"
+  ) %>%
+  mutate(
+    param = paste0("B.site[", site_id, ",", cov_id, "]"),
+    label = paste0("B.site[", site, ",", cov, "]"),
+    group = "site"
+  ) %>% 
+  filter(site == SITE)
+
+labels_B_year <- crossing(
+  year_id = m$ids$year$year_id,
+  cov_id = 1:length(m$covs$year.ef)
+) %>%
+  left_join(m$ids$year, by = "year_id") %>%
+  left_join(
+    data_frame(
+      cov_id = 1:length(m$covs$year.ef),
+      cov = m$covs$year.ef
+    ),
+    by = "cov_id"
+  ) %>%
+  mutate(
+    param = paste0("B.year[", year_id, ",", cov_id, "]"),
+    label = paste0("B.year[", year, ",", cov, "]"),
+    group = "year"
+  ) %>% 
+  filter(year == YEAR)
+```
+
+
+```{r}
+B_means <- m$results$summary[, 1]
+df_B_values <- data_frame(
+  param = names(B_means),
+  B_value = unname(B_means)
+)
+
+df_B_fixed <- labels_B_fixed %>% 
+  left_join(df_B_values, by = "param")
+df_B_site <- labels_B_site %>% 
+  left_join(df_B_values, by = "param")
+df_B_huc <- labels_B_huc %>% 
+  left_join(df_B_values, by = "param")
+df_B_year <- labels_B_year %>% 
+  left_join(df_B_values, by = "param")
+
+df_B <- bind_rows(
+  df_B_fixed,
+  df_B_site,
+  df_B_huc,
+  df_B_year
+) %>% 
+  select(group, param, cov, B_value)
+```
+
+```{r}
+df_B_site_mean <- crossing(
+  site_id = m$ids$site$site_id,
+  cov_id = 1:length(m$covs$site.ef)
+) %>%
+  left_join(m$ids$site, by = "site_id") %>%
+  left_join(
+    data_frame(
+      cov_id = 1:length(m$covs$site.ef),
+      cov = m$covs$site.ef
+    ),
+    by = "cov_id"
+  ) %>%
+  mutate(
+    param = paste0("B.site[", site_id, ",", cov_id, "]"),
+    label = paste0("B.site[", site, ",", cov, "]"),
+    group = "site"
+  ) %>% 
+  left_join(df_B_values) %>% 
+  group_by(group, cov) %>% 
+  summarise(
+    n = n(),
+    B_value = mean(B_value)
+  )
+
+
+df_B2 <- bind_rows(
+  df_B_fixed,
+  df_B_site_mean,
+  df_B_huc,
+  df_B_year
+) %>% 
+  select(group, param, cov, B_value)
+```
+
+
+```{r}
+df <- df_X %>% 
+  gather(cov, value, -featureid, -year, -date) %>% 
+  full_join(df_B, by = "cov") %>% 
+  mutate(Y = value * B_value) %>% 
+  filter(month(date) >= 4, month(date) <= 11)
+df2 <- df_X %>% 
+  gather(cov, value, -featureid, -year, -date) %>% 
+  full_join(df_B2, by = "cov") %>% 
+  mutate(Y = value * B_value) %>% 
+  filter(month(date) >= 4, month(date) <= 11)
+```
+
+```{r}
+df %>% 
+  ggplot(aes(date, Y, group = param)) +
+  geom_line()
+```
+
+
+```{r}
+df %>% 
+  filter(group == "fixed", cov != "intercept") %>% 
+  ggplot(aes(date, Y, color = cov)) +
+  geom_line()
+```
+
+
+```{r}
+df %>% 
+  filter(group == "site") %>% 
+  ggplot(aes(date, Y, color = cov)) +
+  geom_line()
+```
+
+```{r}
+df %>% 
+  filter(group == "huc") %>% 
+  ggplot(aes(date, Y, color = cov)) +
+  geom_line()
+```
+
+```{r}
+df %>% 
+  filter(group == "year") %>% 
+  ggplot(aes(date, Y, color = cov)) +
+  geom_line()
+```
+
+```{r}
+df %>% 
+  group_by(featureid, year, date, group) %>% 
+  summarise(Y = sum(Y)) %>% 
+  ggplot(aes(date, Y, color = group)) +
+  geom_line()
+```
+
+```{r}
+df %>% 
+  group_by(featureid, year, date) %>% 
+  summarise(Y = sum(Y)) %>% 
+  ggplot(aes(date, Y)) +
+  geom_line() +
+  scale_x_date(breaks = scales::date_breaks("1 months"), labels = scales::date_format("%b")) +
+  labs(
+    x = "Date",
+    y = "deg C"
+  )
+```
+
+```{r}
+df %>% 
+  group_by(featureid, year, date) %>% 
+  summarise(Y = sum(Y)) %>% 
+  ggplot(aes(date, Y)) +
+  geom_line() +
+  geom_line(
+    data = df_obs,
+    aes(y = temp),
+    color = "red"
+  )
+```
+
+```{r}
+df %>% 
+  group_by(featureid, year, date) %>% 
+  summarise(Y = sum(Y)) %>% 
+  ggplot(aes(date, Y)) +
+  geom_line() +
+  geom_line(
+    data = df2 %>% 
+      group_by(featureid, year, date) %>% 
+      summarise(Y = sum(Y)), 
+    linetype = "dashed"
+  ) +
+  geom_line(
+    data = df_obs,
+    aes(y = temp),
+    color = "red"
+  )
+```
+
+
+```{r}
+dbDisconnect(con)
+```
+
