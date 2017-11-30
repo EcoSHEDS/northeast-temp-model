@@ -1,6 +1,5 @@
 # fetch covariates from database
-# <- {wd}/data/clean.rds
-# -> {wd}/data/covariates.rds
+# -> {wd}/covariates.rds
 
 start <- lubridate::now(tzone = "US/Eastern")
 cat("starting data-prepare:", as.character(start, tz = "US/Eastern"), "\n")
@@ -50,7 +49,7 @@ cat("done\n")
 
 cat("saving to data/covariates.rds...")
 df_covariates %>%
-  saveRDS(file.path(config$wd, "data", "covariates.rds"))
+  saveRDS(file.path(config$wd, "covariates.rds"))
 cat("done\n")
 
 end <- lubridate::now(tzone = "US/Eastern")
