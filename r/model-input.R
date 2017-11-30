@@ -39,6 +39,7 @@ df_daymet <- read_csv(
     airTemp = (tmin + tmax) / 2
   ) %>%
   select(featureid, year, date, airTemp, prcp)
+df_huc <- readRDS(file.path(config$wd, "huc8.rds"))
 cat("done\n")
 
 cat("computing lagged climate variables...")
@@ -86,25 +87,6 @@ df <- df %>%
     dOY <= fall_bp
   )
 cat("done ( nrow =", nrow(df), ")\n")
-
-cat("connecting to db ( host =", config$db$host, ", dbname =", config$db$dbname, ")...")
-con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
-cat("done\n")
-
-cat("fetching featureid-huc12...")
-featureids <- unique(df$featureid)
-df_huc <- tbl(con, "catchment_huc12") %>%
-  filter(featureid %in% featureids) %>%
-  collect()
-df_huc <- df_huc %>%
-  mutate(
-    huc2 = str_sub(huc12, 1, 2),
-    huc4 = str_sub(huc12, 1, 4),
-    huc8 = str_sub(huc12, 1, 8),
-    huc10 = str_sub(huc12, 1, 10)
-  )
-disconnected <- dbDisconnect(con)
-cat("done\n")
 
 cat("joining huc...")
 df <- df %>%
