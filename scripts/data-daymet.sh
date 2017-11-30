@@ -1,7 +1,7 @@
 #!/bin/bash
-# Identify locations in impoundment and tidal zones, export id's to txt file
-# output: locations-exclude.txt
-# usage: $ ./locations-exclude.sh
+# Retrieve daymet data for [featureid,year] listed in daymet-featureid_year.csv
+# output: data-daymet.csv
+# usage: $ ./data-daymet.sh
 
 set -eu
 set -o pipefail
@@ -38,4 +38,4 @@ COPY (
     tmax, tmin, prcp
   FROM t2
 ) TO STDOUT WITH CSV HEADER;
-" < ${SHEDS_STM_WD}/daymet_featureid_year.csv > ${SHEDS_STM_WD}/daymet.csv
+" < ${SHEDS_STM_WD}/daymet-featureid_year.csv > ${SHEDS_STM_WD}/data-daymet.csv

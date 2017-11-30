@@ -1,6 +1,6 @@
-# process raw data (clean, qaqc)
-# <- {wd}/data-db.rds
-# -> {wd}/data-input.rds
+# generate breakpoints
+# <- {wd}/data-clean.rds
+# -> {wd}/data-breakpoints.rds
 
 start <- lubridate::now(tzone = "US/Eastern")
 cat("starting data-process:", as.character(start, tz = "US/Eastern"), "\n")
@@ -19,7 +19,7 @@ config <- fromJSON("../config.json")
 
 # load data ---------------------------------------------------------------
 
-df <- readRDS(file.path(config$wd, "data", "clean.rds"))
+df <- readRDS(file.path(config$wd, "data-clean.rds"))
 
 df <- df %>%
   mutate(
@@ -506,5 +506,5 @@ df_fill %>%
 
 df_fill %>%
   select(featureid, year, featureid_year, spring_bp, fall_bp) %>%
-  saveRDS(file.path(config$wd, "data", "breakpoints.rds"))
+  saveRDS(file.path(config$wd, "data-breakpoints.rds"))
 

@@ -1,6 +1,7 @@
 # process raw data (clean, qaqc)
 # <- {wd}/data-db.rds
-# -> {wd}/data-input.rds
+# <- {wd}/data-daymet.csv
+# -> {wd}/data-clean.rds
 
 start <- lubridate::now(tzone = "US/Eastern")
 cat("starting data-process:", as.character(start, tz = "US/Eastern"), "\n")
@@ -18,9 +19,9 @@ config <- fromJSON("../config.json")
 
 # load data ---------------------------------------------------------------
 
-cat("loading daymet.csv...")
+cat("loading data-daymet.csv...")
 df_daymet <- read_csv(
-  file.path(config$wd, "daymet.csv"),
+  file.path(config$wd, "data-daymet.csv"),
   col_types = cols(
     featureid = col_integer(),
     date = col_date(format = ""),
@@ -56,8 +57,8 @@ df_daymet <- df_daymet %>%
 MAX_YEAR <- max(year(df_daymet$date))
 cat("done ( nrow =", nrow(df_daymet), ", max year =", MAX_YEAR, ")\n")
 
-cat("loading data/db.rds...")
-db <- readRDS(file.path(config$wd, "data", "db.rds"))
+cat("loading data-db.rds...")
+db <- readRDS(file.path(config$wd, "data-db.rds"))
 db_series <- db$series
 db_locations <- db$locations
 db_values <- db$values
@@ -1179,10 +1180,10 @@ cat("done ( nrow =", nrow(df_values), ")\n")
 #   geom_line(aes(y = mean))
 
 
-cat("saving to data/clean.rds...")
+cat("saving to data-clean.rds...")
 df_values %>%
   select(featureid, location_id, date, mean, airtemp, prcp) %>%
-  saveRDS(file.path(config$wd, "data", "clean.rds"))
+  saveRDS(file.path(config$wd, "data-clean.rds"))
 cat("done\n")
 
 end <- lubridate::now(tzone = "US/Eastern")

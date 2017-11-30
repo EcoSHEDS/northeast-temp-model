@@ -1,8 +1,9 @@
-# process raw data (clean, qaqc)
-# <- {wd}/data/clean.rds
-# <- {wd}/data/breakpoints.rds
-# <- {wd}/data/covariates.rds
-# -> {wd}/data/model-input.rds
+# generate model-input from cleaned data
+# <- {wd}/data-clean.rds
+# <- {wd}/data-breakpoints.rds
+# <- {wd}/covariates.rds
+# <- {wd}/daymet.csv
+# -> {wd}/model-input.rds
 
 start <- lubridate::now(tzone = "US/Eastern")
 cat("starting data-prepare:", as.character(start, tz = "US/Eastern"), "\n")
@@ -16,14 +17,13 @@ suppressPackageStartupMessages(library(stringr))
 
 config <- fromJSON("../config.json")
 
-
 cat("loading input data frames...")
-df_temp <- readRDS(file.path(config$wd, "data", "clean.rds")) %>%
+df_temp <- readRDS(file.path(config$wd, "data-clean.rds")) %>%
   mutate(year = year(date)) %>%
   select(featureid, year, date, temp = mean)
-df_bp <- readRDS(file.path(config$wd, "data", "breakpoints.rds")) %>%
+df_bp <- readRDS(file.path(config$wd, "data-breakpoints.rds")) %>%
   select(-featureid_year)
-df_covariates <- readRDS(file.path(config$wd, "data", "covariates.rds"))
+df_covariates <- readRDS(file.path(config$wd, "covariates.rds"))
 df_daymet <- read_csv(
   file.path(config$wd, "daymet.csv"),
   col_types = cols(
@@ -48,14 +48,6 @@ df_daymet <- df_daymet %>%
   group_by(featureid, year) %>%
   mutate(
     airTempLagged1 = lag(airTemp, n = 1, fill = NA),
-    # temp5p = rollapply(
-    #   data = airTempLagged1,
-    #   width = 5,
-    #   FUN = mean,
-    #   align = "right",
-    #   fill = NA,
-    #   na.rm = TRUE
-    # ),
     temp7p = rollapply(
       data = airTempLagged1,
       width = 7,
@@ -65,7 +57,6 @@ df_daymet <- df_daymet %>%
       na.rm = TRUE
     ),
     prcp2 = rollsum(x = prcp, 2, align = "right", fill = NA),
-    # prcp7 = rollsum(x = prcp, 7, align = "right", fill = NA),
     prcp30 = rollsum(x = prcp, 30, align = "right", fill = NA)
   )
 cat("done\n")
@@ -268,4 +259,4 @@ list(
 
 end <- lubridate::now(tzone = "US/Eastern")
 elapsed <- as.numeric(difftime(end, start, tz = "US/Eastern", units = "sec"))
-cat("finished data-process:", as.character(end, tz = "US/Eastern"), "( elapsed =", round(elapsed / 60, digits = 1), "min )\n")
+cat("finished data-prepare:", as.character(end, tz = "US/Eastern"), "( elapsed =", round(elapsed / 60, digits = 1), "min )\n")

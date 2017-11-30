@@ -1,5 +1,7 @@
 # retrieve raw data from database
-# -> {wd}/data/db.rds
+# <- {wd}/locations-exclude.txt
+# -> {wd}/data-db.rds
+# -> {wd}/daymet-featureid_year.csv
 
 start <- lubridate::now(tzone = "US/Eastern")
 cat("starting data-retrieve:", as.character(start, tz = "US/Eastern"), "\n")
@@ -33,7 +35,6 @@ agencies_exclude <- df_agencies %>%
   filter(name %in% config$dataset$agencies$exclude) %>%
   select(agency_id = id)
 cat("done ( nrow =", nrow(df_agencies), ", excluding =", nrow(agencies_exclude), ")\n")
-
 
 cat("retrieving locations...")
 db_locations <- tbl(con, "locations") %>%
@@ -81,7 +82,11 @@ db_values <- tbl(con, "values") %>%
 df_values <- collect(db_values)
 cat("done ( nrow =", nrow(df_values), ")\n")
 
-out_file <- file.path(config$wd, "data", "db.rds")
+cat("disconnecting from db...")
+disconnected <- dbDisconnect(con)
+cat("done\n")
+
+out_file <- file.path(config$wd, "data-db.rds")
 cat("saving db dataset to", out_file, "...")
 list(
   agencies = df_agencies,
@@ -90,10 +95,6 @@ list(
   values = df_values
 ) %>%
   saveRDS(out_file)
-cat("done\n")
-
-cat("disconnecting from db...")
-disconnected <- dbDisconnect(con)
 cat("done\n")
 
 cat("writing featureid/year list to daymet_featureid_year.csv...")
@@ -117,7 +118,7 @@ df_daymet <- df_series %>%
   mutate(year = as.character(year)) %>%
   filter(!is.na(featureid))
 df_daymet %>%
-  write_csv(path = file.path(config$wd, "daymet_featureid_year.csv"))
+  write_csv(path = file.path(config$wd, "daymet-featureid_year.csv"))
 cat("done\n")
 
 end <- lubridate::now(tzone = "US/Eastern")

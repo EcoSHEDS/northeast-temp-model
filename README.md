@@ -28,7 +28,7 @@ cp config.template.json config.json # JSON config for R
 Identify locations near impoundments and in the tidal zone, which need to be excluded. List of location.id's saved to `$WD/locations-exclude.txt`.
 
 ```bash
-./scripts/locations-exclude.sh # -> locations-exclude.txt
+./scripts/locations-exclude.sh # -> locations-tidal.txt, locations-impoundment.txt, locations-exclude.txt
 ```
 
 Calculate minimum distance of each location from nearest flowline and catchment pour point.
@@ -40,19 +40,25 @@ Calculate minimum distance of each location from nearest flowline and catchment 
 Retrieve stream temperature data from database
 
 ```bash
-Rscript r/retrieve-db.R # -> data/db.rds, daymet_featureid_year.csv
+Rscript r/data-db.R # -> data-db.rds, daymet-featureid_year.csv
 ```
 
 Retrieve daymet data from database for featureid
 
 ```bash
-./scripts/daymet-retrieve.sh # -> daymet.csv
+./scripts/data-daymet.sh # -> data-daymet.csv
+```
+
+Retrieve covariates from database for all featureids
+
+```bash
+Rscript r/data-covariates.R # -> covariates.rds
 ```
 
 Process data (QAQC, split, filter)
 
 ```bash
-Rscript r/data-process.R # -> data/clean.rds
+Rscript r/data-clean.R # -> data-clean.rds
 ```
 
 1. Remove values within user-defined flags  
@@ -74,19 +80,13 @@ Rscript r/data-process.R # -> data/clean.rds
 Determine spring/fall breakspoints
 
 ```bash
-Rscript r/data-breakpoints.R # -> data/breakpoints.rds
-```
-
-Retrieve covariates
-
-```bash
-Rscript r/data-covariates.R # -> data/covariates.rds
+Rscript r/data-breakpoints.R # -> data-breakpoints.rds
 ```
 
 Prepare dataset for model input
 
 ```bash
-Rscript r/data-prepare.R # -> model-input.rds
+Rscript r/model-input.R # -> model-input.rds
 ```
 
 ## Run Model
@@ -94,7 +94,19 @@ Rscript r/data-prepare.R # -> model-input.rds
 Run the model
 
 ```bash
-Rscript r/run-model.R # -> model-output.rds
+Rscript r/model-execute.R # -> model-output.rds
+```
+
+Run diagnostics
+
+```bash
+Rscript r/model-diagnostics.R
+```
+
+Generate predictions (derived metrics)
+
+```bash
+Rscript r/model-predict.R
 ```
 
 
