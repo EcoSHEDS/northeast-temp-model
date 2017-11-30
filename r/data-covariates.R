@@ -11,7 +11,7 @@ suppressPackageStartupMessages(library(jsonlite))
 config <- fromJSON("../config.json")
 
 cat("connecting to db ( host =", config$db$host, ", dbname =", config$db$dbname, ")...")
-con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user)
+con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
 cat("done\n")
 
 # upstream covariates
