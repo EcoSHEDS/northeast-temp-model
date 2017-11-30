@@ -11,41 +11,32 @@ suppressPackageStartupMessages(library(jsonlite))
 
 config <- fromJSON("../config.json")
 
-cat("loading data/clean.rds...")
-df <- readRDS(file.path(config$wd, "data", "clean.rds"))
-featureids <- unique(df$featureid)
-cat("done\n")
-
 cat("connecting to db ( host =", config$db$host, ", dbname =", config$db$dbname, ")...")
 con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user)
 cat("done\n")
 
 # upstream covariates
 cat("fetching upstream covariates...")
-covariates <- c("agriculture", "alloffnet", "allonnet", "AreaSqKM", "devel_hi", "devel_low", "devel_med", "developed", "devel_opn", "drainageclass", "elevation", "forest", "fwsopenwater", "fwswetlands", "herbaceous", "hydrogroup_a", "hydrogroup_ab", "hydrogroup_cd", "hydrogroup_d1", "hydrogroup_d4", "impervious", "openoffnet", "openonnet", "percent_sandy", "slope_pcnt", "surfcoarse", "tree_canopy", "undev_forest", "water", "wetland")
-db_covariates_upstream <- tbl(con, "covariates") %>%
+df_covariates_upstream <- tbl(con, "covariates") %>%
   filter(
-    featureid %in% featureids,
-    variable %in% covariates,
+    variable %in% c("AreaSqKM", "devel_hi", "agriculture", "allonnet"),
     zone == "upstream",
     is.na(riparian_distance_ft)
-  )
-df_covariates_upstream <- db_covariates_upstream %>%
-  collect()
+  ) %>%
+  collect() %>%
+  select(featureid, variable, value)
 cat("done ( nrow =", nrow(df_covariates_upstream), ")\n")
-# ~15 min
 
 # riparian
 cat("fetching riparian covariates...")
-db_covariarates_riparian <- tbl(con, "covariates") %>%
+df_covariates_riparian <- tbl(con, "covariates") %>%
   filter(
-    featureid %in% featureids,
     variable %in% c("forest"),
     zone == "upstream",
     riparian_distance_ft == 200
-  )
-df_covariarates_riparian <- db_covariarates_riparian %>%
-  collect()
+  ) %>%
+  collect() %>%
+  select(featureid, variable, value)
 cat("done ( nrow =", nrow(df_covariarates_riparian), ")\n")
 
 cat("disconnecting from db...")
@@ -53,16 +44,8 @@ diconnected <- dbDisconnect(con)
 cat("done\n")
 
 cat("merging upstream and riparian covariates...")
-df_covariates <- df_covariates_upstream %>%
-  select(-zone, -riparian_distance_ft) %>%
-  spread(variable, value) %>%
-  rename(forest_all = forest) %>%
-  left_join(
-    df_covariarates_riparian %>%
-      select(-zone, -riparian_distance_ft) %>%
-      spread(variable, value),
-    by = "featureid"
-  )
+df_covariates <- bind_rows(df_covariates_upstream, df_covariates_riparian) %>%
+  spread(variable, value)
 cat("done\n")
 
 cat("saving to data/covariates.rds...")
