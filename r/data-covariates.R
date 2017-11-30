@@ -36,7 +36,7 @@ df_covariates_riparian <- tbl(con, "covariates") %>%
   ) %>%
   collect() %>%
   select(featureid, variable, value)
-cat("done ( nrow =", nrow(df_covariarates_riparian), ")\n")
+cat("done ( nrow =", nrow(df_covariates_riparian), ")\n")
 
 cat("disconnecting from db...")
 diconnected <- dbDisconnect(con)
