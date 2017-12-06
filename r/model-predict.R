@@ -1,4 +1,8 @@
 # generate predictions for all catchments
+# <- covariates.rds
+# <- model-input.rds
+# <- model-output.rds
+# -> model-predict-derived.rds
 
 rm(list=ls())
 
@@ -9,22 +13,33 @@ suppressPackageStartupMessages(library(RPostgreSQL))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(jsonlite))
 suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(zoo))
+suppressPackageStartupMessages(library(stringr))
 suppressPackageStartupMessages(library(foreach))
 suppressPackageStartupMessages(library(doParallel))
 
-cl <- makeCluster(3)
+cl <- makeCluster(12)
 registerDoParallel(cl)
 
 config <- fromJSON("../config.json")
+
+cat("loading covariates...")
+df_huc <- readRDS(file.path(config$wd, "huc.rds"))
+cat("done ( nrow =", nrow(df_huc), ")\n")
 
 cat("loading covariates...")
 df_covariates <- readRDS(file.path(config$wd, "covariates.rds")) %>%
   filter(
     AreaSqKM <= 200,
     allonnet < 70
+  ) %>%
+  mutate(
+    impoundArea = AreaSqKM * allonnet / 100
   )
 df_covariates <- df_covariates[complete.cases(df_covariates), ]
 cat("done ( nrow =", nrow(df_covariates), ")\n")
+# df_covariates <- df_covariates %>% head(80)
+
 
 cat("loading model input/output...")
 m_in <- readRDS(file.path(config$wd, "model-input.rds"))
@@ -46,50 +61,95 @@ coef_list <- list(
 )
 cat("done\n")
 
-cat("connecting to db ( host =", config$db$host, ", dbname =", config$db$dbname, ")...")
-con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user)
-cat("done\n")
+#
+# cat("loading data breakpoints...")
+# list_bp <- readRDS(file.path(config$wd, "data-breakpoints.rds"))
+# cat("done\n")
+#
+# cat("joining breakpoints...")
+# bp_median_spring <- median(list_bp$data$spring_bp, na.rm = TRUE)
+# bp_median_fall <- median(list_bp$data$fall_bp, na.rm = TRUE)
+#
+# df_bp <- crossing(
+#     featureid = df_covariates$featureid,
+#     year = 1980:2015
+#   ) %>%
+#   left_join(df_huc, by = "featureid") %>%
+#   select(featureid, year, huc4, huc8, huc12) %>%
+#   left_join(
+#     list_bp$data %>%
+#       select(featureid, year, spring_bp_data = spring_bp, fall_bp_data = fall_bp) %>%
+#       mutate(
+#         spring_bp_data = as.numeric(spring_bp_data),
+#         fall_bp_data = as.numeric(fall_bp_data)
+#       ),
+#     by = c("featureid", "year")
+#   ) %>%
+#   left_join(
+#     list_bp$featureid %>%
+#       select(featureid, spring_bp_featureid = spring_bp_featureid_mean, fall_bp_featureid = fall_bp_featureid_mean),
+#     by = c("featureid")
+#   ) %>%
+#   left_join(
+#     list_bp$huc12 %>%
+#       select(huc12, spring_bp_huc12 = spring_bp_huc12_mean, fall_bp_huc12 = fall_bp_huc12_mean),
+#     by = c("huc12")
+#   ) %>%
+#   left_join(
+#     list_bp$huc8 %>%
+#       select(huc8, spring_bp_huc8 = spring_bp_huc8_mean, fall_bp_huc8 = fall_bp_huc8_mean),
+#     by = c("huc8")
+#   ) %>%
+#   left_join(
+#     list_bp$huc4 %>%
+#       select(huc4, spring_bp_huc4 = spring_bp_huc4_mean, fall_bp_huc4 = fall_bp_huc4_mean),
+#     by = c("huc4")
+#   ) %>%
+#   mutate(
+#     spring_bp_median = as.numeric(bp_median_spring),
+#     fall_bp_median = as.numeric(bp_median_fall)
+#   ) %>%
+#   mutate(
+#     spring_bp = coalesce(spring_bp_data, spring_bp_featureid, spring_bp_huc4, spring_bp_huc12, spring_bp_huc8, spring_bp_huc4, spring_bp_median),
+#     fall_bp = coalesce(fall_bp_data, fall_bp_featureid, fall_bp_huc4, fall_bp_huc12, fall_bp_huc8, fall_bp_huc4, fall_bp_median)
+#   )
+#
+# df_bp %>%
+#   select(featureid, year, spring_bp, fall_bp) %>%
+#   gather(var, value, spring_bp, fall_bp) %>%
+#   ggplot(aes(value)) +
+#   geom_histogram() +
+#   facet_wrap(~ var, scales = "free")
+#
+# cat("done\n")
 
-featureids <- df_covariates$featureid
+
+
+# n_featureids <- 101
+# featureids <- df_covariates$featureid %>% head(n_featureids)
+featureids <- as.integer(df_covariates$featureid)
 n <- length(featureids)
 chunk_size <- 10
 n_chunks <- ceiling(n / chunk_size)
 
+# logging
+# log_file <- file.path(config$wd, "model-predict.log")
+# writeLines(c(""), log_file)
+
+cat("generated predictions for", n, "featureids ( chunk_size =", chunk_size, ", n_chunks =", n_chunks, ")\n")
 system.time({
-  df_derived_all <- foreach(i = 1:n_chunks, .combine = rbind, .packages = c("RPostgreSQL", "DBI", "dplyr", "tidyr", "purrr", "zoo", "lubridate", "stringr")) %dopar% {
-    con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user)
-    start_i <- ((i - 1) * n_chunks) + 1
-    end_i <- i * n_chunks
+  df_derived_year <- foreach(i = 1:n_chunks, .combine = rbind, .packages = c("RPostgreSQL", "DBI", "dplyr", "tidyr", "purrr", "zoo", "lubridate", "stringr")) %dopar% {
+    # sink(log_file, append = TRUE)
+
+    start_i <- ((i - 1) * chunk_size) + 1
+    end_i <- i * chunk_size
     if (end_i > length(featureids)) {
       end_i <- length(featureids)
     }
     x_featureids <- featureids[start_i:end_i]
+    cat(as.character(Sys.time()), " - i = ", i, " | ", paste(x_featureids, collapse = ","), "\n", sep = "")
 
-    df_covariates_upstream <- tbl(con, "covariates") %>%
-      filter(
-        featureid %in% x_featureids,
-        variable %in% c("AreaSqKM", "devel_hi", "agriculture", "allonnet"),
-        zone == "upstream",
-        is.na(riparian_distance_ft)
-      ) %>%
-      collect() %>%
-      select(featureid, variable, value)
-    df_covariates_riparian <- tbl(con, "covariates") %>%
-      filter(
-        featureid %in% x_featureids,
-        variable %in% c("forest"),
-        zone == "upstream",
-        riparian_distance_ft == 200
-      ) %>%
-      collect() %>%
-      select(featureid, variable, value)
-
-    df_covariates <- bind_rows(df_covariates_upstream, df_covariates_riparian) %>%
-      spread(variable, value) %>%
-      mutate(
-        impoundArea = AreaSqKM * allonnet / 100
-      )
-
+    con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
     sql_daymet <- paste0("
       WITH t1 AS (
          SELECT
@@ -145,6 +205,7 @@ system.time({
 
     # merge covariates
     df <- df_covariates %>%
+      filter(featureid %in% x_featureids) %>%
       left_join(df_huc, by = "featureid") %>%
       left_join(df_daymet, by = "featureid") %>%
       mutate(
@@ -236,7 +297,11 @@ system.time({
 
     df <- df %>%
       mutate(
-        temp = Y,
+        temp = Y
+      )
+    df <- df %>%
+      group_by(site, year) %>%
+      mutate(
         temp_30d = rollapply(
           data = temp,
           width = 30,
@@ -245,7 +310,8 @@ system.time({
           fill = NA,
           na.rm = TRUE
         )
-      )
+      ) %>%
+      ungroup()
 
     # compute derived metrics
     df_nest <- df %>%
@@ -268,16 +334,13 @@ system.time({
 
           data_frame(
             max_temp = max(x$temp),
-            mean_jul_airtemp = mean(x_7$airTemp),
             mean_jul_temp = mean(x_7$temp),
-            mean_aug_airtemp = mean(x_8$airTemp),
             mean_aug_temp = mean(x_8$temp),
-            mean_summer_airtemp = mean(x_summer$airTemp),
             mean_summer_temp = mean(x_summer$temp),
-            max_temp_30d = max(x$temp_30d),
-            n_day_18 = sum(x$temp > 18),
-            n_day_20 = sum(x$temp > 20),
-            n_day_22 = sum(x$temp > 22),
+            max_temp_30d = max(x$temp_30d, na.rm = TRUE),
+            n_day_temp_gt_18 = sum(x$temp > 18),
+            n_day_temp_gt_20 = sum(x$temp > 20),
+            n_day_temp_gt_22 = sum(x$temp > 22),
             resist = sum(abs(x_resist$airTemp - x_resist$temp))
           )
         })
@@ -288,9 +351,14 @@ system.time({
     df_derived
   }
 })
-df_derived
+# 32 hours
 
-df_derived %>%
+
+# df_derived_year
+stopCluster(cl)
+saveRDS(df_derived_year, file.path(config$wd, "model-derived-year.rds"))
+
+df_derived_year %>%
   gather(var, value, -site, -year) %>%
   group_by(site, var) %>%
   summarise(
@@ -301,8 +369,7 @@ df_derived %>%
   geom_histogram() +
   facet_wrap(~var, scales = "free")
 
-saveRDS(df_derived, file.path(config$wd, "derived.rds"))
 
-stopCluster(cl)
-dbDisconnect(con)
+
+
 
