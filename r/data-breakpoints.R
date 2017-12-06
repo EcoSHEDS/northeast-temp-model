@@ -208,8 +208,6 @@ df %>%
   geom_histogram() +
   facet_wrap(~ var, scales = "free")
 
-
-
 df %>%
   filter(!is.na(spring_bp)) %>%
   arrange(desc(spring_bp)) %>%
@@ -269,23 +267,8 @@ df %>%
 
 # compute average breakpoints ---------------------------------------------
 
-cat("connecting to db ( host =", config$db$host, ", dbname =", config$db$dbname, ")...")
-con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user)
-cat("done\n")
-
-cat("fetching featureid-huc12...")
-featureids <- unique(df$featureid)
-df_huc <- tbl(con, "catchment_huc12") %>%
-  filter(featureid %in% featureids) %>%
-  collect()
-df_huc <- df_huc %>%
-  mutate(
-    huc2 = str_sub(huc12, 1, 2),
-    huc4 = str_sub(huc12, 1, 4),
-    huc8 = str_sub(huc12, 1, 8),
-    huc10 = str_sub(huc12, 1, 10)
-  )
-disconnected <- dbDisconnect(con)
+cat("loading hucs...")
+df_huc <- readRDS(file.path(config$wd, "huc.rds"))
 cat("done\n")
 
 cat("joining huc...")
@@ -330,6 +313,8 @@ df_huc12 <- df %>%
     fall_bp_huc12_mean = mean(fall_bp, na.rm = TRUE)
   )
 cat("done\n")
+
+
 
 cat("fill missing breakpoints with featureid/huc means...")
 df_fill <- df %>%
@@ -504,7 +489,14 @@ df_fill %>%
 
 # export ------------------------------------------------------------------
 
-df_fill %>%
-  select(featureid, year, featureid_year, spring_bp, fall_bp) %>%
+list(
+  model = df_fill %>%
+    select(featureid, year, featureid_year, spring_bp, fall_bp),
+  data = df,
+  featureid = df_featureid,
+  huc4 = df_huc4,
+  huc8 = df_huc8,
+  huc12 = df_huc12
+) %>%
   saveRDS(file.path(config$wd, "data-breakpoints.rds"))
 

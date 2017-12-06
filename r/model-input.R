@@ -21,7 +21,7 @@ cat("loading input data frames...")
 df_temp <- readRDS(file.path(config$wd, "data-clean.rds")) %>%
   mutate(year = year(date)) %>%
   select(featureid, year, date, temp = mean)
-df_bp <- readRDS(file.path(config$wd, "data-breakpoints.rds")) %>%
+df_bp <- readRDS(file.path(config$wd, "data-breakpoints.rds"))$model %>%
   select(-featureid_year)
 df_covariates <- readRDS(file.path(config$wd, "covariates.rds"))
 df_daymet <- read_csv(
@@ -39,7 +39,8 @@ df_daymet <- read_csv(
     airTemp = (tmin + tmax) / 2
   ) %>%
   select(featureid, year, date, airTemp, prcp)
-df_huc <- readRDS(file.path(config$wd, "huc8.rds"))
+df_huc <- readRDS(file.path(config$wd, "huc8.rds")) %>%
+  select(featureid, huc8)
 cat("done\n")
 
 cat("computing lagged climate variables...")

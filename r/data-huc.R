@@ -1,5 +1,5 @@
 # retrieve featureid-huc table
-# -> {wd}/huc8.rds
+# -> {wd}/huc.rds
 
 start <- lubridate::now(tzone = "US/Eastern")
 cat("starting data-huc:", as.character(start, tz = "US/Eastern"), "\n")
@@ -31,6 +31,6 @@ cat("done\n")
 
 cat("exporting huc8.rds...")
 df_huc %>%
-  select(featureid, huc8) %>%
-  saveRDS(file.path(config$wd, "huc8.rds"))
+  select(featureid, huc2, huc4, huc8, huc10, huc12) %>%
+  saveRDS(file.path(config$wd, "huc.rds"))
 cat("done\n")
