@@ -4,7 +4,7 @@
 # -> {wd}/daymet-featureid_year.csv
 
 start <- lubridate::now(tzone = "US/Eastern")
-cat("starting data-retrieve:", as.character(start, tz = "US/Eastern"), "\n")
+cat("starting data-db:", as.character(start, tz = "US/Eastern"), "\n")
 
 suppressPackageStartupMessages(library(RPostgreSQL))
 suppressPackageStartupMessages(library(tidyverse))
@@ -124,4 +124,4 @@ cat("done\n")
 end <- lubridate::now(tzone = "US/Eastern")
 elapsed <- as.numeric(difftime(end, start, tz = "US/Eastern", units = "sec"))
 
-cat("finished data-retrieve:", as.character(end, tz = "US/Eastern"), "( elapsed =", round(elapsed / 60, digits = 1), "min )\n")
+cat("finished data-db:", as.character(end, tz = "US/Eastern"), "( elapsed =", round(elapsed / 60, digits = 1), "min )\n")
