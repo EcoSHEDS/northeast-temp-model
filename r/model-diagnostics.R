@@ -59,7 +59,6 @@ df_pred <- data_frame(
   ) %>%
   ungroup()
 
-
 df_pred_deploy <- df_pred %>%
   group_by(site, year, deploy_id) %>%
   nest() %>%
@@ -166,7 +165,8 @@ df_pred_site %>%
   ggplot(aes(date)) +
   geom_line(aes(y = Y, group = deploy_id)) +
   geom_point(aes(y = temp), size = 1, color = "orangered", shape = 1) +
-  facet_wrap(~ site, scales = "free")
+  facet_wrap(~ site, scales = "free") +
+  labs(x = "Date", y = "Predicted Temperature (degC) w/o Autoregressive Term")
 
 df_pred_site %>%
   filter(n > 100) %>%
@@ -359,7 +359,7 @@ df_valid_site %>%
 
 # w/o autoregressive term
 df_valid_site %>%
-  arrange(desc(rmse)) %>%
+  arrange(desc(rmse_Y)) %>%
   head(10) %>%
   unnest(data) %>%
   ggplot(aes(date)) +
@@ -368,7 +368,7 @@ df_valid_site %>%
   facet_wrap(~ site, scales = "free")
 
 df_valid_site %>%
-  arrange(rmse) %>%
+  arrange(rmse_Y) %>%
   head(10) %>%
   unnest(data) %>%
   ggplot(aes(date)) +

@@ -3,7 +3,7 @@
 # -> {wd}/data-breakpoints.rds
 
 start <- lubridate::now(tzone = "US/Eastern")
-cat("starting data-process:", as.character(start, tz = "US/Eastern"), "\n")
+cat("starting data-breakpoints:", as.character(start, tz = "US/Eastern"), "\n")
 
 suppressPackageStartupMessages(library(RPostgreSQL))
 suppressPackageStartupMessages(library(tidyverse))
@@ -67,7 +67,6 @@ df %>%
   unnest(breaks) %>%
   ggplot(aes(q_hi)) +
   geom_histogram()
-
 df %>%
   unnest(breaks) %>%
   ggplot(aes(q_hi-q_lo)) +
@@ -500,3 +499,6 @@ list(
 ) %>%
   saveRDS(file.path(config$wd, "data-breakpoints.rds"))
 
+end <- lubridate::now(tzone = "US/Eastern")
+elapsed <- as.numeric(difftime(end, start, tz = "US/Eastern", units = "sec"))
+cat("finished data-breakpoints:", as.character(end, tz = "US/Eastern"), "( elapsed =", round(elapsed / 60, digits = 1), "min )\n")

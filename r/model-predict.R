@@ -23,9 +23,9 @@ registerDoParallel(cl)
 
 config <- fromJSON("../config.json")
 
-cat("loading covariates...")
+cat("loading hucs...")
 df_huc <- readRDS(file.path(config$wd, "huc.rds"))
-cat("done ( nrow =", nrow(df_huc), ")\n")
+cat("done (nrow = ", nrow(df_huc), ")\n", sep = "")
 
 cat("loading covariates...")
 df_covariates <- readRDS(file.path(config$wd, "covariates.rds")) %>%
@@ -37,9 +37,7 @@ df_covariates <- readRDS(file.path(config$wd, "covariates.rds")) %>%
     impoundArea = AreaSqKM * allonnet / 100
   )
 df_covariates <- df_covariates[complete.cases(df_covariates), ]
-cat("done ( nrow =", nrow(df_covariates), ")\n")
-# df_covariates <- df_covariates %>% head(80)
-
+cat("done (nrow = ", nrow(df_covariates), ")\n", sep = "")
 
 cat("loading model input/output...")
 m_in <- readRDS(file.path(config$wd, "model-input.rds"))
@@ -61,83 +59,186 @@ coef_list <- list(
 )
 cat("done\n")
 
-#
-# cat("loading data breakpoints...")
-# list_bp <- readRDS(file.path(config$wd, "data-breakpoints.rds"))
-# cat("done\n")
-#
-# cat("joining breakpoints...")
-# bp_median_spring <- median(list_bp$data$spring_bp, na.rm = TRUE)
-# bp_median_fall <- median(list_bp$data$fall_bp, na.rm = TRUE)
-#
-# df_bp <- crossing(
-#     featureid = df_covariates$featureid,
-#     year = 1980:2015
-#   ) %>%
-#   left_join(df_huc, by = "featureid") %>%
-#   select(featureid, year, huc4, huc8, huc12) %>%
-#   left_join(
-#     list_bp$data %>%
-#       select(featureid, year, spring_bp_data = spring_bp, fall_bp_data = fall_bp) %>%
-#       mutate(
-#         spring_bp_data = as.numeric(spring_bp_data),
-#         fall_bp_data = as.numeric(fall_bp_data)
-#       ),
-#     by = c("featureid", "year")
-#   ) %>%
-#   left_join(
-#     list_bp$featureid %>%
-#       select(featureid, spring_bp_featureid = spring_bp_featureid_mean, fall_bp_featureid = fall_bp_featureid_mean),
-#     by = c("featureid")
-#   ) %>%
-#   left_join(
-#     list_bp$huc12 %>%
-#       select(huc12, spring_bp_huc12 = spring_bp_huc12_mean, fall_bp_huc12 = fall_bp_huc12_mean),
-#     by = c("huc12")
-#   ) %>%
-#   left_join(
-#     list_bp$huc8 %>%
-#       select(huc8, spring_bp_huc8 = spring_bp_huc8_mean, fall_bp_huc8 = fall_bp_huc8_mean),
-#     by = c("huc8")
-#   ) %>%
-#   left_join(
-#     list_bp$huc4 %>%
-#       select(huc4, spring_bp_huc4 = spring_bp_huc4_mean, fall_bp_huc4 = fall_bp_huc4_mean),
-#     by = c("huc4")
-#   ) %>%
-#   mutate(
-#     spring_bp_median = as.numeric(bp_median_spring),
-#     fall_bp_median = as.numeric(bp_median_fall)
-#   ) %>%
-#   mutate(
-#     spring_bp = coalesce(spring_bp_data, spring_bp_featureid, spring_bp_huc4, spring_bp_huc12, spring_bp_huc8, spring_bp_huc4, spring_bp_median),
-#     fall_bp = coalesce(fall_bp_data, fall_bp_featureid, fall_bp_huc4, fall_bp_huc12, fall_bp_huc8, fall_bp_huc4, fall_bp_median)
-#   )
-#
-# df_bp %>%
-#   select(featureid, year, spring_bp, fall_bp) %>%
-#   gather(var, value, spring_bp, fall_bp) %>%
-#   ggplot(aes(value)) +
-#   geom_histogram() +
-#   facet_wrap(~ var, scales = "free")
-#
-# cat("done\n")
+predict_daily <- function (featureids) {
+  # con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
+  con <- dbConnect(PostgreSQL(), host = "localhost", dbname = "daymet")
+  sql_daymet <- paste0("
+                       WITH t1 AS (
+                       SELECT
+                       featureid, year,
+                       unnest(tmax) AS tmax,
+                       unnest(tmin) AS tmin,
+                       unnest(prcp) AS prcp
+                       FROM daymet
+                       WHERE featureid IN (",
+                       paste0("$", seq_along(featureids), collapse = ", "),
+                       ")), t2 AS (
+                       SELECT
+                       featureid, year,
+                       row_number() OVER () as i,
+                       tmax, tmin, prcp
+                       FROM t1
+                       )
+                       SELECT
+                       featureid, year,
+                       (DATE (year || '-01-01')) + ((row_number() OVER (PARTITION BY featureid, year ORDER BY i)) - 1)::integer AS date,
+                       tmax, tmin, prcp
+                       FROM t2
+                       ")
+  rs <- dbSendQuery(con, sql_daymet, featureids)
 
+  df_daymet <- dbFetch(rs) %>%
+    mutate(
+      airTemp = (tmin + tmax) / 2,
+      airTempLagged1 = lag(airTemp, n = 1, fill = NA),
+      temp7p = rollapply(
+        data = airTempLagged1,
+        width = 7,
+        FUN = mean,
+        align = "right",
+        fill = NA,
+        na.rm = TRUE
+      ),
+      prcp2 = rollsum(x = prcp, 2, align = "right", fill = NA),
+      prcp30 = rollsum(x = prcp, 30, align = "right", fill = NA)
+    ) %>%
+    select(-tmin, -tmax)
+  dbClearResult(rs)
 
+  # df_huc <- tbl(con, "catchment_huc12") %>%
+  #   filter(featureid %in% featureids) %>%
+  #   collect() %>%
+  #   mutate(
+  #     huc8 = str_sub(huc12, 1, 8)
+  #   ) %>%
+  #   select(featureid, huc8)
 
+  dbDisconnect(con)
+
+  # merge covariates
+  df <- df_covariates %>%
+    filter(featureid %in% featureids) %>%
+    left_join(df_huc, by = "featureid") %>%
+    left_join(df_daymet, by = "featureid") %>%
+    mutate(
+      site = as.character(featureid),
+      spring_bp = 75,
+      fall_bp = 330
+    ) %>%
+    mutate(
+      dOY = yday(date)
+    ) %>%
+    filter(
+      dOY >= spring_bp,
+      dOY <= fall_bp
+    ) %>%
+    select(
+      site, huc8, year, date,
+      airTemp, prcp2, prcp30, temp7p,
+      AreaSqKM, forest, devel_hi, agriculture, impoundArea
+    )
+
+  # standardize covariates
+  df <- df %>%
+    gather(var, value, -site, -huc8, -year, -date) %>%
+    left_join(df_cov_std, by = "var") %>%
+    mutate(value = (value - mean) / sd) %>%
+    select(-mean, -sd) %>%
+    spread(var, value)
+
+  # compute derived covariates
+  df <- df %>%
+    mutate(
+      prcp2.da = prcp2 * AreaSqKM,
+      prcp30.da = prcp30 * AreaSqKM,
+      airTemp.prcp2 = airTemp * prcp2,
+      airTemp.prcp2.da = airTemp * prcp2 * AreaSqKM,
+      airTemp.prcp30 = airTemp * prcp30,
+      airTemp.prcp30.da = airTemp * prcp30 * AreaSqKM,
+      airTemp.forest = airTemp * forest,
+      airTemp.devel_hi = airTemp * devel_hi,
+      airTemp.da = airTemp * AreaSqKM,
+      airTemp.impoundArea = airTemp * impoundArea,
+      airTemp.agriculture = airTemp * agriculture,
+      intercept = 1,
+      intercept.site = 1,
+      intercept.year = 1
+    )
+
+  # add id columns
+  df <- df %>%
+    left_join(ids_list$site, by = "site") %>%
+    left_join(ids_list$huc8, by = "huc8") %>%
+    left_join(ids_list$year, by = "year")
+
+  # compute predictions
+  X.0 <- df %>%
+    select(one_of(cov_list$fixed.ef)) %>%
+    as.matrix()
+  B.0 <- as.matrix(coef_list$fixed)
+  Y.0 <- (X.0 %*% B.0)[, 1]
+
+  X.site <- df %>%
+    select(one_of(cov_list$site.ef)) %>%
+    as.matrix()
+  B.site <- coef_list$site[df$site_id, ]
+  for (i in seq_along(B.site.mean)) {
+    B.site[is.na(B.site[, i]), i] <- B.site.mean[i]
+  }
+  Y.site <- rowSums(X.site * B.site)
+
+  X.huc <- df %>%
+    select(one_of(cov_list$huc.ef)) %>%
+    as.matrix()
+  B.huc <- coef_list$huc[df$huc8_id, ]
+  for (i in seq_along(B.huc.mean)) {
+    B.huc[is.na(B.huc[, i]), i] <- B.huc.mean[i]
+  }
+  Y.huc <- rowSums(X.huc * B.huc)
+
+  X.year <- df %>%
+    select(one_of(cov_list$year.ef)) %>%
+    as.matrix()
+  B.year <- as.matrix(coef_list$year[df$year_id, ])
+  for (i in seq_along(B.year.mean)) {
+    B.year[is.na(B.year[, i]), i] <- B.year.mean[i]
+  }
+  Y.year <- rowSums(X.year * B.year)
+
+  Y <- Y.0 + Y.site + Y.year + Y.huc
+
+  df %>%
+    mutate(
+      temp = Y
+    ) %>%
+    group_by(site, year) %>%
+    mutate(
+      temp_30d = rollapply(
+        data = temp,
+        width = 30,
+        FUN = mean,
+        align = "right",
+        fill = NA,
+        na.rm = TRUE
+      )
+    ) %>%
+    ungroup()
+}
+
+# # subset
+# set.seed(12345)
 # n_featureids <- 101
-# featureids <- df_covariates$featureid %>% head(n_featureids)
+# featureids <- as.integer(df_covariates$featureid) %>% sample(size = n_featureids, replace = FALSE)
+
 featureids <- as.integer(df_covariates$featureid)
 n <- length(featureids)
 chunk_size <- 10
 n_chunks <- ceiling(n / chunk_size)
 
-# logging
-# log_file <- file.path(config$wd, "model-predict.log")
-# writeLines(c(""), log_file)
+# predict_daily(featureids[1:3]) %>% summary
 
-cat("generated predictions for", n, "featureids ( chunk_size =", chunk_size, ", n_chunks =", n_chunks, ")\n")
-system.time({
+cat("generated predictions for ", n, " featureids (chunk_size = ", chunk_size, ", n_chunks = ", n_chunks, ")...", sep = "")
+st <- system.time({
   df_derived_year <- foreach(i = 1:n_chunks, .combine = rbind, .packages = c("RPostgreSQL", "DBI", "dplyr", "tidyr", "purrr", "zoo", "lubridate", "stringr")) %dopar% {
     # sink(log_file, append = TRUE)
 
@@ -149,169 +250,7 @@ system.time({
     x_featureids <- featureids[start_i:end_i]
     cat(as.character(Sys.time()), " - i = ", i, " | ", paste(x_featureids, collapse = ","), "\n", sep = "")
 
-    con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
-    sql_daymet <- paste0("
-      WITH t1 AS (
-         SELECT
-         featureid, year,
-         unnest(tmax) AS tmax,
-         unnest(tmin) AS tmin,
-         unnest(prcp) AS prcp
-         FROM daymet
-         WHERE featureid IN (",
-      paste0("$", seq_along(x_featureids), collapse = ", "),
-     ")), t2 AS (
-         SELECT
-         featureid, year,
-         row_number() OVER () as i,
-         tmax, tmin, prcp
-         FROM t1
-      )
-      SELECT
-      featureid, year,
-      (DATE (year || '-01-01')) + ((row_number() OVER (PARTITION BY featureid, year ORDER BY i)) - 1)::integer AS date,
-      tmax, tmin, prcp
-      FROM t2
-   ")
-    rs <- dbSendQuery(con, sql_daymet, x_featureids)
-
-    df_daymet <- dbFetch(rs) %>%
-      mutate(
-        airTemp = (tmin + tmax) / 2,
-        airTempLagged1 = lag(airTemp, n = 1, fill = NA),
-        temp7p = rollapply(
-          data = airTempLagged1,
-          width = 7,
-          FUN = mean,
-          align = "right",
-          fill = NA,
-          na.rm = TRUE
-        ),
-        prcp2 = rollsum(x = prcp, 2, align = "right", fill = NA),
-        prcp30 = rollsum(x = prcp, 30, align = "right", fill = NA)
-      ) %>%
-      select(-tmin, -tmax)
-    dbClearResult(rs)
-
-    df_huc <- tbl(con, "catchment_huc12") %>%
-      filter(featureid %in% x_featureids) %>%
-      collect() %>%
-      mutate(
-        huc8 = str_sub(huc12, 1, 8)
-      ) %>%
-      select(featureid, huc8)
-
-    dbDisconnect(con)
-
-    # merge covariates
-    df <- df_covariates %>%
-      filter(featureid %in% x_featureids) %>%
-      left_join(df_huc, by = "featureid") %>%
-      left_join(df_daymet, by = "featureid") %>%
-      mutate(
-        site = as.character(featureid),
-        spring_bp = 75,
-        fall_bp = 330
-      ) %>%
-      mutate(
-        dOY = yday(date)
-      ) %>%
-      filter(
-        dOY >= spring_bp,
-        dOY <= fall_bp
-      ) %>%
-      select(
-        site, huc8, year, date,
-        airTemp, prcp2, prcp30, temp7p,
-        AreaSqKM, forest, devel_hi, agriculture, impoundArea
-      )
-
-    # standardize covariates
-    df <- df %>%
-      gather(var, value, -site, -huc8, -year, -date) %>%
-      left_join(df_cov_std, by = "var") %>%
-      mutate(value = (value - mean) / sd) %>%
-      select(-mean, -sd) %>%
-      spread(var, value)
-
-    # compute derived covariates
-    df <- df %>%
-      mutate(
-        prcp2.da = prcp2 * AreaSqKM,
-        prcp30.da = prcp30 * AreaSqKM,
-        airTemp.prcp2 = airTemp * prcp2,
-        airTemp.prcp2.da = airTemp * prcp2 * AreaSqKM,
-        airTemp.prcp30 = airTemp * prcp30,
-        airTemp.prcp30.da = airTemp * prcp30 * AreaSqKM,
-        airTemp.forest = airTemp * forest,
-        airTemp.devel_hi = airTemp * devel_hi,
-        airTemp.da = airTemp * AreaSqKM,
-        airTemp.impoundArea = airTemp * impoundArea,
-        airTemp.agriculture = airTemp * agriculture,
-        intercept = 1,
-        intercept.site = 1,
-        intercept.year = 1
-      )
-
-    # add id columns
-    df <- df %>%
-      left_join(ids_list$site, by = "site") %>%
-      left_join(ids_list$huc8, by = "huc8") %>%
-      left_join(ids_list$year, by = "year")
-
-    # compute predictions
-    X.0 <- df %>%
-      select(one_of(cov_list$fixed.ef)) %>%
-      as.matrix()
-    B.0 <- as.matrix(coef_list$fixed)
-    Y.0 <- (X.0 %*% B.0)[, 1]
-
-    X.site <- df %>%
-      select(one_of(cov_list$site.ef)) %>%
-      as.matrix()
-    B.site <- coef_list$site[df$site_id, ]
-    for (i in seq_along(B.site.mean)) {
-      B.site[is.na(B.site[, i]), i] <- B.site.mean[i]
-    }
-    Y.site <- rowSums(X.site * B.site)
-
-    X.huc <- df %>%
-      select(one_of(cov_list$huc.ef)) %>%
-      as.matrix()
-    B.huc <- coef_list$huc[df$huc8_id, ]
-    for (i in seq_along(B.huc.mean)) {
-      B.huc[is.na(B.huc[, i]), i] <- B.huc.mean[i]
-    }
-    Y.huc <- rowSums(X.huc * B.huc)
-
-    X.year <- df %>%
-      select(one_of(cov_list$year.ef)) %>%
-      as.matrix()
-    B.year <- as.matrix(coef_list$year[df$year_id, ])
-    for (i in seq_along(B.year.mean)) {
-      B.year[is.na(B.year[, i]), i] <- B.year.mean[i]
-    }
-    Y.year <- rowSums(X.year * B.year)
-
-    Y <- Y.0 + Y.site + Y.year + Y.huc
-
-    df <- df %>%
-      mutate(
-        temp = Y
-      )
-    df <- df %>%
-      group_by(site, year) %>%
-      mutate(
-        temp_30d = rollapply(
-          data = temp,
-          width = 30,
-          FUN = mean,
-          align = "right",
-          fill = NA,
-          na.rm = TRUE
-        )
-      ) %>%
-      ungroup()
+    df <- predict_daily(x_featureids)
 
     # compute derived metrics
     df_nest <- df %>%
@@ -323,25 +262,19 @@ system.time({
     df_derived <- df_nest %>%
       mutate(
         metrics = map(data, function (x) {
-          x_7 <- x %>%
-            filter(month == 7)
-          x_8 <- x %>%
-            filter(month == 8)
-          x_summer <- x %>%
-            filter(month %in% c(6:8))
-          x_resist <- x %>%
-            filter(yday(date) >= 152, yday(date) < 244)
+          x_summer <- x[x$month %in% 6:8, ]
 
           data_frame(
-            max_temp = max(x$temp),
-            mean_jul_temp = mean(x_7$temp),
-            mean_aug_temp = mean(x_8$temp),
-            mean_summer_temp = mean(x_summer$temp),
-            max_temp_30d = max(x$temp_30d, na.rm = TRUE),
-            n_day_temp_gt_18 = sum(x$temp > 18),
-            n_day_temp_gt_20 = sum(x$temp > 20),
-            n_day_temp_gt_22 = sum(x$temp > 22),
-            resist = sum(abs(x_resist$airTemp - x_resist$temp))
+            max_temp = max(x[["temp"]]),
+            mean_jun_temp = mean(x[["temp"]][x$month == 6]),
+            mean_jul_temp = mean(x[["temp"]][x$month == 7]),
+            mean_aug_temp = mean(x[["temp"]][x$month == 8]),
+            mean_summer_temp = mean(x_summer[["temp"]]),
+            max_temp_30d = max(x[["temp_30d"]], na.rm = TRUE),
+            n_day_temp_gt_18 = sum(x[["temp"]] > 18),
+            n_day_temp_gt_20 = sum(x[["temp"]] > 20),
+            n_day_temp_gt_22 = sum(x[["temp"]] > 22),
+            resist = sum(abs(x_summer[["airTemp"]] - x_summer[["temp"]]))
           )
         })
       ) %>%
@@ -351,25 +284,23 @@ system.time({
     df_derived
   }
 })
+cat("done (elapsed = ", round(unname(st[3]) / 60, 1), " min, ", round(unname(st[3]) / 60 / 60, 1), " hr)\n", sep = "")
 # 32 hours
-
 
 # df_derived_year
 stopCluster(cl)
 saveRDS(df_derived_year, file.path(config$wd, "model-derived-year.rds"))
 
-df_derived_year %>%
-  gather(var, value, -site, -year) %>%
-  group_by(site, var) %>%
-  summarise(
-    mean = mean(value)
-  ) %>%
-  ungroup() %>%
-  ggplot(aes(mean)) +
-  geom_histogram() +
-  facet_wrap(~var, scales = "free")
+# df_derived_year %>%
+#   gather(var, value, -site, -year) %>%
+#   group_by(site, var) %>%
+#   summarise(
+#     mean = mean(value)
+#   ) %>%
+#   ungroup() %>%
+#   ggplot(aes(mean)) +
+#   geom_histogram() +
+#   facet_wrap(~var, scales = "free")
 
-
-
-
-
+end <- lubridate::now(tzone = "US/Eastern")
+cat("finished model-predictions:", as.character(end, tz = "US/Eastern"), "\n")

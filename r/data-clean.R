@@ -4,7 +4,7 @@
 # -> {wd}/data-clean.rds
 
 start <- lubridate::now(tzone = "US/Eastern")
-cat("starting data-process:", as.character(start, tz = "US/Eastern"), "\n")
+cat("starting data-clean:", as.character(start, tz = "US/Eastern"), "\n")
 
 suppressPackageStartupMessages(library(RPostgreSQL))
 suppressPackageStartupMessages(library(tidyverse))
@@ -87,7 +87,7 @@ df_series_flags <- df_series %>%
           start_date = as.character(as.Date(ymd_hms(start), tz = "US/Eastern")),
           end_date = as.character(as.Date(ymd_hms(end), tz = "US/Eastern")),
           date = map2(start_date, end_date, function (x, y) {
-            seq.Date(from = as.Date(x, tz = "US/Eastern"), to = as.Date(y, tz = "US/Eastern"), by = "day")
+            data_frame(date = seq.Date(from = as.Date(x, tz = "US/Eastern"), to = as.Date(y, tz = "US/Eastern"), by = "day"))
           })
         ) %>%
         unnest(date) %>%
@@ -261,8 +261,8 @@ airtemp_exclude <- df_values_airtemp %>%
   filter(
     slope >= 0.95,
     slope <= 1.05,
-    intercept >= -0.5,
-    intercept <= 0.5,
+    intercept >= -1,
+    intercept <= 1,
     r.squared > 0.95
   )
 
@@ -611,7 +611,7 @@ df_values %>%
   mutate(cumsum_n = cumsum(n) / sum(n)) %>%
   ggplot(aes(line_distance_m, cumsum_n)) +
   geom_point() +
-  geom_vline(xintercept = 100)
+  geom_vline(xintercept = 60)
 
 # no good pour_distance cutoff
 df_values %>%
@@ -620,15 +620,15 @@ df_values %>%
     n = n()
   ) %>%
   ungroup() %>%
-  filter(line_distance_m > 100) %>%
+  filter(line_distance_m > 60) %>%
   arrange(pour_distance_m) %>%
   mutate(cumsum_n = cumsum(n) / sum(n)) %>%
   ggplot(aes(pour_distance_m, cumsum_n)) +
   geom_point()
 
-cat("excluding", length(unique(df_values[df_values$line_distance_m > 100, ]$location_id)), "locations with flowline distance > 100 m")
+cat("excluding", length(unique(df_values[df_values$line_distance_m > 60, ]$location_id)), "locations with flowline distance > 100 m")
 df_values <- df_values %>%
-  filter(line_distance_m <= 100)
+  filter(line_distance_m <= 60)
 cat("done ( nrow =", nrow(df_values), ")\n")
 
 
@@ -636,7 +636,6 @@ cat("done ( nrow =", nrow(df_values), ")\n")
 # filter multiple locations within catchment ------------------------------
 
 df_values_featureid <- df_values %>%
-  unnest(data) %>%
   group_by(featureid) %>%
   nest() %>%
   mutate(
@@ -1188,4 +1187,4 @@ cat("done\n")
 
 end <- lubridate::now(tzone = "US/Eastern")
 elapsed <- as.numeric(difftime(end, start, tz = "US/Eastern", units = "sec"))
-cat("finished data-process:", as.character(end, tz = "US/Eastern"), "( elapsed =", round(elapsed / 60, digits = 1), "min )\n")
+cat("finished data-clean:", as.character(end, tz = "US/Eastern"), "( elapsed =", round(elapsed / 60, digits = 1), "min )\n")

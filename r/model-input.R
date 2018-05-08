@@ -6,7 +6,7 @@
 # -> {wd}/model-input.rds
 
 start <- lubridate::now(tzone = "US/Eastern")
-cat("starting data-prepare:", as.character(start, tz = "US/Eastern"), "\n")
+cat("starting model-input:", as.character(start, tz = "US/Eastern"), "\n")
 
 suppressPackageStartupMessages(library(RPostgreSQL))
 suppressPackageStartupMessages(library(tidyverse))
@@ -25,7 +25,7 @@ df_bp <- readRDS(file.path(config$wd, "data-breakpoints.rds"))$model %>%
   select(-featureid_year)
 df_covariates <- readRDS(file.path(config$wd, "covariates.rds"))
 df_daymet <- read_csv(
-  file.path(config$wd, "daymet.csv"),
+  file.path(config$wd, "data-daymet.csv"),
   col_types = cols(
     featureid = col_integer(),
     year = col_integer(),
@@ -39,7 +39,7 @@ df_daymet <- read_csv(
     airTemp = (tmin + tmax) / 2
   ) %>%
   select(featureid, year, date, airTemp, prcp)
-df_huc <- readRDS(file.path(config$wd, "huc8.rds")) %>%
+df_huc <- readRDS(file.path(config$wd, "huc.rds")) %>%
   select(featureid, huc8)
 cat("done\n")
 
@@ -242,4 +242,4 @@ list(
 
 end <- lubridate::now(tzone = "US/Eastern")
 elapsed <- as.numeric(difftime(end, start, tz = "US/Eastern", units = "sec"))
-cat("finished data-prepare:", as.character(end, tz = "US/Eastern"), "( elapsed =", round(elapsed / 60, digits = 1), "min )\n")
+cat("finished model-input:", as.character(end, tz = "US/Eastern"), "( elapsed =", round(elapsed / 60, digits = 1), "min )\n")
