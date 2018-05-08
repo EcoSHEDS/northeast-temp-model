@@ -211,6 +211,12 @@ predict_daily <- function (featureids) {
     mutate(
       temp = Y
     ) %>%
+    left_join(
+      df_daymet %>%
+        select(site = featureid, date, airTemp_degC = airTemp) %>%
+        mutate(site = as.character(site)),
+      by = c("site", "date")
+    ) %>%
     group_by(site, year) %>%
     mutate(
       temp_30d = rollapply(
@@ -225,7 +231,7 @@ predict_daily <- function (featureids) {
     ungroup()
 }
 
-# # subset
+# subset
 # set.seed(12345)
 # n_featureids <- 101
 # featureids <- as.integer(df_covariates$featureid) %>% sample(size = n_featureids, replace = FALSE)
@@ -239,7 +245,7 @@ n_chunks <- ceiling(n / chunk_size)
 
 cat("generated predictions for ", n, " featureids (chunk_size = ", chunk_size, ", n_chunks = ", n_chunks, ")...", sep = "")
 st <- system.time({
-  df_derived_year <- foreach(i = 1:n_chunks, .combine = rbind, .packages = c("RPostgreSQL", "DBI", "dplyr", "tidyr", "purrr", "zoo", "lubridate", "stringr")) %dopar% {
+  df_predict_year <- foreach(i = 1:n_chunks, .combine = rbind, .packages = c("RPostgreSQL", "DBI", "dplyr", "tidyr", "purrr", "zoo", "lubridate", "stringr")) %dopar% {
     # sink(log_file, append = TRUE)
 
     start_i <- ((i - 1) * chunk_size) + 1
@@ -255,7 +261,7 @@ st <- system.time({
     # compute derived metrics
     df_nest <- df %>%
       mutate(month = month(date)) %>%
-      select(site, year, month, date, airTemp, temp, temp_30d) %>%
+      select(site, year, month, date, airTemp_degC, temp, temp_30d) %>%
       group_by(site, year) %>%
       nest()
 
@@ -274,7 +280,7 @@ st <- system.time({
             n_day_temp_gt_18 = sum(x[["temp"]] > 18),
             n_day_temp_gt_20 = sum(x[["temp"]] > 20),
             n_day_temp_gt_22 = sum(x[["temp"]] > 22),
-            resist = sum(abs(x_summer[["airTemp"]] - x_summer[["temp"]]))
+            resist = sum(abs(x_summer[["airTemp_degC"]] - x_summer[["temp"]]))
           )
         })
       ) %>%
@@ -285,13 +291,14 @@ st <- system.time({
   }
 })
 cat("done (elapsed = ", round(unname(st[3]) / 60, 1), " min, ", round(unname(st[3]) / 60 / 60, 1), " hr)\n", sep = "")
-# 32 hours
+# 20171117 - 32 hours
 
-# df_derived_year
+# df_predict_year
 stopCluster(cl)
-saveRDS(df_derived_year, file.path(config$wd, "model-derived-year.rds"))
+saveRDS(df_predict_year, file.path(config$wd, "model-predict-year.rds"))
+# df_predict_year %>% write_csv(file.path(config$wd, "model-predict-year.csv"))
 
-# df_derived_year %>%
+# df_predict_year %>%
 #   gather(var, value, -site, -year) %>%
 #   group_by(site, var) %>%
 #   summarise(
