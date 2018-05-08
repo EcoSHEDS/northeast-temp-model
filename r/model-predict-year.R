@@ -1,13 +1,14 @@
 # generate predictions for all catchments
 # <- covariates.rds
+# <- huc.rds
 # <- model-input.rds
 # <- model-output.rds
-# -> model-predict-derived.rds
+# -> model-predict-year.rds
 
 rm(list=ls())
 
 start <- lubridate::now(tzone = "US/Eastern")
-cat("starting model-predictions:", as.character(start, tz = "US/Eastern"), "\n")
+cat("starting model-predict-year:", as.character(start, tz = "US/Eastern"), "\n")
 
 suppressPackageStartupMessages(library(RPostgreSQL))
 suppressPackageStartupMessages(library(tidyverse))
@@ -310,4 +311,4 @@ saveRDS(df_predict_year, file.path(config$wd, "model-predict-year.rds"))
 #   facet_wrap(~var, scales = "free")
 
 end <- lubridate::now(tzone = "US/Eastern")
-cat("finished model-predictions:", as.character(end, tz = "US/Eastern"), "\n")
+cat("finished model-predict-year:", as.character(end, tz = "US/Eastern"), "\n")

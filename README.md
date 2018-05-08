@@ -37,6 +37,12 @@ Calculate minimum distance of each location from nearest flowline and catchment 
 ./scripts/locations-flowlines-distance.sh # -> locations-flowlines-distance.csv
 ```
 
+Retrieve huc8 list from db
+
+```bash
+Rscript r/data-huc.R # -> data-huc.rds
+```
+
 Retrieve stream temperature data from database
 
 ```bash
@@ -103,10 +109,16 @@ Run diagnostics
 Rscript r/model-diagnostics.R
 ```
 
-Generate predictions (derived metrics)
+Generate annual predictions
 
 ```bash
-Rscript r/model-predict.R
+Rscript r/model-predict-year.R # -> model-predict-year.rds
+```
+
+Calculate derived metrics by site
+
+```bash
+Rscript r/model-predict-derived.R # -> model-predict-derived.[rds,csv]
 ```
 
 
