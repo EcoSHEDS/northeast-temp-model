@@ -13,23 +13,7 @@ suppressPackageStartupMessages(library(jsonlite))
 config <- fromJSON("../config.json")
 
 cat("loading model-predict-year.rds...")
-df_site_year <- read_csv(
-  file.path(config$wd, "model-predict-year.csv"),
-  col_types = cols(
-    site = col_integer(),
-    year = col_double(),
-    max_temp = col_double(),
-    mean_jun_temp = col_double(),
-    mean_jul_temp = col_double(),
-    mean_aug_temp = col_double(),
-    mean_summer_temp = col_double(),
-    max_temp_30d = col_double(),
-    n_day_temp_gt_18 = col_integer(),
-    n_day_temp_gt_20 = col_integer(),
-    n_day_temp_gt_22 = col_integer(),
-    resist = col_double()
-  )
-) %>%
+df_site_year <- readRDS(file.path(config$wd, "model-predict-year.rds")) %>%
   arrange(site, year)
 cat("done\n")
 
@@ -52,8 +36,26 @@ df_site <- df_site_year %>%
     freq_temp_gt_22 = mean(max_temp > 22) * n(),
     resist = mean(resist)
   )
-cat("done\n")
+cat("done (nrow = ", nrow(df_site), ")\n", sep = "")
 
+summary(df_site)
+# NA's for 105 catchments due to missing daymet data
+# these catchments tend to be along coastline and associated with daymet points that have NA values
+# replace with nearest neighbor catchment that does have data ?
+df_site %>% filter(is.na(mean_max_temp)) %>% pull(site)
+
+cat("dropping ", sum(is.na(df_site$mean_max_temp)), " catchments with null values (coastline)...", sep = "")
+df_site <- df_site %>%
+  filter(!is.na(mean_max_temp))
+cat("done (nrow = ", nrow(df_site), ")\n", sep = "")
+
+# plot --------------------------------------------------------------------
+
+df_site %>%
+  gather(var, value, -site) %>%
+  ggplot(aes(value)) +
+  geom_histogram() +
+  facet_wrap(~ var, scales = "free")
 
 # exporting results -------------------------------------------------------
 
