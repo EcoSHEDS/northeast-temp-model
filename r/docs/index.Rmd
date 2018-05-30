@@ -1,7 +1,7 @@
 --- 
-title: "SHEDS Stream Temperature Model Documentation"
+title: "SHEDS Stream Temperature Model"
 author: "Jeffrey D Walker, PhD"
-date: "v0.9.0 - `r Sys.Date()`"
+date: "v0.9.0 (May 30, 2018)"
 site: bookdown::bookdown_site
 output: bookdown::gitbook
 documentclass: book
@@ -20,17 +20,17 @@ This website is provides background and results of the stream temperature model.
 
 The source code for the model and documentation is available in the github repository [walkerjeffd/sheds-streamtempmodel](https://github.com/walkerjeffd/sheds-streamtempmodel).
 
-## Model Versions
+## Model Versioning
 
 The SHEDS stream temperature model uses semantic versioning of the form: `vX.Y.Z`
 
 `X` is the major version, `Y` is the minor version, and `Z` is the patch version.
 
-For the stream temperature model, the `Z` value will be incremented if the only change to the model is an update of the observed stream temperature dataset. The `Y` value will be incremented if there are (relatively minor) changes to the model code, equations, or QAQC procedures. The `X` value will be incremented when there is a major change to the model theory, code, or datasets.
+For the stream temperature model, the `X` value will be incremented when there is a major change to the model theory, code, or datasets. The `Y` value will be incremented when there is a new set of results due to changes in the model code, datasets, processing procedures, etc. The `Z` value will be incremented when only the documentation or output datasets are updated, but the results remain the same (based on the `Y` value). 
 
 ## Changelog
 
-- **v0.9.0 (May 30, 2018)**  
+- **[v0.9.0 (May 30, 2018)](http://ecosheds.org/models/stream-temperature/v0.9.0/)**  
 Preliminary release of the new model framework and documentation.
 - **[Previous Versions](http://conte-ecology.github.io/conteStreamTemperature_northeast/) (prior to 2018)**  
 Previous versions of the stream temperature model can be found [here](http://conte-ecology.github.io/conteStreamTemperature_northeast/). That website is now deprecated, but will remain available for future reference. Beginning with v1.0.0 of the new framework and codebase, all model changes and results will be tracked and made available.

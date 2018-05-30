@@ -26,7 +26,10 @@ When a new version of the stream temperature model is released, follow this chec
 - [ ] Update Change Log in index.Rmd
 - [ ] Make any necessary changes to the underlying theory, processing, etc.
 - [ ] Regenerate all pages to update the tables and figures
-- [ ] Deploy the output (`_book/`) to the web server under the new version number
+- [ ] Deploy the output (`_book/`) to the web server under the new version number  
+```txt
+scp -r _book/* jeff@ecosheds.org:/conte/www/static/models/stream-temperature/<vX.Y.Z>/
+```
 - [ ] Update the stream temperature model homepage to list the newest version
 - [ ] Update the `/latest` redirect in the web server to point to the newest version
 
