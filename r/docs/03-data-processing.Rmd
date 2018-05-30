@@ -1,0 +1,3 @@
+# Data Processing {#data-processing}
+
+The observed stream temperature data underwent the following QAQC procedure...

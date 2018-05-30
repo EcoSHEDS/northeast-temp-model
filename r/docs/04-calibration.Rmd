@@ -1,0 +1,6 @@
+# Calibration/Validation
+
+After processing all of the data, the model was fitted using jags. The observation dataset was split into 80% for calibration, 20% for validation.
+
+
+

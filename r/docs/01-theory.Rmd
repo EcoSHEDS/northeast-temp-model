@@ -1,0 +1,4 @@
+# Theory {#theory}
+
+The stream temperature model is based on a hierarchical nested Bayesian framework.
+

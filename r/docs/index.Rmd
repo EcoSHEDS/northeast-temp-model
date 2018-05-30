@@ -1,0 +1,37 @@
+--- 
+title: "SHEDS Stream Temperature Model Documentation"
+author: "Jeffrey D Walker, PhD"
+date: "v0.9.0 - `r Sys.Date()`"
+site: bookdown::bookdown_site
+output: bookdown::gitbook
+documentclass: book
+bibliography: [book.bib, packages.bib]
+biblio-style: apalike
+link-citations: yes
+github-repo: walkerjeffd/sheds-streamtempmodel
+description: "Documentation for the SHEDS stream temperature model."
+---
+
+# Introduction {#intro}
+
+Welcome to the SHEDS stream temperature model documentation.
+
+This website is provides background and results of the stream temperature model. The documentation will be updated for each new set of results. See the Change Log below for changes from earlier versions.
+
+The source code for the model and documentation is available in the github repository [walkerjeffd/sheds-streamtempmodel](https://github.com/walkerjeffd/sheds-streamtempmodel).
+
+## Model Versions
+
+The SHEDS stream temperature model uses semantic versioning of the form: `vX.Y.Z`
+
+`X` is the major version, `Y` is the minor version, and `Z` is the patch version.
+
+For the stream temperature model, the `Z` value will be incremented if the only change to the model is an update of the observed stream temperature dataset. The `Y` value will be incremented if there are (relatively minor) changes to the model code, equations, or QAQC procedures. The `X` value will be incremented when there is a major change to the model theory, code, or datasets.
+
+## Changelog
+
+- **v0.9.0 (May 30, 2018)**  
+Preliminary release of the new model framework and documentation.
+- **[Previous Versions](http://conte-ecology.github.io/conteStreamTemperature_northeast/) (prior to 2018)**  
+Previous versions of the stream temperature model can be found [here](http://conte-ecology.github.io/conteStreamTemperature_northeast/). That website is now deprecated, but will remain available for future reference. Beginning with v1.0.0 of the new framework and codebase, all model changes and results will be tracked and made available.
+
