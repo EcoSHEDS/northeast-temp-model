@@ -98,6 +98,110 @@ df_pred_huc <- df_pred %>%
     })
   )
 
+
+df_valid <- readRDS(file.path(config$wd, "model-input.rds"))$test %>%
+  select(-site_id, -huc8_id, -year_id) %>%
+  left_join(out$ids$site, by = "site") %>%
+  left_join(out$ids$year, by = "year") %>%
+  left_join(out$ids$huc8, by = "huc8")
+summary(df_valid)
+
+X.0.pred <- df_valid %>%
+  mutate(intercept = 1) %>%
+  select(one_of(out$covs$fixed.ef))
+B.0.pred <- out$results$mean$B.0
+Y.0.pred <- (as.matrix(X.0.pred) %*% as.matrix(B.0.pred))[, 1]
+
+X.site.pred <- df_valid %>%
+  mutate(intercept.site = 1) %>%
+  select(one_of(out$covs$site.ef))
+B.site.mean <- colMeans(out$results$mean$B.site)
+B.site.pred <- out$results$mean$B.site[df_valid$site_id, ]
+for (i in seq_along(B.site.mean)) {
+  B.site.pred[is.na(B.site.pred[, i]), i] <- B.site.mean[i]
+}
+Y.site.pred <- rowSums(X.site.pred * B.site.pred)
+
+X.huc.pred <- X.site.pred
+B.huc.mean <- colMeans(out$results$mean$B.huc)
+B.huc.pred <- out$results$mean$B.huc[df_valid$huc8_id, ]
+for (i in seq_along(B.huc.mean)) {
+  B.huc.pred[is.na(B.huc.pred[, i]), i] <- B.huc.mean[i]
+}
+Y.huc.pred <- rowSums(X.huc.pred * B.huc.pred)
+
+X.year.pred <- df_valid %>%
+  mutate(intercept.year = 1) %>%
+  select(one_of(out$covs$year.ef))
+B.year.mean <- colMeans(out$results$mean$B.year)
+B.year.pred <- as.matrix(out$results$mean$B.year[df_valid$year_id, ])
+for (i in seq_along(B.year.mean)) {
+  B.year.pred[is.na(B.year.pred[, i]), i] <- B.year.mean[i]
+}
+Y.year.pred <- rowSums(X.year.pred * B.year.pred)
+
+Y.pred <- Y.0.pred + Y.site.pred + Y.year.pred + Y.huc.pred
+
+df_valid <- df_valid %>%
+  mutate(
+    Y = Y.pred
+  ) %>%
+  group_by(deploy_id) %>%
+  mutate(
+    deploy_row = row_number(),
+    resid_Y = temp - Y,
+    resid_lag = coalesce(lag(resid_Y), 0),
+    pred = if_else(deploy_row == 1, Y, Y + out$results$mean$B.ar1 * resid_lag),
+    resid = temp - pred
+  ) %>%
+  ungroup()
+
+
+df_valid_deploy <- df_valid %>%
+  group_by(site, year, deploy_id) %>%
+  nest() %>%
+  mutate(
+    n = map_int(data, nrow),
+    rmse = map_dbl(data, function (x) {
+      sqrt(mean(x$resid^2))
+    }),
+    rmse_Y = map_dbl(data, function (x) {
+      sqrt(mean(x$resid_Y^2))
+    })
+  )
+
+df_valid_site <- df_valid %>%
+  group_by(site) %>%
+  nest() %>%
+  mutate(
+    n = map_int(data, nrow),
+    rmse = map_dbl(data, function (x) {
+      sqrt(mean(x$resid^2))
+    }),
+    rmse_Y = map_dbl(data, function (x) {
+      sqrt(mean(x$resid_Y^2))
+    })
+  )
+
+# export ------------------------------------------------------------------
+
+list(
+  calibration = list(
+    values = df_pred,
+    site = df_pred_site,
+    deploy = df_pred_deploy
+  ),
+  validation = list(
+    values = df_valid,
+    site = df_valid_site,
+    deploy = df_valid_deploy
+  )
+) %>%
+  saveRDS(file.path(config$wd, "model-diagnostics.rds"))
+
+# results -----------------------------------------------------------------
+
+
 # RMSE
 sqrt(mean(df_pred$resid^2))
 sqrt(mean(df_pred$resid_Y^2))
@@ -216,77 +320,6 @@ df_pred_huc %>%
   facet_wrap(~site, scales = "free")
 
 # validation --------------------------------------------------------------
-
-df_valid <- readRDS(file.path(config$wd, "model-input.rds"))$test %>%
-  select(-site_id, -huc8_id, -year_id) %>%
-  left_join(out$ids$site, by = "site") %>%
-  left_join(out$ids$year, by = "year") %>%
-  left_join(out$ids$huc8, by = "huc8")
-summary(df_valid)
-
-X.0.pred <- df_valid %>%
-  mutate(intercept = 1) %>%
-  select(one_of(out$covs$fixed.ef))
-B.0.pred <- out$results$mean$B.0
-Y.0.pred <- (as.matrix(X.0.pred) %*% as.matrix(B.0.pred))[, 1]
-
-X.site.pred <- df_valid %>%
-  mutate(intercept.site = 1) %>%
-  select(one_of(out$covs$site.ef))
-B.site.mean <- colMeans(out$results$mean$B.site)
-B.site.pred <- out$results$mean$B.site[df_valid$site_id, ]
-for (i in seq_along(B.site.mean)) {
-  B.site.pred[is.na(B.site.pred[, i]), i] <- B.site.mean[i]
-}
-Y.site.pred <- rowSums(X.site.pred * B.site.pred)
-
-X.huc.pred <- X.site.pred
-B.huc.mean <- colMeans(out$results$mean$B.huc)
-B.huc.pred <- out$results$mean$B.huc[df_valid$huc8_id, ]
-for (i in seq_along(B.huc.mean)) {
-  B.huc.pred[is.na(B.huc.pred[, i]), i] <- B.huc.mean[i]
-}
-Y.huc.pred <- rowSums(X.huc.pred * B.huc.pred)
-
-X.year.pred <- df_valid %>%
-  mutate(intercept.year = 1) %>%
-  select(one_of(out$covs$year.ef))
-B.year.mean <- colMeans(out$results$mean$B.year)
-B.year.pred <- as.matrix(out$results$mean$B.year[df_valid$year_id, ])
-for (i in seq_along(B.year.mean)) {
-  B.year.pred[is.na(B.year.pred[, i]), i] <- B.year.mean[i]
-}
-Y.year.pred <- rowSums(X.year.pred * B.year.pred)
-
-Y.pred <- Y.0.pred + Y.site.pred + Y.year.pred + Y.huc.pred
-
-df_valid <- df_valid %>%
-  mutate(
-    Y = Y.pred
-  ) %>%
-  group_by(deploy_id) %>%
-  mutate(
-    deploy_row = row_number(),
-    resid_Y = temp - Y,
-    resid_lag = coalesce(lag(resid_Y), 0),
-    pred = if_else(deploy_row == 1, Y, Y + out$results$mean$B.ar1 * resid_lag),
-    resid = temp - pred
-  ) %>%
-  ungroup()
-df_valid_site <- df_valid %>%
-  group_by(site) %>%
-  nest() %>%
-  mutate(
-    n = map_int(data, nrow),
-    rmse = map_dbl(data, function (x) {
-      sqrt(mean(x$resid^2))
-    }),
-    rmse_Y = map_dbl(data, function (x) {
-      sqrt(mean(x$resid_Y^2))
-    })
-  )
-
-
 
 # RMSE
 sqrt(mean(df_valid$resid^2))
