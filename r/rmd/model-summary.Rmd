@@ -10,7 +10,9 @@ library(tidyverse)
 library(jsonlite)
 theme_set(theme_bw())
 
-config <- fromJSON("../config.json")
+source("../functions.R")
+
+config <- load_config("../../")
 
 # load data
 diagnostics <- readRDS(file.path(config$wd, "model-diagnostics.rds"))

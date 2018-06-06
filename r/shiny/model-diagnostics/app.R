@@ -6,7 +6,9 @@ library(lubridate)
 
 theme_set(theme_bw())
 
-config <- fromJSON("../../config.json")
+source("../../functions.R")
+config <- load_config("../../../")
+
 diagnostics <- readRDS(file.path(config$wd, "model-diagnostics.rds"))
 calib <- diagnostics$calibration
 
