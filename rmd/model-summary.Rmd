@@ -1,0 +1,211 @@
+---
+title: "Model Summary - v20180501"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+library(tidyverse)
+library(jsonlite)
+theme_set(theme_bw())
+
+config <- fromJSON("../config.json")
+
+# load data
+diagnostics <- readRDS(file.path(config$wd, "model-diagnostics.rds"))
+```
+
+# Calibration
+
+```{r}
+calib <- diagnostics$calibration
+```
+
+## With Auto-correlation Term
+
+### Summary Statistics
+
+```{r, comment = NA}
+cat(
+  "Statistics of All Observations\n",
+  "==============================\n",
+  "# Observations = ", scales::comma(nrow(calib$values)), "\n",
+  "RMSE = ", format(sqrt(mean(calib$values$resid^2)), digits = 3), "\n",
+  "R^2 = ", format(cor(calib$values$temp, calib$values$pred)^2, digits = 3), " degC\n",
+  "Median Absolute Residual = ", format(median(abs(calib$values$resid)), digits = 3), " degC\n",
+  "Mean Residual = ", format(mean(calib$values$resid), digits = 3), " degC\n",
+  "Median Residual = ", format(median(calib$values$resid), digits = 3), " degC\n",
+  "Max Residual = ", format(max(calib$values$resid), digits = 3), " degC\n",
+  "95th Percentile Residual = ", format(quantile(calib$values$resid, probs = 0.95), digits = 3), " degC\n",
+  "5th Percentile Residual = ", format(quantile(calib$values$resid, probs = 0.05), digits = 3), " degC\n",
+  "Min Residual = ", format(min(calib$values$resid), digits = 3), " degC\n",
+  sep = ""
+)
+```
+
+```{r, comment=NA}
+cat(
+  "Statistics by Deployment\n",
+  "==============================\n",
+  "# Deployments = ", scales::comma(nrow(calib$deploy)), "\n",
+  "Mean RMSE = ", format(mean(calib$deploy$rmse), digits = 3), " degC\n",
+  "Median RMSE = ", format(median(calib$deploy$rmse), digits = 3), " degC\n",
+  "Max RMSE = ", format(max(calib$deploy$rmse), digits = 3), " degC\n",
+  "Min RMSE = ", format(min(calib$deploy$rmse), digits = 3), " degC\n",
+  sep = ""
+)
+```
+
+```{r, comment=NA}
+cat(
+  "Statistics by Site\n",
+  "==============================\n",
+  "# Sites = ", scales::comma(nrow(calib$site)), "\n",
+  "Mean RMSE = ", format(mean(calib$site$rmse), digits = 3), " degC\n",
+  "Median RMSE = ", format(median(calib$site$rmse), digits = 3), " degC\n",
+  "Max RMSE = ", format(max(calib$site$rmse), digits = 3), " degC\n",
+  "Min RMSE = ", format(min(calib$site$rmse), digits = 3), " degC\n",
+  sep = ""
+)
+```
+
+
+```{r}
+calib$values %>%
+  ggplot(aes(temp, pred)) +
+  geom_abline() +
+  geom_point(size = 0.5, alpha = 0.25) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  coord_equal() +
+  labs(
+    x = "Observed Temperature (degC)",
+    y = "Predicted Temperature (degC)"
+  ) +
+  theme(aspect.ratio = 1)
+```
+
+
+```{r}
+calib$values %>%
+  ggplot(aes(resid)) +
+  geom_histogram() +
+  labs(
+    x = "Residual (degC)",
+    y = "# Observations"
+  )
+```
+
+```{r}
+calib$deploy %>% 
+  ggplot(aes(rmse)) +
+  geom_histogram() +
+  labs(
+    x = "Deployment RMSE (degC)",
+    y = "# Deployments"
+  )
+```
+
+
+```{r}
+calib$site %>% 
+  ggplot(aes(rmse)) +
+  geom_histogram() +
+  labs(
+    x = "Site RMSE (degC)",
+    y = "# Sites"
+  )
+```
+
+## Without Autocorrelation Term
+
+
+```{r, comment = NA}
+cat(
+  "Statistics of All Observations\n",
+  "==============================\n",
+  "# Observations = ", scales::comma(nrow(calib$values)), "\n",
+  "RMSE = ", format(sqrt(mean(calib$values$resid_Y^2)), digits = 3), "\n",
+  "R^2 = ", format(cor(calib$values$temp, calib$values$Y)^2, digits = 3), " degC\n",
+  "Median Absolute Residual = ", format(median(abs(calib$values$resid_Y)), digits = 3), " degC\n",
+  "Mean Residual = ", format(mean(calib$values$resid_Y), digits = 3), " degC\n",
+  "Median Residual = ", format(median(calib$values$resid_Y), digits = 3), " degC\n",
+  "Max Residual = ", format(max(calib$values$resid_Y), digits = 3), " degC\n",
+  "95th Percentile Residual = ", format(quantile(calib$values$resid_Y, probs = 0.95), digits = 3), " degC\n",
+  "5th Percentile Residual = ", format(quantile(calib$values$resid_Y, probs = 0.05), digits = 3), " degC\n",
+  "Min Residual = ", format(min(calib$values$resid_Y), digits = 3), " degC\n",
+  sep = ""
+)
+```
+
+```{r, comment=NA}
+cat(
+  "Statistics by Deployment\n",
+  "==============================\n",
+  "# Deployments = ", scales::comma(nrow(calib$deploy)), "\n",
+  "Mean RMSE = ", format(mean(calib$deploy$rmse_Y), digits = 3), " degC\n",
+  "Median RMSE = ", format(median(calib$deploy$rmse_Y), digits = 3), " degC\n",
+  "Max RMSE = ", format(max(calib$deploy$rmse_Y), digits = 3), " degC\n",
+  "Min RMSE = ", format(min(calib$deploy$rmse_Y), digits = 3), " degC\n",
+  sep = ""
+)
+```
+
+```{r, comment=NA}
+cat(
+  "Statistics by Site\n",
+  "==============================\n",
+  "# Sites = ", scales::comma(nrow(calib$site)), "\n",
+  "Mean RMSE = ", format(mean(calib$site$rmse_Y), digits = 3), " degC\n",
+  "Median RMSE = ", format(median(calib$site$rmse_Y), digits = 3), " degC\n",
+  "Max RMSE = ", format(max(calib$site$rmse_Y), digits = 3), " degC\n",
+  "Min RMSE = ", format(min(calib$site$rmse_Y), digits = 3), " degC\n",
+  sep = ""
+)
+```
+
+
+```{r}
+calib$values %>%
+  ggplot(aes(temp, Y)) +
+  geom_abline() +
+  geom_point(size = 0.5, alpha = 0.25) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  coord_equal() +
+  labs(
+    x = "Observed Temperature (degC)",
+    y = "Predicted Temperature (degC)"
+  ) +
+  theme(aspect.ratio = 1)
+```
+
+
+```{r}
+calib$values %>%
+  ggplot(aes(resid_Y)) +
+  geom_histogram() +
+  labs(
+    x = "Residual (degC)",
+    y = "# Observations"
+  )
+```
+
+```{r}
+calib$deploy %>% 
+  ggplot(aes(rmse_Y)) +
+  geom_histogram() +
+  labs(
+    x = "Deployment RMSE (degC)",
+    y = "# Deployments"
+  )
+```
+
+```{r}
+calib$site %>% 
+  ggplot(aes(rmse_Y)) +
+  geom_histogram() +
+  labs(
+    x = "Site RMSE (degC)",
+    y = "# Sites"
+  )
+```
