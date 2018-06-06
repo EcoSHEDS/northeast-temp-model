@@ -4,6 +4,6 @@ config.sh
 .Rproj.user
 .Rhistory
 
-r/rmd/*_cache
-r/rmd/*_files
-r/rmd/*.html
+rmd/*_cache
+rmd/*_files
+rmd/*.html
