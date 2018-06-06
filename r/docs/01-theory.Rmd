@@ -1,4 +1,37 @@
 # Theory {#theory}
 
-The stream temperature model is based on a hierarchical nested Bayesian framework.
+The stream temperature model is a nested hierarchical Bayesian model that predicts daily stream temperature based on catchment characteristics and climate conditions. An early version of this model can be found in [Letcher et al (2016)](https://peerj.com/articles/1727/).
+
+Daily mean stream temperature for each catchment is assumed to be a normally distributed random variable:
+
+$$t_{h,c,y,d} \sim \mathcal{N}(\mu_{h,c,y,d},\sigma_{[t]})$$
+
+where $t_{h,c,y,d}$ is the mean stream temperature on day $d$ within year $y$ for catchment $c$, which is located within HUC8 $h$. This random variable is normally distributed with an expected mean $\mu_{h,c,y,d}$ and standard deviation $\sigma_{[t]}$.
+
+The expected mean is computed as:
+
+$$
+\mu_{h,c,y,d} = \left \{ \begin{array}{l l}
+  \omega_{h,c,y,d} + \delta_{h}(t_{h,c,y,d-1} - \omega_{h,c,y,d-1}) & \quad \text{for } t_{h,c,y,d-1} \text{ is real} \\
+  \omega_{h,c,y,d} & \quad \text{for } t_{h,c,y,d-1} \text{ is not real}
+  \end{array} \right.
+$$
+
+where $\delta_h$ is an autoregressive [AR(1)] coefficient and $\omega_{h,c,y,d}$ is the expected temperature before accounting for temporal autocorrelation in the error structure.
+
+The expected temperature is computed as a linear equation with four sets of terms:
+
+$$\omega_{h,c,y,d} = X_{[0]} B_{[0]} + X_{h,c} B_{h,c} + X_{h} B_{h} + X_{y} B_{y}$$
+
+where
+
+- $B_{[0]}$ is a vector of fixed effect coefficients
+- $B_{h,c}$ is a vector of random effect coefficients for catchment $c$
+- $B_{h}$ is a vector of random effect coefficients for HUC $h$
+- $B_{y}$ is a vector of random effect coefficients for year $y$
+
+Each of these vectors is multiplied by a corresponding matrix containing the corresponding predictor values of each catchment $c$ and on each day $d$.
+
+
+
 

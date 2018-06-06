@@ -4,14 +4,44 @@
 
 ### Catchment Delineation
 
+The stream temperature model is based on the [National Hydrography Dataset High Resolution Delineation Version 2 (NHDHRDV2)](http://conte-ecology.github.io/shedsGisData/).
+
+Shapefiles of the catchment delineation can be downloaded from: http://ecosheds.org/assets/nhdhrd/v2/
+
+The `spatial_XX.zip` files contain pre-staged datasets for each HUC2 region (e.g. spatial_01.zip contains the catchments for the HUC2 region 01).
+
 ### Climate Data
 
-Daily air temperature and precipitation were obtained from Daymet v3.
+Daily air temperature and precipitation were obtained from the [Daymet V3](https://daymet.ornl.gov/) gridded estimates of daily weather parameters for North America. The raw Daymet datasets (NetCDF4 files) were processed using the code in [`walkerjeffd/sheds-daymet`](https://github.com/walkerjeffd/sheds-daymet).
 
 ### Geospatial Characteristics
 
+Geospatial characteristics of each catchment were generated using the code in [basinCharacteristics](https://github.com/Conte-Ecology/shedsGisData/tree/master/basinCharacteristics). More information can be found on the [SHEDS GIS Data](http://conte-ecology.github.io/shedsGisData/) page.
+
 ## Stream Temperature Observations
 
-Temperature observations taken from [SHEDS Stream Temperature Database](http://db.ecosheds.org).
+Temperature observations extractd from the [SHEDS Stream Temperature Database](http://db.ecosheds.org), which contains data uploaded from numerous state and federal agencies, universities, and non-profit organizations.
 
-Summary of agencies, locations, etc.
+### Data Summary
+
+The following table summarizes the number of monitoring stations, deployments, and total observations for each agency and organization.
+
+```{r}
+db <- readRDS(file.path(config$wd, "data-db.rds"))
+df_series <- db$series %>% 
+  select(series_id = id, location_id, agency_id, start_datetime, end_datetime, value_count) %>% 
+  left_join(db$agencies %>% select(agency_id = id, agency_name = name, agency_description = description), by = c("agency_id"))
+```
+
+```{r}
+df_series %>% 
+  group_by(agency_name, agency_description) %>% 
+  summarise(
+    n_series = n(),
+    n_location = length(unique(location_id)),
+    n_value = sum(value_count)
+  ) %>% 
+  knitr::kable(col.names = c("Agency ID", "Agency Description", "# Stations", "# Deployments", "# Observations"), format.args = list(big.mark = ","))
+```
+
+
