@@ -2,13 +2,13 @@ SHEDS Stream Temperature Model
 ==============================
 
 Jeffrey D. Walker, PhD  
-[Walker Environmental Research LLC](https://walkerenvres.com)
+[Walker Environmental Research LLC](https://walkerenvres.com/)
 
 Dan Hocking, PhD  
-[Frostburg State University, Hocking Lab of Herpetology & Conservation](http://hockinglab.weebly.com/)
+[Frostburg State University](http://hockinglab.weebly.com/)
 
 Ben Letcher, PhD  
-[USGS, Conte Ecology Lab](https://www.lsc.usgs.gov/?q=cafb-research)
+[USGS](https://www.lsc.usgs.gov/?q=cafb-research), [UMass](https://eco.umass.edu/people/faculty/letcher-ben/)
 
 ## About
 
