@@ -1,0 +1,17 @@
+# Data Sources {#data-sources}
+
+## Covariate Datasets
+
+### Catchment Delineation
+
+### Climate Data
+
+Daily air temperature and precipitation were obtained from Daymet v3.
+
+### Geospatial Characteristics
+
+## Stream Temperature Observations
+
+Temperature observations taken from [SHEDS Stream Temperature Database](http://db.ecosheds.org).
+
+Summary of agencies, locations, etc.

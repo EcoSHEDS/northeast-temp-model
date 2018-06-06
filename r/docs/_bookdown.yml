@@ -1,0 +1,5 @@
+book_filename: "stm-docs"
+language:
+  ui:
+    chapter_name: "Section "
+delete_merged_file: true
