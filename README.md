@@ -53,9 +53,7 @@ The working directory for the current model version is determined by combining t
 
 ## Documentation
 
-As the model evolves over time, so too must the documentation.
-
-The model documentation contains the theory, data processing steps, calibration/validation procedures, and results of each model version.
+The model documentation contains the theory, data processing steps, calibration/validation procedures, and results of each model version. As the model evolves over time, so too must the documentation.
 
 To facilitate updates to the documentation, it is generated using the [bookdown R package](https://bookdown.org/yihui/bookdown/) for authoring technical documents with R Markdown.
 
