@@ -6,7 +6,7 @@
 set -eu
 set -o pipefail
 
-. ./load_config.sh
+. ./load-config.sh
 
 psql -h $SHEDS_STM_DB_HOST -d $SHEDS_STM_DB_DBNAME -w -c "
 CREATE TEMPORARY TABLE daymet_featureid_year (featureid bigint, year int);

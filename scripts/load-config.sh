@@ -1,5 +1,6 @@
 #!/bin/bash
 # Load and merge configuration variables
+# usage: . ./load-config.sh
 
 . ../config.sh
 . ../version.sh
