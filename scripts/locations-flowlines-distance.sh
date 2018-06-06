@@ -6,7 +6,7 @@
 set -eu
 set -o pipefail
 
-. ../config.sh
+. ./load_config.sh
 
 echo Exporting locations-flowlines-distance.csv...
 

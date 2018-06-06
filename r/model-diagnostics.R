@@ -18,7 +18,11 @@ suppressPackageStartupMessages(library(ggmcmc))
 
 theme_set(theme_bw())
 
-config <- fromJSON("../config.json")
+source("functions.R")
+
+config <- load_config()
+
+# load data ---------------------------------------------------------------
 
 out <- readRDS(file.path(config$wd, "model-output.rds"))
 

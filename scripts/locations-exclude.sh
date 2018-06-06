@@ -6,7 +6,7 @@
 set -eu
 set -o pipefail
 
-. ../config.sh
+. ./load_config.sh
 
 ./locations-impoundment.sh
 ./locations-tidal.sh

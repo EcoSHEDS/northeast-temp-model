@@ -15,7 +15,9 @@ suppressPackageStartupMessages(library(stringr))
 suppressPackageStartupMessages(library(zoo))
 suppressPackageStartupMessages(library(broom))
 
-config <- fromJSON("../config.json")
+source("functions.R")
+
+config <- load_config()
 
 # load data ---------------------------------------------------------------
 

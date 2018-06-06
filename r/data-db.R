@@ -11,7 +11,11 @@ suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(jsonlite))
 suppressPackageStartupMessages(library(lubridate))
 
-config <- fromJSON("../config.json")
+source("functions.R")
+
+config <- load_config()
+
+# load data ---------------------------------------------------------------
 
 cat("reading locations-exclude.txt...")
 locations_exclude <- read_table(

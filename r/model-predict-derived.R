@@ -10,7 +10,11 @@ cat("starting model-predict-derived:", as.character(start, tz = "US/Eastern"), "
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(jsonlite))
 
-config <- fromJSON("../config.json")
+source("functions.R")
+
+config <- load_config()
+
+# load --------------------------------------------------------------------
 
 cat("loading model-predict-year.rds...")
 df_site_year <- readRDS(file.path(config$wd, "model-predict-year.rds")) %>%

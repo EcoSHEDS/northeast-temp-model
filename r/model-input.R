@@ -15,7 +15,11 @@ suppressPackageStartupMessages(library(lubridate))
 suppressPackageStartupMessages(library(zoo))
 suppressPackageStartupMessages(library(stringr))
 
-config <- fromJSON("../config.json")
+source("functions.R")
+
+config <- load_config()
+
+# load data ---------------------------------------------------------------
 
 cat("loading input data frames...")
 df_temp <- readRDS(file.path(config$wd, "data-clean.rds")) %>%

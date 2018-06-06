@@ -18,10 +18,16 @@ suppressPackageStartupMessages(library(stringr))
 suppressPackageStartupMessages(library(foreach))
 suppressPackageStartupMessages(library(doParallel))
 
+source("functions.R")
+
+config <- load_config()
+
+# setup cluster -----------------------------------------------------------
+
 cl <- makeCluster(6)
 registerDoParallel(cl)
 
-config <- fromJSON("../config.json")
+# load data ---------------------------------------------------------------
 
 cat("loading covariates...")
 df_huc <- readRDS(file.path(config$wd, "huc.rds"))

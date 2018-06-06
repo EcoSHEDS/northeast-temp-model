@@ -8,7 +8,11 @@ suppressPackageStartupMessages(library(RPostgreSQL))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(jsonlite))
 
-config <- fromJSON("../config.json")
+source("functions.R")
+
+config <- load_config()
+
+# load data ---------------------------------------------------------------
 
 cat("connecting to db ( host =", config$db$host, ", dbname =", config$db$dbname, ")...")
 con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)

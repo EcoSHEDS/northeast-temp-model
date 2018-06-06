@@ -13,7 +13,11 @@ suppressPackageStartupMessages(library(zoo))
 suppressPackageStartupMessages(library(stringr))
 suppressPackageStartupMessages(library(jagsUI))
 
-config <- fromJSON("../config.json")
+source("functions.R")
+
+config <- load_config()
+
+# load data ---------------------------------------------------------------
 
 inp <- readRDS(file.path(config$wd, "model-input.rds"))
 
