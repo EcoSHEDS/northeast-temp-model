@@ -62,102 +62,13 @@ To facilitate updates to the documentation, it is generated using the [bookdown 
 The documentation source code can be found in the `r/docs` folder. See `r/docs/README.md` for more details about updating, compiling and deploying the model documentation.
 
 
-## Workflow
+## Model Execution
 
-### Data Processing
+Use the `run-model.sh` script to run the full sequence of model steps. **Remember** to change the model version within `version.sh` to create the working directory prior to running this script or you will overwrite previous results.
 
-Identify locations near impoundments and in the tidal zone, which need to be excluded. List of location.id's saved to `$WD/locations-exclude.txt`.
-
-```bash
-./scripts/locations-exclude.sh            # -> locations-tidal.txt, locations-impoundment.txt, locations-exclude.txt
+```
+./run-model.sh
 ```
 
-Calculate minimum distance of each location from nearest flowline and catchment pour point.
+Currently, I recommend that you **do not run this script directly**, but rather run each command within that script individually so you can check the output along the way. However, in theory you should be able to run this single command to perform all steps from gathering and processing the input data to fitting the model to generating the final prediction outputs.
 
-```bash
-./scripts/locations-flowlines-distance.sh # -> locations-flowlines-distance.csv
-```
-
-Retrieve huc8 list from db
-
-```bash
-Rscript r/data-huc.R                      # -> data-huc.rds
-```
-
-Retrieve stream temperature data from database
-
-```bash
-Rscript r/data-db.R                       # -> data-db.rds, daymet-featureid_year.csv
-```
-
-Retrieve daymet data from database for featureid
-
-```bash
-./scripts/data-daymet.sh                  # -> data-daymet.csv
-```
-
-Retrieve covariates from database for all featureids
-
-```bash
-Rscript r/data-covariates.R               # -> covariates.rds
-```
-
-Process data (QAQC, split, filter)
-
-```bash
-Rscript r/data-clean.R                    # -> data-clean.rds
-```
-
-1. Remove values within user-defined flags  
-2. Remove series missing featureid  
-3. Remove series with area_km2 >= 200  
-4. Remove series with allonnet >= 50  
-5. Remove values with mean < -25  
-6. Remove values with mean > 35  
-7. Remove values with max > 35  
-8. Remove series suspected to be air temperature (slope ~ 1, intercept ~ 0, R2 > 0.95)  
-9. Remove series with count < 5  
-10. Remove values with persist(mean) > 5 and mean > 3  
-11. Remove first/last day of each series if n < median(n)  
-12. Remove series with count < 5  
-13. Average duplicate dates at each location (overlapping series)  
-14. Remove series where location > 100 m from main flowline  
-15. Choose location with most summer data in each catchment
-
-Determine spring/fall breakspoints
-
-```bash
-Rscript r/data-breakpoints.R      # -> data-breakpoints.rds
-```
-
-Prepare model input dataset
-
-```bash
-Rscript r/model-input.R           # -> model-input.rds
-```
-
-### Run Model
-
-Run the model using JAGS
-
-```bash
-Rscript r/model-execute.R         # -> model-output.rds
-```
-
-Generate diagnostics dataset and plots
-
-```bash
-Rscript r/model-diagnostics.R     # -> model-diagnostics.rds
-```
-
-Generate annual predictions
-
-```bash
-Rscript r/model-predict-year.R    # -> model-predict-year.rds
-```
-
-Calculate derived metrics by site
-
-```bash
-Rscript r/model-predict-derived.R # -> model-predict-derived.[rds,csv]
-```
