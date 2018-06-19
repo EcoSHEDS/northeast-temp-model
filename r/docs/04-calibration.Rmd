@@ -1,9 +1,3 @@
-```{r}
-diagnostics <- readRDS(file.path(config$wd, "model-diagnostics.rds"))
-calib <- diagnostics$calibration
-valid <- diagnostics$validation
-```
-
 
 # Calibration and Validation
 

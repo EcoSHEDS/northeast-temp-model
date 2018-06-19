@@ -12,7 +12,7 @@ The documentation website is built using **bookdown** (https://github.com/rstudi
 
 ## Compiling
 
-Open the R project file (`stm-docs.Rproj`) within the R Studio IDE.
+Open the R project file (`docs.Rproj`) within the R Studio IDE.
 
 Click the `Build Book` button under the `Build` menu.
 
@@ -26,6 +26,12 @@ When a new version of the stream temperature model is released, follow this chec
 - [ ] Update Change Log in index.Rmd
 - [ ] Make any necessary changes to the underlying theory, processing, etc.
 - [ ] Regenerate all pages to update the tables and figures
+- [ ] Assign new tag on Github after final push
+
+## Deploying
+
+After completing an update, deploy the compiled files to ecosheds.org.
+
 - [ ] Deploy the output (`_book/`) to the web server under the new version number  
 ```txt
 scp -r _book/* jeff@ecosheds.org:/conte/www/static/models/stream-temperature/<vX.Y.Z>/

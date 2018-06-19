@@ -1,6 +1,6 @@
 # Theory {#theory}
 
-The stream temperature model is a nested hierarchical Bayesian model that predicts daily stream temperature based on catchment characteristics and climate conditions. An early version of this model can be found in [Letcher et al (2016)](https://peerj.com/articles/1727/).
+The stream temperature model is a nested hierarchical Bayesian model that predicts daily stream temperature based on catchment characteristics and climate conditions. An early version of this model can be found in @Letcher2016.
 
 Daily mean stream temperature for each catchment is assumed to be a normally distributed random variable:
 

@@ -1,3 +1,7 @@
 # Downloads
 
-After the model was calibrated, it was used to generate predictions at every catchment in the northeast US.
+This section provides a list of datasets available for download.
+
+- Catchment Delineation
+- Input Covariates (Geospatial Characteristics)
+- Derived Metrics of Stream Temperature Predictions (Model Output)

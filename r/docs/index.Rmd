@@ -5,10 +5,10 @@ date: "v0.9.1 (Jun 6, 2018)"
 site: bookdown::bookdown_site
 output: bookdown::gitbook
 documentclass: book
-bibliography: [book.bib, packages.bib]
+bibliography: [book.bib]
 biblio-style: apalike
 link-citations: yes
-github-repo: walkerjeffd/sheds-streamtempmodel
+github-repo: walkerjeffd/sheds-temp-model
 description: "Documentation for the SHEDS stream temperature model."
 ---
 
@@ -17,25 +17,73 @@ library(tidyverse)
 source("../functions.R")
 config <- load_config("../../")
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, comment = NA)
+
+diagnostics <- readRDS(file.path(config$wd, "model-diagnostics.rds"))
+calib <- diagnostics$calib
+valid <- diagnostics$valid
 ```
 
 # Introduction {#intro}
 
 Welcome to the SHEDS stream temperature model documentation.
 
-This website is provides background and results of the stream temperature model. The documentation will be updated for each new set of results. See the Change Log below for changes from earlier versions.
+The stream temperature model is a linear mixed effects model that accounts for spatial and temporal correlations using a hierachical Bayesian structure. @Letcher2016 describe the initial development of this model framework, and apply it to a small region in western Massachusetts. See the [Model Overview] section below for a brief introduction to the model, or the [Theory] section a more detailed explanation.
 
-The source code for the model and documentation is available in the github repository [walkerjeffd/sheds-streamtempmodel](https://github.com/walkerjeffd/sheds-streamtempmodel).
+The documentation is divided into the following sections:
+
+1. [Introduction] : provides an overview the stream temperature model and documentation, as well as a snapshot of the current calibration
+1. [Theory] : describes how the model works including the underlying structure and theory
+1. [Data Sources] : describes the datasets used as inputs to the model
+1. [Data Processing] : describes how input datasets are processed prior to model fitting (i.e. QAQC procedures) 
+1. [Calibration and Validation] : describes how well the model predicts stream temperature based on observations that were included (calibration) and excluded (validation) from the model fitting process
+1. [Predictions] : describes how predictions are generated after the model is calibrated and describes the various summary metrics that are computed for each catchment
+1. [Downloads] : provides links to access the input datasets and mode output
+
+The model will be periodically updated and re-calibrated (approximately once every 6 months) to incorporate any new temperature observations, and to make any necessary revisions to the data processing and/or model structure. With each update, a new version will be assigned to the model, and this documentation website will be updated to reflect the most recent performance of the model. A brief summary of the changes associated with each new version is provided in the [Change Log](#change-log) below.
+
+## Model Overview
+
+The SHEDS stream temperature model predicts daily mean stream temperature based on geospatial characteristics and daily weather conditions. Predictions are made at a relatively fine spatial resultion based on a customized catchment delineation (average size about 2 km^2^) across the northeast U.S. from Maine to Virginia. 
+
+The model uses a hierarchical Bayesian structure to account for spatial correlation in temperature between near-by locations through random effects for both the individual catchments and the larger watershed (HUC8) containing that catchment. THerefore, catchments within the same HUC8 watershed share a set of HUC-specific coefficients.
+
+Year to year variations in temperature are also accounted for using a random effect for the year.
+
+## Performance Snapshot
+
+The following is a brief summary of the model calibration and validation performance for the current version. More details about the model performance can be found in the [Calibration and Validation] section.
+
+```{r}
+tribble(
+  ~Var, ~Calibration, ~Validation,
+  "# Observations", scales::comma(calib$summary$n_obs), scales::comma(valid$summary$n_obs),
+  "# Catchments",   scales::comma(calib$summary$n_catchment), scales::comma(valid$summary$n_catchment),
+  "# Years",        scales::comma(calib$summary$n_year), scales::comma(valid$summary$n_year),
+  "RMSE",           sprintf("%.2f", calib$summary$rmse_trend), sprintf("%.2f", valid$summary$rmse_trend),
+  "Mean Residual",  sprintf("%.2f", calib$summary$mean_resid_trend), sprintf("%.2f", valid$summary$mean_resid_trend),
+  "Median Residual",  sprintf("%.2f", calib$summary$median_resid_trend), sprintf("%.2f", valid$summary$median_resid_trend),
+  "Mean Absolute Residual",  sprintf("%.2f", calib$summary$mean_abs_resid_trend), sprintf("%.2f", valid$summary$mean_abs_resid_trend),
+  "Median Absolute Residual",  sprintf("%.2f", calib$summary$median_abs_resid_trend), sprintf("%.2f", valid$summary$median_abs_resid_trend)
+) %>% 
+  knitr::kable(align = "lrr")
+```
+
+
+
 
 ## Model Versioning
 
 The SHEDS stream temperature model uses semantic versioning of the form: `vX.Y.Z`
 
-`X` is the major version, `Y` is the minor version, and `Z` is the patch version.
+- `X` is the **major** version, which will be incremented when there is a major change to the model theory, code, or datasets.
+- `Y` is the **minor** version, which will be incremented when there is a new set of results due to changes in the model code, datasets, processing procedures, etc.
+- `Z` is the **patch** version, which will be incremented only when there is a change to the documentation or code that *does not* yield different results.
 
-For the stream temperature model, the `X` value will be incremented when there is a major change to the model theory, code, or datasets. The `Y` value will be incremented when there is a new set of results due to changes in the model code, datasets, processing procedures, etc. The `Z` value will be incremented when only the documentation or output datasets are updated, but the results remain the same (based on the `Y` value). 
+## Source Code
 
-## Changelog
+The source code for the model itself and this documentation is available in the Github repository [walkerjeffd/sheds-temp-model](https://github.com/walkerjeffd/sheds-temp-model). Each version of the model will be included under the list of  [Releases](https://github.com/walkerjeffd/sheds-temp-model/releases).
+
+## Change Log {#change-log}
 
 - **[v0.9.1 (Jun 6, 2018)](http://ecosheds.org/models/stream-temperature/v0.9.1/)**  
 Updates to model versioning and configuration framework, and minor updates to documentation (still incomplete).
