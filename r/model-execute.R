@@ -198,6 +198,12 @@ ids <- list(
 # )
 
 
+# copy jags file ----------------------------------------------------------
+
+copied <- file.copy("jags/temp-model.jags", file.path(config$wd, "temp-model.jags"), overwrite = TRUE)
+if (!copied) {
+  stop("Failed to copy JAGS model definition file")
+}
 
 # run model ---------------------------------------------------------------
 
@@ -206,7 +212,7 @@ jm <- jags(
   data = data.list,
   # inits = inits.list,
   parameters.to.save = params,
-  model.file = file.path(config$wd, "model.txt"),
+  model.file = file.path(config$wd, "temp-model.jags"),
   n.chains = 3,
   n.iter = 6000,
   n.burnin = 3000,
