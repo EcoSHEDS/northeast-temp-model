@@ -1,381 +1,880 @@
-
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 # Calibration and Validation
+
+```{r, echo = FALSE, message = FALSE}
+library(tidyverse)
+source("../functions.R")
+config <- load_config("../../")
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, comment = NA)
+
+theme_set(theme_bw())
+theme_update(
+  strip.background = element_blank(),
+  strip.text = element_text(face = "bold")
+)
+
+m_inp <- readRDS(file.path(config$wd, "model-input.rds"))
+m_out <- readRDS(file.path(config$wd, "model-output.rds"))
+m_diag <- readRDS(file.path(config$wd, "model-diagnostics.rds"))
+calib <- m_diag$calib
+valid <- m_diag$valid
+```
 
 After processing all of the data, the model was fitted using jags. The observation dataset was split into 80% for calibration, 20% for validation.
 
-## Calibration Results
+## Parameter Estimates
 
-### With Autocorrelation Term
+### Fixed Effects
 
 ```{r}
-cat(
-  "Statistics of All Observations\n",
-  "==============================\n",
-  "# Observations = ", scales::comma(nrow(calib$values)), "\n",
-  "RMSE = ", format(sqrt(mean(calib$values$resid^2)), digits = 3), "\n",
-  "R^2 = ", format(cor(calib$values$temp, calib$values$pred)^2, digits = 3), " degC\n",
-  "Median Absolute Residual = ", format(median(abs(calib$values$resid)), digits = 3), " degC\n",
-  "Mean Residual = ", format(mean(calib$values$resid), digits = 3), " degC\n",
-  "Median Residual = ", format(median(calib$values$resid), digits = 3), " degC\n",
-  "Max Residual = ", format(max(calib$values$resid), digits = 3), " degC\n",
-  "95th Percentile Residual = ", format(quantile(calib$values$resid, probs = 0.95), digits = 3), " degC\n",
-  "5th Percentile Residual = ", format(quantile(calib$values$resid, probs = 0.05), digits = 3), " degC\n",
-  "Min Residual = ", format(min(calib$values$resid), digits = 3), " degC\n",
-  sep = ""
+levels_fixed <- c(
+  "intercept",
+  "AreaSqKM",
+  "impoundArea",
+  "agriculture",
+  "devel_hi",
+  "forest",
+  "prcp2",
+  "prcp30",
+  "prcp2.da",
+  "prcp30.da",
+  "airTemp.da",
+  "airTemp.impoundArea",
+  "airTemp.agriculture",
+  "airTemp.forest",
+  "airTemp.devel_hi",
+  "airTemp.prcp2",
+  "airTemp.prcp30",
+  "airTemp.prcp2.da",
+  "airTemp.prcp30.da"
 )
+param_fixed <- data_frame(
+  var = factor(m_out$covs$fixed.ef, levels = levels_fixed, ordered = TRUE),
+  mean = m_out$results$mean$B.0,
+  q_025 = m_out$results$q2.5$B.0,
+  q_975 = m_out$results$q97.5$B.0
+) %>% 
+  arrange(var)
 ```
 
-```{r}
-cat(
-  "Statistics by Deployment\n",
-  "==============================\n",
-  "# Deployments = ", scales::comma(nrow(calib$deploy)), "\n",
-  "Mean RMSE = ", format(mean(calib$deploy$rmse), digits = 3), " degC\n",
-  "Median RMSE = ", format(median(calib$deploy$rmse), digits = 3), " degC\n",
-  "Max RMSE = ", format(max(calib$deploy$rmse), digits = 3), " degC\n",
-  "Min RMSE = ", format(min(calib$deploy$rmse), digits = 3), " degC\n",
-  sep = ""
-)
+Figure \@ref(fig:plot-params-fixed) and Table \@ref(tab:table-params-fixed) present the estimated mean and 95% credible region interval (CRI) of each fixed effect parameter. The intercept term is not shown in the figure because the values are much larger than the other parameters, and would thus skew the scale.
+
+```{r plot-params-fixed, fig.height=6, fig.cap="Estimated Mean and 95% CRI of Fixed Effects"}
+param_fixed %>% 
+  filter(var != "intercept") %>% 
+  mutate(
+    var = ordered(var, levels = rev(levels(var)))
+  ) %>% 
+  ggplot(aes(var, mean)) +
+  geom_hline(yintercept = 0, color = "black") +
+  geom_segment(aes(x = var, xend = var, y = q_025, yend = q_975), color = "deepskyblue") +
+  geom_point(size = 2) +
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) +
+  coord_flip() +
+  labs(
+    x = "Fixed Effect Variable",
+    y = "Estimated Mean and 95% CRI"
+  )
 ```
 
-```{r}
-cat(
-  "Statistics by Site\n",
-  "==============================\n",
-  "# Sites = ", scales::comma(nrow(calib$site)), "\n",
-  "Mean RMSE = ", format(mean(calib$site$rmse), digits = 3), " degC\n",
-  "Median RMSE = ", format(median(calib$site$rmse), digits = 3), " degC\n",
-  "Max RMSE = ", format(max(calib$site$rmse), digits = 3), " degC\n",
-  "Min RMSE = ", format(min(calib$site$rmse), digits = 3), " degC\n",
-  sep = ""
-)
+```{r table-params-fixed}
+param_fixed %>% 
+  select(Variable = var, Mean = mean, `Lower CRI` = q_025, `Upper CRI` = q_975) %>% 
+  knitr::kable(digits = 3, caption = "Estimated Mean and 95% CRI of Fixed Effects")
 ```
 
+### HUC8 Random Effects 
 
 ```{r}
-calib$values %>%
-  ggplot(aes(temp, pred)) +
+levels_huc8 <- c(
+  "intercept.huc8",
+  "airTemp",
+  "temp7p"
+)
+
+params_huc8 <- bind_rows(
+  setNames(as_data_frame(m_out$results$mean$B.huc), m_out$covs$huc.ef) %>% 
+    mutate(stat = "mean") %>% 
+    bind_cols(m_out$ids$huc8),
+  setNames(as_data_frame(m_out$results$q2.5$B.huc), m_out$covs$huc.ef) %>% 
+    mutate(stat = "q_025") %>% 
+    bind_cols(m_out$ids$huc8),
+  setNames(as_data_frame(m_out$results$q97.5$B.huc), m_out$covs$huc.ef) %>% 
+    mutate(stat = "q_975") %>% 
+    bind_cols(m_out$ids$huc8)
+) %>% 
+  rename(intercept.huc8 = intercept.site) %>% 
+  gather(var, value, -stat, -huc8, -huc8_id) %>% 
+  mutate(
+    huc8 = factor(huc8, levels = rev(sort(unique(huc8))), ordered = TRUE),
+    var = factor(var, levels = levels_huc8, ordered = TRUE)
+  ) %>%  
+  spread(stat, value) %>% 
+  arrange(var, huc8_id)
+```
+
+Figure \@ref(fig:plot-params-huc8) shows the estimated mean and 95% credible region interval (CRI) for each random effect and HUC8. Table \@ref(tab:table-params-huc8) lists the estimated mean and 95% CRI of each parameter averaged over all HUC8s (mean value with standard deviation in parentheses).
+
+```{r plot-params-huc8, fig.width=8, fig.height=10, fig.cap="Estimated Mean and 95% CRI of HUC Random Effects for Each HUC8"}
+params_huc8 %>% 
+  ggplot(aes(huc8, mean)) +
+  geom_hline(yintercept = 0, color = "black") +
+  geom_segment(aes(x = huc8, xend = huc8, y = q_025, yend = q_975), color = "deepskyblue") +
+  geom_point() +
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 6)) +
+  coord_flip() +
+  facet_wrap(~ var, nrow = 1, scales = "free_x") +
+  labs(
+    x = "HUC8",
+    y = "Estimated Mean and 95% CRI"
+  ) +
+  theme(
+    axis.text.y = element_text(size = 8)
+  )
+```
+
+```{r table-params-huc8}
+params_huc8 %>% 
+  gather(stat, value, mean, q_025, q_975) %>% 
+  group_by(var, stat) %>% 
+  summarise(
+    n = n(),
+    mean = mean(value),
+    sd = sd(value)
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    label = paste0(sprintf("%.3f", mean), " (", sprintf("%.3f", sd), ")")
+  ) %>% 
+  select(var, stat, n, label) %>% 
+  spread(stat, label) %>% 
+  select(Variable = var, Count = n, Mean = mean, `Lower CRI` = q_025, `Upper CRI` = q_975) %>% 
+  knitr::kable(align = "lrrrr", captio = "Mean and 95% CRI of HUC8 Random Effects Averaged Over All HUC8s (Mean Value and Std. Dev. in Parentheses)")
+```
+
+### Catchment Random Effects 
+
+```{r}
+levels_site <- c(
+  "intercept.site",
+  "airTemp",
+  "temp7p"
+)
+
+params_site <- bind_rows(
+  setNames(as_data_frame(m_out$results$mean$B.site), m_out$covs$site.ef) %>% 
+    mutate(stat = "mean") %>% 
+    bind_cols(m_out$ids$site),
+  setNames(as_data_frame(m_out$results$q2.5$B.site), m_out$covs$site.ef) %>% 
+    mutate(stat = "q_025") %>% 
+    bind_cols(m_out$ids$site),
+  setNames(as_data_frame(m_out$results$q97.5$B.site), m_out$covs$site.ef) %>% 
+    mutate(stat = "q_975") %>% 
+    bind_cols(m_out$ids$site)
+) %>% 
+  gather(var, value, -stat, -site, -site_id) %>% 
+  mutate(
+    site = factor(site, levels = rev(sort(unique(site))), ordered = TRUE),
+    var = factor(var, levels = levels_site, ordered = TRUE)
+  ) %>%  
+  spread(stat, value) %>% 
+  arrange(var, site_id)
+```
+
+Figure \@ref(fig:plot-params-catchment) shows the distribution of the estimated mean for each random effect term over all catchments. CRIs are not shown due to the large number of individual catchments (`r nrow(params_site)`). Table \@ref(tab:table-params-catchment) lists the estimated mean and 95% CRI of each parameter averaged over all catchments (mean value with standard deviation in parentheses).
+
+```{r plot-params-catchment, fig.width=8, fig.height=3, fig.cap="Distribution of estimated mean for each random effect over all catchments"}
+params_site %>% 
+  ggplot(aes(mean)) +
+  geom_histogram(bins = 30) +
+  geom_vline(xintercept = 0, color = "black") +
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 6)) +
+  facet_wrap(~ var, nrow = 1, scales = "free") +
+  labs(
+    x = "Estimated Mean",
+    y = "# Catchments"
+  )
+```
+
+```{r table-params-catchment}
+params_site %>% 
+  gather(stat, value, mean, q_025, q_975) %>% 
+  group_by(var, stat) %>% 
+  summarise(
+    n = n(),
+    mean = mean(value),
+    sd = sd(value)
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    label = paste0(sprintf("%.3f", mean), " (", sprintf("%.3f", sd), ")")
+  ) %>% 
+  select(var, stat, n, label) %>% 
+  spread(stat, label) %>% 
+  mutate(n = scales::comma(n)) %>% 
+  select(Variable = var, Count = n, Mean = mean, `Lower CRI` = q_025, `Upper CRI` = q_975) %>% 
+  knitr::kable(align = 'lrrrr', caption = "Estimated mean and 95% CRI for each random effect averaged over all catchments (mean value with std. dev. in parentheses)")
+```
+
+### Year Random Effects
+
+```{r}
+levels_year <- c(
+  "intercept.year"
+)
+
+params_year <- bind_rows(
+  setNames(as_data_frame(m_out$results$mean$B.year), m_out$covs$year.ef) %>% 
+    mutate(stat = "mean") %>% 
+    bind_cols(m_out$ids$year),
+  setNames(as_data_frame(m_out$results$q2.5$B.year), m_out$covs$year.ef) %>% 
+    mutate(stat = "q_025") %>% 
+    bind_cols(m_out$ids$year),
+  setNames(as_data_frame(m_out$results$q97.5$B.year), m_out$covs$year.ef) %>% 
+    mutate(stat = "q_975") %>% 
+    bind_cols(m_out$ids$year)
+) %>% 
+  gather(var, value, -stat, -year, -year_id) %>% 
+  mutate(
+    year = factor(year, levels = rev(sort(unique(year))), ordered = TRUE)
+  ) %>%  
+  spread(stat, value) %>% 
+  arrange(var, year_id)
+```
+
+Figure \@ref(fig:plot-params-year) and Table \@ref(tab:table-params-year) present the mean and 95% CRI of the intercept term for each year. Recall that there are no random effects for years other than the intercept. 
+
+```{r plot-params-year, fig.cap="Estimated Mean and 95% CRI of Intercept Random Effect for Each Year"}
+params_year %>% 
+  ggplot(aes(year, mean)) +
+  geom_hline(yintercept = 0, color = "black") +
+  geom_segment(aes(x = year, xend = year, y = q_025, yend = q_975), color = "deepskyblue") +
+  geom_point(size = 2) +
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) +
+  coord_flip() +
+  facet_wrap(~ var, nrow = 1, scales = "free_x") +
+  labs(
+    x = "Year",
+    y = "Estimated Mean and 95% CRI"
+  ) +
+  theme(
+    axis.text.y = element_text(size = 8)
+  )
+```
+
+```{r table-params-year}
+params_year %>% 
+  select(Year = year, Mean = mean, `Lower CRI` = q_025, `Upper CRI` = q_975) %>% 
+  knitr::kable(align = 'lrrrr', digits = 3, caption = "Estimated Mean and 95% CRI of Intercept Random Effect for Each Year")
+```
+
+## Goodness-of-Fit
+
+### All Observations 
+
+Table \@ref(tab:table-gof) summarizes the model goodness-of-fit for all observations in the calibration an dvalidation datasets. Values in parentheses exclude the temporal auto-correlation term from the prediction calculations and thus represent model performance for ungauged catchments or time periods when observation data are not available.
+
+```{r table-gof}
+stat_labels <- c(
+  "n_obs" = "# Observations",
+  "n_deploy" = "# Time Series",
+  "n_catchment" = "# Catchments",
+  "n_huc8" = "# HUC8s",
+  "n_year" = "# Years",
+  "lab_rmse" = "RMSE (degC)",
+  "lab_mean_resid" = "Mean Residual (degC)",
+  "lab_median_resid" = "Median Residual (degC)",
+  "lab_mean_abs_resid" = "Mean Absolute Residual (degC)",
+  "lab_median_abs_resid" = "Median Absolute Residual (degC)",
+  "lab_min_resid" = "Minimum Residual (degC)",
+  "lab_q01_resid" = "1st Percentile Residual (degC)",
+  "lab_q99_resid" = "99th Percentile Residual (degC)",
+  "lab_max_resid" = "Maximum Residual (degC)"
+)
+bind_cols(
+  data_frame(
+    dataset = c("calibration", "validation")
+  ),
+  as_data_frame(
+    bind_rows(calib$summary, valid$summary)
+  )
+) %>%
+  mutate_at(vars(starts_with("n_")), scales::comma) %>% 
+  mutate_at(
+    vars(
+      rmse, rmse_trend,
+      mean_resid, mean_resid_trend,
+      median_resid, median_resid_trend,
+      mean_abs_resid, mean_abs_resid_trend,
+      median_abs_resid, median_abs_resid_trend,
+      min_resid, min_resid_trend,
+      q01_resid, q01_resid_trend,
+      q99_resid, q99_resid_trend,
+      max_resid, max_resid_trend
+    ),
+    ~ sprintf("%.3f", .)
+  ) %>% 
+  mutate(
+    lab_rmse = paste0(rmse, " (", rmse_trend, ")"),
+    lab_mean_resid = paste0(mean_resid, " (", mean_resid_trend, ")"),
+    lab_median_resid = paste0(median_resid, " (", median_resid_trend, ")"),
+    lab_mean_abs_resid = paste0(mean_abs_resid, " (", mean_abs_resid_trend, ")"),
+    lab_median_abs_resid = paste0(median_abs_resid, " (", median_abs_resid_trend, ")"),
+    lab_min_resid = paste0(min_resid, " (", min_resid_trend, ")"),
+    lab_q01_resid = paste0(q01_resid, " (", q01_resid_trend, ")"),
+    lab_q99_resid = paste0(q99_resid, " (", q99_resid_trend, ")"),
+    lab_max_resid = paste0(max_resid, " (", max_resid_trend, ")")
+  ) %>% 
+  select(dataset, starts_with("n_"), starts_with("lab_")) %>% 
+  gather(stat, value, -dataset) %>% 
+  spread(dataset, value) %>% 
+  mutate(
+    stat = factor(stat, ordered = TRUE, levels = names(stat_labels))
+  ) %>% 
+  arrange(stat) %>% 
+  mutate(
+    stat_label = plyr::revalue(stat, stat_labels)
+  ) %>% 
+  select(-stat) %>% 
+  select(stat_label, calibration, validation) %>% 
+  knitr::kable(
+    align = "lrr", 
+    col.names = c("", "Calibration", "Validation"),
+    caption = "Summary statistics of model calibration and validation (values in parentheses denote value when temporal auto-correlation term is excluded)"
+  )
+```
+
+Figure \@ref(fig:splot-calib-valid-pred) presents scatterplots of predicted vs. observed daily mean temperature for the calibration and validation datasets. The black line is the 1:1 line of equality. The red line is a linear regression trend line.
+
+```{r splot-calib-valid-pred, fig.width=8, fig.height=4, fig.cap="Predicted versus Observed Daily Mean Temperature (degC) for Calibration and Validation Datasets (including temporal auto-correlation term)"}
+bind_rows(
+  calib$values %>% 
+    select(obs, pred) %>% 
+    mutate(dataset = "Calibration"),
+  valid$values %>% 
+    select(obs, pred) %>% 
+    mutate(dataset = "Validation")
+) %>% 
+  sample_frac(size = 0.1) %>% 
+  ggplot(aes(obs, pred)) +
   geom_abline() +
   geom_point(size = 0.5, alpha = 0.25) +
   geom_smooth(method = "lm", color = "red", se = FALSE) +
   coord_equal() +
+  facet_wrap(~ dataset, nrow = 1) +
   labs(
     x = "Observed Temperature (degC)",
-    y = "Predicted Temperature (degC)"
+    y = "Predicted Temperature (degC)\n(with Temporal Auto-correlation)"
   ) +
   theme(aspect.ratio = 1)
 ```
 
+Figure \@ref(fig:splot-calib-valid-trend) also presents scatterplots of predicted vs. observed daily mean temperature for the calibration and validation datasets but excludes the temporal auto-correlation term. The black line is the 1:1 line of equality. The red line is a linear regression trend line.
 
-```{r}
-calib$values %>%
-  ggplot(aes(resid)) +
-  geom_histogram() +
-  labs(
-    x = "Residual (degC)",
-    y = "# Observations"
-  )
-```
-
-```{r}
-calib$deploy %>% 
-  ggplot(aes(rmse)) +
-  geom_histogram() +
-  labs(
-    x = "Deployment RMSE (degC)",
-    y = "# Deployments"
-  )
-```
-
-
-```{r}
-calib$site %>% 
-  ggplot(aes(rmse)) +
-  geom_histogram() +
-  labs(
-    x = "Site RMSE (degC)",
-    y = "# Sites"
-  )
-```
-
-### Without Autocorrelation Term
-
-
-```{r}
-cat(
-  "Statistics of All Observations\n",
-  "==============================\n",
-  "# Observations = ", scales::comma(nrow(calib$values)), "\n",
-  "RMSE = ", format(sqrt(mean(calib$values$resid_Y^2)), digits = 3), "\n",
-  "R^2 = ", format(cor(calib$values$temp, calib$values$Y)^2, digits = 3), " degC\n",
-  "Median Absolute Residual = ", format(median(abs(calib$values$resid_Y)), digits = 3), " degC\n",
-  "Mean Residual = ", format(mean(calib$values$resid_Y), digits = 3), " degC\n",
-  "Median Residual = ", format(median(calib$values$resid_Y), digits = 3), " degC\n",
-  "Max Residual = ", format(max(calib$values$resid_Y), digits = 3), " degC\n",
-  "95th Percentile Residual = ", format(quantile(calib$values$resid_Y, probs = 0.95), digits = 3), " degC\n",
-  "5th Percentile Residual = ", format(quantile(calib$values$resid_Y, probs = 0.05), digits = 3), " degC\n",
-  "Min Residual = ", format(min(calib$values$resid_Y), digits = 3), " degC\n",
-  sep = ""
-)
-```
-
-```{r}
-cat(
-  "Statistics by Deployment\n",
-  "==============================\n",
-  "# Deployments = ", scales::comma(nrow(calib$deploy)), "\n",
-  "Mean RMSE = ", format(mean(calib$deploy$rmse_Y), digits = 3), " degC\n",
-  "Median RMSE = ", format(median(calib$deploy$rmse_Y), digits = 3), " degC\n",
-  "Max RMSE = ", format(max(calib$deploy$rmse_Y), digits = 3), " degC\n",
-  "Min RMSE = ", format(min(calib$deploy$rmse_Y), digits = 3), " degC\n",
-  sep = ""
-)
-```
-
-```{r}
-cat(
-  "Statistics by Site\n",
-  "==============================\n",
-  "# Sites = ", scales::comma(nrow(calib$site)), "\n",
-  "Mean RMSE = ", format(mean(calib$site$rmse_Y), digits = 3), " degC\n",
-  "Median RMSE = ", format(median(calib$site$rmse_Y), digits = 3), " degC\n",
-  "Max RMSE = ", format(max(calib$site$rmse_Y), digits = 3), " degC\n",
-  "Min RMSE = ", format(min(calib$site$rmse_Y), digits = 3), " degC\n",
-  sep = ""
-)
-```
-
-
-```{r}
-calib$values %>%
-  ggplot(aes(temp, Y)) +
+```{r splot-calib-valid-trend, fig.width=8, fig.height=4, fig.cap="Predicted versus Observed Daily Mean Temperature (degC) for Calibration and Validation Datasets (excluding temporal auto-correlation term)"}
+bind_rows(
+  calib$values %>% 
+    select(obs, trend) %>% 
+    mutate(dataset = "Calibration"),
+  valid$values %>% 
+    select(obs, trend) %>% 
+    mutate(dataset = "Validation")
+) %>% 
+  sample_frac(size = 0.1) %>% 
+  ggplot(aes(obs, trend)) +
   geom_abline() +
   geom_point(size = 0.5, alpha = 0.25) +
   geom_smooth(method = "lm", color = "red", se = FALSE) +
   coord_equal() +
+  facet_wrap(~ dataset, nrow = 1) +
   labs(
     x = "Observed Temperature (degC)",
-    y = "Predicted Temperature (degC)"
+    y = "Predicted Temperature (degC)\n(without Temporal Auto-correlation)"
   ) +
   theme(aspect.ratio = 1)
 ```
 
+### Deployments
 
-```{r}
-calib$values %>%
-  ggplot(aes(resid_Y)) +
-  geom_histogram() +
-  labs(
-    x = "Residual (degC)",
-    y = "# Observations"
-  )
-```
+Table \@ref(tab:table-gof-series) summarises the mean, median, minimum and maximum RMSE for each deployment (i.e. continuous timeseries of observations at a single location) in the calibration and validation datasets.
 
-```{r}
-calib$deploy %>% 
-  ggplot(aes(rmse_Y)) +
-  geom_histogram() +
-  labs(
-    x = "Deployment RMSE (degC)",
-    y = "# Deployments"
-  )
-```
-
-```{r}
-calib$site %>% 
-  ggplot(aes(rmse_Y)) +
-  geom_histogram() +
-  labs(
-    x = "Site RMSE (degC)",
-    y = "# Sites"
-  )
-```
-
-
-## Validation Results
-
-### With Autocorrelation Term
-
-```{r}
-cat(
-  "Statistics of All Observations\n",
-  "==============================\n",
-  "# Observations = ", scales::comma(nrow(valid$values)), "\n",
-  "RMSE = ", format(sqrt(mean(valid$values$resid^2)), digits = 3), "\n",
-  "R^2 = ", format(cor(valid$values$temp, valid$values$pred)^2, digits = 3), " degC\n",
-  "Median Absolute Residual = ", format(median(abs(valid$values$resid)), digits = 3), " degC\n",
-  "Mean Residual = ", format(mean(valid$values$resid), digits = 3), " degC\n",
-  "Median Residual = ", format(median(valid$values$resid), digits = 3), " degC\n",
-  "Max Residual = ", format(max(valid$values$resid), digits = 3), " degC\n",
-  "95th Percentile Residual = ", format(quantile(valid$values$resid, probs = 0.95), digits = 3), " degC\n",
-  "5th Percentile Residual = ", format(quantile(valid$values$resid, probs = 0.05), digits = 3), " degC\n",
-  "Min Residual = ", format(min(valid$values$resid), digits = 3), " degC\n",
-  sep = ""
+```{r table-gof-series}
+stat_labels_deploy <- c(
+  "n" = "# Time Series",
+  "lab_mean_rmse" = "Mean RMSE (degC)",
+  "lab_median_rmse" = "Median RMSE (degC)",
+  "lab_min_rmse" = "Minimum RMSE (degC)",
+  "lab_max_rmse" = "Maximum RMSE (degC)"
 )
-```
-
-```{r}
-cat(
-  "Statistics by Deployment\n",
-  "==============================\n",
-  "# Deployments = ", scales::comma(nrow(valid$deploy)), "\n",
-  "Mean RMSE = ", format(mean(valid$deploy$rmse), digits = 3), " degC\n",
-  "Median RMSE = ", format(median(valid$deploy$rmse), digits = 3), " degC\n",
-  "Max RMSE = ", format(max(valid$deploy$rmse), digits = 3), " degC\n",
-  "Min RMSE = ", format(min(valid$deploy$rmse), digits = 3), " degC\n",
-  sep = ""
-)
-```
-
-```{r}
-cat(
-  "Statistics by Site\n",
-  "==============================\n",
-  "# Sites = ", scales::comma(nrow(valid$site)), "\n",
-  "Mean RMSE = ", format(mean(valid$site$rmse), digits = 3), " degC\n",
-  "Median RMSE = ", format(median(valid$site$rmse), digits = 3), " degC\n",
-  "Max RMSE = ", format(max(valid$site$rmse), digits = 3), " degC\n",
-  "Min RMSE = ", format(min(valid$site$rmse), digits = 3), " degC\n",
-  sep = ""
-)
-```
-
-
-```{r}
-valid$values %>%
-  ggplot(aes(temp, pred)) +
-  geom_abline() +
-  geom_point(size = 0.5, alpha = 0.25) +
-  geom_smooth(method = "lm", color = "red", se = FALSE) +
-  coord_equal() +
-  labs(
-    x = "Observed Temperature (degC)",
-    y = "Predicted Temperature (degC)"
-  ) +
-  theme(aspect.ratio = 1)
-```
-
-
-```{r}
-valid$values %>%
-  ggplot(aes(resid)) +
-  geom_histogram() +
-  labs(
-    x = "Residual (degC)",
-    y = "# Observations"
+df_deploy <- bind_cols(
+  data_frame(
+    dataset = c("calibration", "validation"),
+    data = list(calib$deploy, valid$deploy)
+  )
+) %>% 
+  mutate(
+    data_best = map(data, function (x) {
+      x %>% 
+        filter(n >= 30) %>% 
+        arrange(rmse) %>% 
+        head(12)
+    }),
+    data_worst = map(data, function (x) {
+      x %>% 
+        filter(n >= 30) %>% 
+        arrange(desc(rmse)) %>% 
+        head(12)
+    }),
+    data_best_trend = map(data, function (x) {
+      x %>% 
+        filter(n >= 30) %>% 
+        arrange(rmse_trend) %>% 
+        head(12)
+    }),
+    data_worst_trend = map(data, function (x) {
+      x %>% 
+        filter(n >= 30) %>% 
+        arrange(desc(rmse_trend)) %>% 
+        head(12)
+    })
+  )
+df_deploy %>%
+  mutate(
+    n = map_dbl(data, nrow),
+    mean_rmse = map_dbl(data, ~ mean(.$rmse)),
+    median_rmse = map_dbl(data, ~ median(.$rmse)),
+    min_rmse = map_dbl(data, ~ min(.$rmse)),
+    max_rmse = map_dbl(data, ~ max(.$rmse)),
+    mean_rmse_trend = map_dbl(data, ~ mean(.$rmse_trend)),
+    median_rmse_trend = map_dbl(data, ~ median(.$rmse_trend)),
+    min_rmse_trend = map_dbl(data, ~ min(.$rmse_trend)),
+    max_rmse_trend = map_dbl(data, ~ max(.$rmse_trend))
+  ) %>% 
+  mutate_at(
+    vars(
+      mean_rmse, median_rmse, min_rmse, max_rmse,
+      mean_rmse_trend, median_rmse_trend, min_rmse_trend, max_rmse_trend
+    ),
+    ~ sprintf("%.3f", .)
+  ) %>% 
+  mutate(
+    lab_mean_rmse = paste0(mean_rmse, " (", mean_rmse_trend, ")"),
+    lab_median_rmse = paste0(median_rmse, " (", median_rmse_trend, ")"),
+    lab_min_rmse = paste0(min_rmse, " (", min_rmse_trend, ")"),
+    lab_max_rmse = paste0(max_rmse, " (", max_rmse_trend, ")")
+  ) %>% 
+  select(dataset, n, starts_with("lab_")) %>% 
+  gather(stat, value, -dataset) %>% 
+  spread(dataset, value) %>% 
+  mutate(
+    stat = factor(stat, ordered = TRUE, levels = names(stat_labels_deploy))
+  ) %>% 
+  arrange(stat) %>% 
+  mutate(
+    stat_label = plyr::revalue(stat, stat_labels_deploy)
+  ) %>% 
+  select(-stat) %>% 
+  select(stat_label, calibration, validation) %>% 
+  knitr::kable(
+    align = "lrr", 
+    col.names = c("", "Calibration", "Validation"),
+    caption = "Summary statistics of model calibration and validation RMSE for each deployment (values in parentheses exclude temporal autocorrelation term)"
   )
 ```
 
-```{r}
-valid$deploy %>% 
+Figure \@ref(fig:plot-hist-series-rmse) shows the distribution of deployment RMSE including the temporal autocorrelation term.
+
+```{r plot-hist-series-rmse, fig.width=8, fig.height=3, fig.cap="Distribution of deployment RMSE including temporal autocorrelation term"}
+df_deploy %>% 
+  unnest(data) %>% 
   ggplot(aes(rmse)) +
-  geom_histogram() +
-  labs(
-    x = "Deployment RMSE (degC)",
-    y = "# Deployments"
-  )
-```
-
-
-```{r}
-valid$site %>% 
-  ggplot(aes(rmse)) +
-  geom_histogram() +
-  labs(
-    x = "Site RMSE (degC)",
-    y = "# Sites"
-  )
-```
-
-### Without Autocorrelation Term
-
-
-```{r}
-cat(
-  "Statistics of All Observations\n",
-  "==============================\n",
-  "# Observations = ", scales::comma(nrow(valid$values)), "\n",
-  "RMSE = ", format(sqrt(mean(valid$values$resid_Y^2)), digits = 3), "\n",
-  "R^2 = ", format(cor(valid$values$temp, valid$values$Y)^2, digits = 3), " degC\n",
-  "Median Absolute Residual = ", format(median(abs(valid$values$resid_Y)), digits = 3), " degC\n",
-  "Mean Residual = ", format(mean(valid$values$resid_Y), digits = 3), " degC\n",
-  "Median Residual = ", format(median(valid$values$resid_Y), digits = 3), " degC\n",
-  "Max Residual = ", format(max(valid$values$resid_Y), digits = 3), " degC\n",
-  "95th Percentile Residual = ", format(quantile(valid$values$resid_Y, probs = 0.95), digits = 3), " degC\n",
-  "5th Percentile Residual = ", format(quantile(valid$values$resid_Y, probs = 0.05), digits = 3), " degC\n",
-  "Min Residual = ", format(min(valid$values$resid_Y), digits = 3), " degC\n",
-  sep = ""
-)
-```
-
-```{r}
-cat(
-  "Statistics by Deployment\n",
-  "==============================\n",
-  "# Deployments = ", scales::comma(nrow(valid$deploy)), "\n",
-  "Mean RMSE = ", format(mean(valid$deploy$rmse_Y), digits = 3), " degC\n",
-  "Median RMSE = ", format(median(valid$deploy$rmse_Y), digits = 3), " degC\n",
-  "Max RMSE = ", format(max(valid$deploy$rmse_Y), digits = 3), " degC\n",
-  "Min RMSE = ", format(min(valid$deploy$rmse_Y), digits = 3), " degC\n",
-  sep = ""
-)
-```
-
-```{r}
-cat(
-  "Statistics by Site\n",
-  "==============================\n",
-  "# Sites = ", scales::comma(nrow(valid$site)), "\n",
-  "Mean RMSE = ", format(mean(valid$site$rmse_Y), digits = 3), " degC\n",
-  "Median RMSE = ", format(median(valid$site$rmse_Y), digits = 3), " degC\n",
-  "Max RMSE = ", format(max(valid$site$rmse_Y), digits = 3), " degC\n",
-  "Min RMSE = ", format(min(valid$site$rmse_Y), digits = 3), " degC\n",
-  sep = ""
-)
-```
-
-
-```{r}
-valid$values %>%
-  ggplot(aes(temp, Y)) +
-  geom_abline() +
-  geom_point(size = 0.5, alpha = 0.25) +
-  geom_smooth(method = "lm", color = "red", se = FALSE) +
-  coord_equal() +
-  labs(
-    x = "Observed Temperature (degC)",
-    y = "Predicted Temperature (degC)"
+  geom_histogram(bins = 30) +
+  geom_vline(
+    data = df_deploy %>%
+      mutate(
+        mean_rmse = map_dbl(data, ~ mean(.$rmse))
+      ),
+    aes(xintercept = mean_rmse, color = "Mean RMSE")
   ) +
-  theme(aspect.ratio = 1)
-```
-
-
-```{r}
-valid$values %>%
-  ggplot(aes(resid_Y)) +
-  geom_histogram() +
+  scale_color_manual("", values = "red") +
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 10), limits = c(0, NA)) +
   labs(
-    x = "Residual (degC)",
-    y = "# Observations"
-  )
-```
-
-```{r}
-valid$deploy %>% 
-  ggplot(aes(rmse_Y)) +
-  geom_histogram() +
-  labs(
-    x = "Deployment RMSE (degC)",
+    x = "RMSE (degC)\nIncluding Temporal Autocorrelation Term",
     y = "# Deployments"
+  ) +
+  facet_wrap(~ dataset, nrow = 1, scales = "free_y", labeller = labeller(dataset = c(
+    "calibration" = "Calibration",
+    "validation" = "Validation"
+  )))
+```
+
+Figure \@ref(fig:plot-hist-series-rmse-trend) shows the distribution of deployment RMSE excluding the temporal autocorrelation term.
+
+```{r plot-hist-series-rmse-trend, fig.width=8, fig.height=3, fig.cap="Distribution of deployment RMSE excluding temporal autocorrelation term"}
+df_deploy %>% 
+  unnest(data) %>% 
+  ggplot(aes(rmse_trend)) +
+  geom_histogram(bins = 30) +
+  geom_vline(
+    data = df_deploy %>%
+      mutate(
+        mean_rmse_trend = map_dbl(data, ~ mean(.$rmse_trend))
+      ),
+    aes(xintercept = mean_rmse_trend, color = "Mean RMSE")
+  ) +
+  scale_color_manual("", values = "red") +
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 10), limits = c(0, NA)) +
+  labs(
+    x = "RMSE (degC)\nExcluding Temporal Autocorrelation Term",
+    y = "# Deployment"
+  ) +
+  facet_wrap(~ dataset, nrow = 1, scales = "free_y", labeller = labeller(dataset = c(
+    "calibration" = "Calibration",
+    "validation" = "Validation"
+  )))
+```
+
+#### Calibration Deployment Examples
+
+Figures \@ref(fig:plot-series-calib-best) to \@ref(fig:plot-series-calib-worst-trend) show example deployments from the calibration dataset with the highest and lowest RMSE and including or excluding the temporal autocorrelation term.
+
+```{r plot-series-calib-best, fig.width=8, fig.height=10, fig.cap="Deployments with lowest RMSE in calibration dataset and n >= 30 including temporal autocorrelation term"}
+df_deploy %>% 
+  filter(dataset == "calibration") %>% 
+  unnest(data_best) %>% 
+  mutate(
+    label = paste0("Catchment ID: ", catchment, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
+    label = factor(label, ordered = TRUE, levels = label)
+  ) %>% 
+  unnest(data) %>% 
+  ggplot(aes(date, obs)) +
+  geom_line(aes(color = "Observed")) +
+  geom_point(aes(color = "Observed"), size = 1) +
+  geom_line(aes(y = pred, color = "Predicted")) +
+  geom_point(aes(y = pred, color = "Predicted"), size = 1) +
+  scale_color_manual("", values = c("Observed" = "black", "Predicted" = "red")) +
+  scale_x_date(labels = scales::date_format("%b %d '%y")) +
+  facet_wrap(~ label, scales = "free", nrow = 4) +
+  labs(
+    x = "Date",
+    y = "Daily Mean Temperature (degC)",
+    title = "Calibration | Lowest RMSE Deployments | Including Autocorrelation"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
   )
 ```
 
-```{r}
-valid$site %>% 
-  ggplot(aes(rmse_Y)) +
-  geom_histogram() +
+```{r plot-series-calib-worst, fig.width=8, fig.height=10, fig.cap="Deployments with highest RMSE in calibration dataset and n >= 30 including temporal autocorrelation term"}
+df_deploy %>% 
+  filter(dataset == "calibration") %>% 
+  unnest(data_worst) %>% 
+  mutate(
+    label = paste0("Catchment ID: ", catchment, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
+    label = factor(label, ordered = TRUE, levels = label)
+  ) %>% 
+  unnest(data) %>% 
+  ggplot(aes(date, obs)) +
+  geom_line(aes(color = "Observed")) +
+  geom_point(aes(color = "Observed"), size = 1) +
+  geom_line(aes(y = pred, color = "Predicted")) +
+  geom_point(aes(y = pred, color = "Predicted"), size = 1) +
+  scale_color_manual("", values = c("Observed" = "black", "Predicted" = "red")) +
+  scale_x_date(labels = scales::date_format("%b %d '%y")) +
+  facet_wrap(~ label, scales = "free", nrow = 4) +
   labs(
-    x = "Site RMSE (degC)",
-    y = "# Sites"
+    x = "Date",
+    y = "Daily Mean Temperature (degC)",
+    title = "Calibration | Highest RMSE Deployments | Including Autocorrelation"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
   )
+```
+
+
+```{r plot-series-calib-best-trend, fig.width=8, fig.height=10, fig.cap="Deployments with lowest RMSE in calibration dataset and n >= 30 excluding temporal autocorrelation term"}
+df_deploy %>% 
+  filter(dataset == "calibration") %>% 
+  unnest(data_best) %>% 
+  mutate(
+    label = paste0("Catchment ID: ", catchment, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
+    label = factor(label, ordered = TRUE, levels = label)
+  ) %>% 
+  unnest(data) %>% 
+  ggplot(aes(date, obs)) +
+  geom_line(aes(color = "Observed")) +
+  geom_point(aes(color = "Observed"), size = 1) +
+  geom_line(aes(y = pred, color = "Predicted")) +
+  geom_point(aes(y = pred, color = "Predicted"), size = 1) +
+  scale_color_manual("", values = c("Observed" = "black", "Predicted" = "red")) +
+  scale_x_date(labels = scales::date_format("%b %d '%y")) +
+  facet_wrap(~ label, scales = "free", nrow = 4) +
+  labs(
+    x = "Date",
+    y = "Daily Mean Temperature (degC)",
+    title = "Calibration | Lowest RMSE Deployments | Excluding Autocorrelation"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+```
+
+```{r plot-series-calib-worst-trend, fig.width=8, fig.height=10, fig.cap="Deployments with highest RMSE in calibration dataset and n >= 30 excluding temporal autocorrelation term"}
+df_deploy %>% 
+  filter(dataset == "calibration") %>% 
+  unnest(data_worst_trend) %>% 
+  mutate(
+    label = paste0("Catchment ID: ", catchment, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
+    label = factor(label, ordered = TRUE, levels = label)
+  ) %>% 
+  unnest(data) %>% 
+  ggplot(aes(date, obs)) +
+  geom_line(aes(color = "Observed")) +
+  geom_point(aes(color = "Observed"), size = 1) +
+  geom_line(aes(y = trend, color = "Predicted")) +
+  geom_point(aes(y = trend, color = "Predicted"), size = 1) +
+  scale_color_manual("", values = c("Observed" = "black", "Predicted" = "red")) +
+  scale_x_date(labels = scales::date_format("%b %d '%y")) +
+  facet_wrap(~ label, scales = "free", nrow = 4) +
+  labs(
+    x = "Date",
+    y = "Daily Mean Temperature (degC)",
+    title = "Calibration | Highest RMSE Deployments | Excluding Autocorrelation"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+```
+
+#### Validation Deployment Examples
+
+Figures \@ref(fig:plot-series-valid-best) to \@ref(fig:plot-series-valid-worst-trend) show example deployments from the validation dataset with the highest and lowest RMSE and including or excluding the temporal autocorrelation term.
+
+```{r plot-series-valid-best, fig.width=8, fig.height=10, fig.cap="Deployments with lowest RMSE in validation dataset and n >= 30 including temporal autocorrelation term"}
+df_deploy %>% 
+  filter(dataset == "validation") %>% 
+  unnest(data_best) %>% 
+  mutate(
+    label = paste0("Catchment ID: ", catchment, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
+    label = factor(label, ordered = TRUE, levels = label)
+  ) %>% 
+  unnest(data) %>% 
+  ggplot(aes(date, obs)) +
+  geom_line(aes(color = "Observed")) +
+  geom_point(aes(color = "Observed"), size = 1) +
+  geom_line(aes(y = pred, color = "Predicted")) +
+  geom_point(aes(y = pred, color = "Predicted"), size = 1) +
+  scale_color_manual("", values = c("Observed" = "black", "Predicted" = "red")) +
+  scale_x_date(labels = scales::date_format("%b %d '%y")) +
+  facet_wrap(~ label, scales = "free", nrow = 4) +
+  labs(
+    x = "Date",
+    y = "Daily Mean Temperature (degC)",
+    title = "Validation | Lowest RMSE Deployments | Including Autocorrelation"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+```
+
+```{r plot-series-valid-worst, fig.width=8, fig.height=8, fig.cap="Deployments with highest RMSE in validation dataset and n >= 30 including temporal autocorrelation term"}
+df_deploy %>% 
+  filter(dataset == "validation") %>% 
+  unnest(data_worst) %>% 
+  mutate(
+    label = paste0("Catchment ID: ", catchment, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
+    label = factor(label, ordered = TRUE, levels = label)
+  ) %>% 
+  unnest(data) %>% 
+  ggplot(aes(date, obs)) +
+  geom_line(aes(color = "Observed")) +
+  geom_point(aes(color = "Observed"), size = 1) +
+  geom_line(aes(y = pred, color = "Predicted")) +
+  geom_point(aes(y = pred, color = "Predicted"), size = 1) +
+  scale_color_manual("", values = c("Observed" = "black", "Predicted" = "red")) +
+  scale_x_date(labels = scales::date_format("%b %d '%y")) +
+  facet_wrap(~ label, scales = "free", nrow = 4) +
+  labs(
+    x = "Date",
+    y = "Daily Mean Temperature (degC)",
+    title = "Validation | Highest RMSE Deployments | Including Autocorrelation"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+```
+
+
+```{r plot-series-valid-best-trend, fig.width=8, fig.height=10, fig.cap="Deployments with lowest RMSE in validation dataset and n >= 30 excluding temporal autocorrelation term"}
+df_deploy %>% 
+  filter(dataset == "validation") %>% 
+  unnest(data_best) %>% 
+  mutate(
+    label = paste0("Catchment ID: ", catchment, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
+    label = factor(label, ordered = TRUE, levels = label)
+  ) %>% 
+  unnest(data) %>% 
+  ggplot(aes(date, obs)) +
+  geom_line(aes(color = "Observed")) +
+  geom_point(aes(color = "Observed"), size = 1) +
+  geom_line(aes(y = pred, color = "Predicted")) +
+  geom_point(aes(y = pred, color = "Predicted"), size = 1) +
+  scale_color_manual("", values = c("Observed" = "black", "Predicted" = "red")) +
+  scale_x_date(labels = scales::date_format("%b %d '%y")) +
+  facet_wrap(~ label, scales = "free", nrow = 4) +
+  labs(
+    x = "Date",
+    y = "Daily Mean Temperature (degC)",
+    title = "Validation | Lowest RMSE Deployments | Excluding Autocorrelation"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+```
+
+```{r plot-series-valid-worst-trend, fig.width=8, fig.height=10, fig.cap="Deployments with highest RMSE in validation dataset and n >= 30 excluding temporal autocorrelation term"}
+df_deploy %>% 
+  filter(dataset == "validation") %>% 
+  unnest(data_worst_trend) %>% 
+  mutate(
+    label = paste0("Catchment ID: ", catchment, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
+    label = factor(label, ordered = TRUE, levels = label)
+  ) %>% 
+  unnest(data) %>% 
+  ggplot(aes(date, obs)) +
+  geom_line(aes(color = "Observed")) +
+  geom_point(aes(color = "Observed"), size = 1) +
+  geom_line(aes(y = trend, color = "Predicted")) +
+  geom_point(aes(y = trend, color = "Predicted"), size = 1) +
+  scale_color_manual("", values = c("Observed" = "black", "Predicted" = "red")) +
+  scale_x_date(labels = scales::date_format("%b %d '%y")) +
+  facet_wrap(~ label, scales = "free", nrow = 4) +
+  labs(
+    x = "Date",
+    y = "Daily Mean Temperature (degC)",
+    title = "Validation | Highest RMSE Deployments | Excluding Autocorrelation"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+```
+
+
+### Catchments
+
+Table \@ref(tab:table-gof-catchment) summarises the mean, median, minimum and maximum RMSE of all catchments in the calibration and validation datasets.
+
+```{r table-gof-catchment}
+stat_labels_catchment <- c(
+  "n" = "# Time Series",
+  "lab_mean_rmse" = "Mean RMSE (degC)",
+  "lab_median_rmse" = "Median RMSE (degC)",
+  "lab_min_rmse" = "Minimum RMSE (degC)",
+  "lab_max_rmse" = "Maximum RMSE (degC)"
+)
+df_catchment <- bind_cols(
+  data_frame(
+    dataset = c("calibration", "validation"),
+    data = list(calib$catchment, valid$catchment)
+  )
+)
+df_catchment %>%
+  mutate(
+    n = map_dbl(data, nrow),
+    mean_rmse = map_dbl(data, ~ mean(.$rmse)),
+    median_rmse = map_dbl(data, ~ median(.$rmse)),
+    min_rmse = map_dbl(data, ~ min(.$rmse)),
+    max_rmse = map_dbl(data, ~ max(.$rmse)),
+    mean_rmse_trend = map_dbl(data, ~ mean(.$rmse_trend)),
+    median_rmse_trend = map_dbl(data, ~ median(.$rmse_trend)),
+    min_rmse_trend = map_dbl(data, ~ min(.$rmse_trend)),
+    max_rmse_trend = map_dbl(data, ~ max(.$rmse_trend))
+  ) %>% 
+  mutate_at(
+    vars(
+      mean_rmse, median_rmse, min_rmse, max_rmse,
+      mean_rmse_trend, median_rmse_trend, min_rmse_trend, max_rmse_trend
+    ),
+    ~ sprintf("%.3f", .)
+  ) %>% 
+  mutate(
+    lab_mean_rmse = paste0(mean_rmse, " (", mean_rmse_trend, ")"),
+    lab_median_rmse = paste0(median_rmse, " (", median_rmse_trend, ")"),
+    lab_min_rmse = paste0(min_rmse, " (", min_rmse_trend, ")"),
+    lab_max_rmse = paste0(max_rmse, " (", max_rmse_trend, ")")
+  ) %>% 
+  select(dataset, n, starts_with("lab_")) %>% 
+  gather(stat, value, -dataset) %>% 
+  spread(dataset, value) %>% 
+  mutate(
+    stat = factor(stat, ordered = TRUE, levels = names(stat_labels_catchment))
+  ) %>% 
+  arrange(stat) %>% 
+  mutate(
+    stat_label = plyr::revalue(stat, stat_labels_catchment)
+  ) %>% 
+  select(-stat) %>% 
+  select(stat_label, calibration, validation) %>% 
+  knitr::kable(
+    align = "lrr", 
+    col.names = c("", "Calibration", "Validation"),
+    caption = "Summary of catchment RMSE values for calibration and validation datasets (values in parentheses exclude temporal autocorrelation term)"
+  )
+```
+
+Figure \@ref(fig:plot-hist-catchment-rmse) shows the distribution of catchment RMSE including the temporal autocorrelation term.
+
+```{r plot-hist-catchment-rmse, fig.width=8, fig.height=3, fig.cap="Distribution of catchment RMSE including temporal autocorrelation term"}
+df_catchment %>% 
+  unnest(data) %>% 
+  ggplot(aes(rmse)) +
+  geom_histogram(bins = 30) +
+  geom_vline(
+    data = df_deploy %>%
+      mutate(
+        mean_rmse = map_dbl(data, ~ mean(.$rmse))
+      ),
+    aes(xintercept = mean_rmse, color = "Mean RMSE")
+  ) +
+  scale_color_manual("", values = "red") +
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 10), limits = c(0, NA)) +
+  labs(
+    x = "RMSE (degC)\nIncluding Temporal Autocorrelation Term",
+    y = "# Catchments"
+  ) +
+  facet_wrap(~ dataset, nrow = 1, scales = "free_y", labeller = labeller(dataset = c(
+    "calibration" = "Calibration",
+    "validation" = "Validation"
+  )))
+```
+
+Figure \@ref(fig:plot-hist-catchment-rmse-trend) shows the distribution of catchment RMSE excluding the temporal autocorrelation term.
+
+```{r plot-hist-catchment-rmse-trend, fig.width=8, fig.height=3, fig.cap="Distribution of catchment RMSE excluding temporal autocorrelation term"}
+df_catchment %>% 
+  unnest(data) %>% 
+  ggplot(aes(rmse_trend)) +
+  geom_histogram(bins = 30) +
+  geom_vline(
+    data = df_deploy %>%
+      mutate(
+        mean_rmse_trend = map_dbl(data, ~ mean(.$rmse_trend))
+      ),
+    aes(xintercept = mean_rmse_trend, color = "Mean RMSE")
+  ) +
+  scale_color_manual("", values = "red") +
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 10), limits = c(0, NA)) +
+  labs(
+    x = "RMSE (degC)\nExcluding Temporal Autocorrelation Term",
+    y = "# Catchments"
+  ) +
+  facet_wrap(~ dataset, nrow = 1, scales = "free_y", labeller = labeller(dataset = c(
+    "calibration" = "Calibration",
+    "validation" = "Validation"
+  )))
 ```

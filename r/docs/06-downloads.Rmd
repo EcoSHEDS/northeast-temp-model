@@ -1,7 +1,0 @@
-# Downloads
-
-This section provides a list of datasets available for download.
-
-- Catchment Delineation
-- Input Covariates (Geospatial Characteristics)
-- Derived Metrics of Stream Temperature Predictions (Model Output)

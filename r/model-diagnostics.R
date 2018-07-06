@@ -299,7 +299,7 @@ list(
   ),
   valid = list(
     values = df_valid,
-    deploy = df_calib_deploy,
+    deploy = df_valid_deploy,
     catchment = df_valid_catchment,
     huc8 = df_valid_huc8,
     summary = df_valid_summary

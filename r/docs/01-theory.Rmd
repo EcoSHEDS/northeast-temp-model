@@ -30,8 +30,63 @@ where
 - $B_{h}$ is a vector of random effect coefficients for HUC $h$
 - $B_{y}$ is a vector of random effect coefficients for year $y$
 
-Each of these vectors is multiplied by a corresponding matrix containing the corresponding predictor values of each catchment $c$ and on each day $d$.
+Each of these vectors is multiplied by a corresponding matrix containing the corresponding predictor values ($X$) of each catchment $c$ (located within HUC $h$) and on each day $d$ (within year $y$).
 
+## Fixed Effects
 
+The fixed effects are shared among all catchments within the model domain. They include the following terms:
 
+Variable     |Description
+:------------|:----------
+`intercept`  |Intercept
+`AreaSqKM`   |Total Drainage Area (km2)
+`impoundArea`|Impounded Drainage Area (km2)
+`agriculture`|Agricultural Land Cover (%)
+`devel_hi`   |High Development Land Cover (%)
+`forest`     |Riparian (200 ft Buffer) Forest Cover (%)
+`prcp2`      |2-day Precipitation (mm)
+`prcp30`     |30-day Precipitation (mm)
 
+The fixed effects also include the following interaction terms.
+
+Interaction Term     |Description
+:--------------------|:-----------------------------------
+`prcp2.da`           |2-day Precipitaation x Drainage Area
+`prcp30.da`          |30-day Precipitaation x Drainage Area
+`airTemp.da`         |Air Temperature x Total Drainage Area
+`airTemp.impoundArea`|Air Temperature x Impounded Drainage Area
+`airTemp.agriculture`|Air Temperature x Agricultural Land Cover
+`airTemp.forest`     |Air Temperature x Riparian (200 ft Buffer) Forest Cover
+`airTemp.devel_hi`   |Air Temperature x High Development Land Cover
+`airTemp.prcp2`      |Air Temperature x 2-day Precipitation
+`airTemp.prcp30`     |Air Temperature x 30-day Precipitation
+`airTemp.prcp2.da`   |Air Temperature x 2-day Precipitation x Drainage Area
+`airTemp.prcp30.da`  |Air Temperature x 30-day Precipitation x Drainage Area
+
+## Catchment Random Effects
+
+The random effects for each catchment ($c$) include the following variables:
+
+Variable   |Description
+:----------|:----------
+`intercept`|Intercept
+`airTemp`  |Air Temperature (degC)
+`temp7p`   |7-day Mean Air Temperature (degC)
+
+## HUC Random Effects
+
+The random effects for each HUC ($h$) include the following variables:
+
+Variable   |Description
+:----------|:----------
+`intercept`|Intercept
+`airTemp`  |Air Temperature (degC)
+`temp7p`   |7-day Mean Air Temperature (degC)
+
+## Year Random Effects
+
+The random effects for each year ($y$) include the following variables:
+
+Variable   |Description
+:----------|:----------
+`intercept`|Intercept

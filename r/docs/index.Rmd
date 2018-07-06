@@ -1,7 +1,7 @@
 --- 
 title: "SHEDS Stream Temperature Model"
-author: "Jeffrey D Walker, PhD"
-date: "v0.9.1 (Jun 6, 2018)"
+author: "[Jeff Walker](https://walkerenvres.com), [Ben Letcher](https://www.lsc.usgs.gov/?q=cafb-ben-letcher), and [Dan Hocking](https://hockinglab.weebly.com/)"
+date: "v0.9.2 (Jul 6, 2018)"
 site: bookdown::bookdown_site
 output: bookdown::gitbook
 documentclass: book
@@ -18,6 +18,8 @@ source("../functions.R")
 config <- load_config("../../")
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, comment = NA)
 
+theme_set(theme_bw())
+
 diagnostics <- readRDS(file.path(config$wd, "model-diagnostics.rds"))
 calib <- diagnostics$calib
 valid <- diagnostics$valid
@@ -25,9 +27,9 @@ valid <- diagnostics$valid
 
 # Introduction {#intro}
 
-Welcome to the SHEDS stream temperature model documentation.
+The SHEDS stream temperature model was developed to predict daily stream temperatures at both gauged and un-gauged catchments across the northeast U.S. based on geospatial characteristics and weather conditions.
 
-The stream temperature model is a linear mixed effects model that accounts for spatial and temporal correlations using a hierachical Bayesian structure. @Letcher2016 describe the initial development of this model framework, and apply it to a small region in western Massachusetts. See the [Model Overview] section below for a brief introduction to the model, or the [Theory] section a more detailed explanation.
+The model is based on a linear mixed effects framework that accounts for spatial and temporal correlations using a hierachical Bayesian structure. @Letcher2016 describe the initial development of this model framework, and apply it to a small region in western Massachusetts. See the [Model Overview] section below for a brief introduction to the model, or the [Theory] section a more detailed explanation.
 
 The documentation is divided into the following sections:
 
@@ -37,39 +39,88 @@ The documentation is divided into the following sections:
 1. [Data Processing] : describes how input datasets are processed prior to model fitting (i.e. QAQC procedures) 
 1. [Calibration and Validation] : describes how well the model predicts stream temperature based on observations that were included (calibration) and excluded (validation) from the model fitting process
 1. [Predictions] : describes how predictions are generated after the model is calibrated and describes the various summary metrics that are computed for each catchment
-1. [Downloads] : provides links to access the input datasets and mode output
 
 The model will be periodically updated and re-calibrated (approximately once every 6 months) to incorporate any new temperature observations, and to make any necessary revisions to the data processing and/or model structure. With each update, a new version will be assigned to the model, and this documentation website will be updated to reflect the most recent performance of the model. A brief summary of the changes associated with each new version is provided in the [Change Log](#change-log) below.
 
 ## Model Overview
 
-The SHEDS stream temperature model predicts daily mean stream temperature based on geospatial characteristics and daily weather conditions. Predictions are made at a relatively fine spatial resultion based on a customized catchment delineation (average size about 2 km^2^) across the northeast U.S. from Maine to Virginia. 
+The SHEDS stream temperature model predicts daily mean stream temperature based on geospatial characteristics and daily weather conditions. Predictions are made at a relatively fine spatial resultion based on a customized catchment delineation (average size about 2 km^2^) across the northeast U.S. from Maine to Virginia. Predictions are limited to streams and rivers with drainage areas less than 200 km^2^. Heavily impounded rivers are also excluded from the model.
 
-The model uses a hierarchical Bayesian structure to account for spatial correlation in temperature between near-by locations through random effects for both the individual catchments and the larger watershed (HUC8) containing that catchment. THerefore, catchments within the same HUC8 watershed share a set of HUC-specific coefficients.
+The model uses a hierarchical Bayesian structure to account for spatial correlation in temperature between near-by locations through random effects for both the individual catchments and the larger watershed (HUC8) containing that catchment. Therefore, catchments within the same HUC8 watershed share a set of HUC-specific coefficients. Year to year variations in temperature are also accounted for using a random effect for the year.
 
-Year to year variations in temperature are also accounted for using a random effect for the year.
+## Current Snapshot
 
-## Performance Snapshot
+Table \@ref(tab:table-intro-gof) provides a snapshot of the calibration and validation performance for the current version of the model (v`r config$version`). More details about the model performance can be found in the [Calibration and Validation] section.
 
-The following is a brief summary of the model calibration and validation performance for the current version. More details about the model performance can be found in the [Calibration and Validation] section.
-
-```{r}
-tribble(
-  ~Var, ~Calibration, ~Validation,
-  "# Observations", scales::comma(calib$summary$n_obs), scales::comma(valid$summary$n_obs),
-  "# Catchments",   scales::comma(calib$summary$n_catchment), scales::comma(valid$summary$n_catchment),
-  "# Years",        scales::comma(calib$summary$n_year), scales::comma(valid$summary$n_year),
-  "RMSE",           sprintf("%.2f", calib$summary$rmse_trend), sprintf("%.2f", valid$summary$rmse_trend),
-  "Mean Residual",  sprintf("%.2f", calib$summary$mean_resid_trend), sprintf("%.2f", valid$summary$mean_resid_trend),
-  "Median Residual",  sprintf("%.2f", calib$summary$median_resid_trend), sprintf("%.2f", valid$summary$median_resid_trend),
-  "Mean Absolute Residual",  sprintf("%.2f", calib$summary$mean_abs_resid_trend), sprintf("%.2f", valid$summary$mean_abs_resid_trend),
-  "Median Absolute Residual",  sprintf("%.2f", calib$summary$median_abs_resid_trend), sprintf("%.2f", valid$summary$median_abs_resid_trend)
-) %>% 
-  knitr::kable(align = "lrr")
+```{r table-intro-gof}
+stat_labels <- c(
+  "n_obs" = "# Observations",
+  "n_deploy" = "# Time Series",
+  "n_catchment" = "# Catchments",
+  "n_huc8" = "# HUC8s",
+  "n_year" = "# Years",
+  "lab_rmse" = "RMSE (degC)",
+  "lab_mean_resid" = "Mean Residual (degC)",
+  "lab_median_resid" = "Median Residual (degC)",
+  "lab_mean_abs_resid" = "Mean Absolute Residual (degC)",
+  "lab_median_abs_resid" = "Median Absolute Residual (degC)",
+  "lab_min_resid" = "Minimum Residual (degC)",
+  "lab_q01_resid" = "1st Percentile Residual (degC)",
+  "lab_q99_resid" = "99th Percentile Residual (degC)",
+  "lab_max_resid" = "Maximum Residual (degC)"
+)
+bind_cols(
+  data_frame(
+    dataset = c("calibration", "validation")
+  ),
+  as_data_frame(
+    bind_rows(calib$summary, valid$summary)
+  )
+) %>%
+  mutate_at(vars(starts_with("n_")), scales::comma) %>% 
+  mutate_at(
+    vars(
+      rmse, rmse_trend,
+      mean_resid, mean_resid_trend,
+      median_resid, median_resid_trend,
+      mean_abs_resid, mean_abs_resid_trend,
+      median_abs_resid, median_abs_resid_trend,
+      min_resid, min_resid_trend,
+      q01_resid, q01_resid_trend,
+      q99_resid, q99_resid_trend,
+      max_resid, max_resid_trend
+    ),
+    ~ sprintf("%.3f", .)
+  ) %>% 
+  mutate(
+    lab_rmse = paste0(rmse, " (", rmse_trend, ")"),
+    lab_mean_resid = paste0(mean_resid, " (", mean_resid_trend, ")"),
+    lab_median_resid = paste0(median_resid, " (", median_resid_trend, ")"),
+    lab_mean_abs_resid = paste0(mean_abs_resid, " (", mean_abs_resid_trend, ")"),
+    lab_median_abs_resid = paste0(median_abs_resid, " (", median_abs_resid_trend, ")"),
+    lab_min_resid = paste0(min_resid, " (", min_resid_trend, ")"),
+    lab_q01_resid = paste0(q01_resid, " (", q01_resid_trend, ")"),
+    lab_q99_resid = paste0(q99_resid, " (", q99_resid_trend, ")"),
+    lab_max_resid = paste0(max_resid, " (", max_resid_trend, ")")
+  ) %>% 
+  select(dataset, starts_with("n_"), starts_with("lab_")) %>% 
+  gather(stat, value, -dataset) %>% 
+  spread(dataset, value) %>% 
+  mutate(
+    stat = factor(stat, ordered = TRUE, levels = names(stat_labels))
+  ) %>% 
+  arrange(stat) %>% 
+  mutate(
+    stat_label = plyr::revalue(stat, stat_labels)
+  ) %>% 
+  select(-stat) %>% 
+  select(stat_label, calibration, validation) %>% 
+  knitr::kable(
+    align = "lrr", 
+    col.names = c("", "Calibration", "Validation"),
+    caption = "Summary statistics of model calibration and validation (values in parentheses denote value when temporal auto-correlation term is excluded)"
+  )
 ```
-
-
-
 
 ## Model Versioning
 
@@ -85,6 +136,8 @@ The source code for the model itself and this documentation is available in the 
 
 ## Change Log {#change-log}
 
+- **[v0.9.2 (Jul 6, 2018)](http://ecosheds.org/models/stream-temperature/v0.9.2/)**  
+Major updates to documentation (introduction, theory, calibration and validation sections)
 - **[v0.9.1 (Jun 6, 2018)](http://ecosheds.org/models/stream-temperature/v0.9.1/)**  
 Updates to model versioning and configuration framework, and minor updates to documentation (still incomplete).
 - **[v0.9.0 (May 30, 2018)](http://ecosheds.org/models/stream-temperature/v0.9.0/)**  

@@ -1,12 +1,19 @@
 # Data Sources {#data-sources}
 
+```{r, echo = FALSE, message = FALSE}
+library(tidyverse)
+source("../functions.R")
+config <- load_config("../../")
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, comment = NA)
+```
+
 ## Covariate Datasets
 
 ### Catchment Delineation
 
-The stream temperature model is based on the [National Hydrography Dataset High Resolution Delineation Version 2 (NHDHRDV2)](http://conte-ecology.github.io/shedsGisData/).
+The stream temperature model uses the [National Hydrography Dataset High Resolution Delineation Version 2 (NHDHRDV2)](http://conte-ecology.github.io/shedsGisData/) catchment delineation.
 
-Shapefiles of the catchment delineation can be downloaded from: http://ecosheds.org/assets/nhdhrd/v2/
+Shapefiles of the catchments can be downloaded from: http://ecosheds.org/assets/nhdhrd/v2/
 
 The `spatial_XX.zip` files contain pre-staged datasets for each HUC2 region (e.g. spatial_01.zip contains the catchments for the HUC2 region 01).
 

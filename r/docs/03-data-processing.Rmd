@@ -1,3 +1,10 @@
 # Data Processing {#data-processing}
 
-The observed stream temperature data underwent the following QAQC procedure...
+```{r, echo = FALSE, message = FALSE}
+library(tidyverse)
+source("../functions.R")
+config <- load_config("../../")
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, comment = NA)
+```
+
+Coming soon...
