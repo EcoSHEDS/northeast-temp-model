@@ -1,7 +1,7 @@
 # generate model-input from cleaned data
 # <- {wd}/data-clean.rds
 # <- {wd}/data-breakpoints.rds
-# <- {wd}/covariates.rds
+# <- {wd}/data-covariates.rds
 # <- {wd}/daymet.csv
 # -> {wd}/model-input.rds
 
@@ -18,16 +18,19 @@ suppressPackageStartupMessages(library(stringr))
 source("functions.R")
 
 config <- load_config()
+rejects <- list(
+  values = list()
+)
 
 # load data ---------------------------------------------------------------
 
 cat("loading input data frames...")
-df_temp <- readRDS(file.path(config$wd, "data-clean.rds")) %>%
+df_temp <- readRDS(file.path(config$wd, "data-clean.rds"))$data %>%
   mutate(year = year(date)) %>%
   select(featureid, year, date, temp = mean)
 df_bp <- readRDS(file.path(config$wd, "data-breakpoints.rds"))$model %>%
   select(-featureid_year)
-df_covariates <- readRDS(file.path(config$wd, "covariates.rds"))
+df_covariates <- readRDS(file.path(config$wd, "data-covariates.rds"))
 df_daymet <- read_csv(
   file.path(config$wd, "data-daymet.csv"),
   col_types = cols(
@@ -43,9 +46,12 @@ df_daymet <- read_csv(
     airTemp = (tmin + tmax) / 2
   ) %>%
   select(featureid, year, date, airTemp, prcp)
-df_huc <- readRDS(file.path(config$wd, "huc.rds")) %>%
+df_huc <- readRDS(file.path(config$wd, "data-huc.rds")) %>%
   select(featureid, huc8)
 cat("done\n")
+
+
+# transform ---------------------------------------------------------------
 
 cat("computing lagged climate variables...")
 df_daymet <- df_daymet %>%
@@ -73,57 +79,60 @@ df <- df_temp %>%
   left_join(df_covariates, by = "featureid") %>%
   left_join(df_daymet, by = c("featureid", "year", "date")) %>%
   mutate(
-    site = as.character(featureid),
     impoundArea = AreaSqKM * allonnet / 100,
     spring_bp = coalesce(spring_bp, 75),
     spring_bp = if_else(spring_bp < 75, 75, spring_bp),
     fall_bp = coalesce(fall_bp, 330),
-    fall_bp = if_else(fall_bp < 75, 75, fall_bp)
+    fall_bp = if_else(fall_bp > 330, 330, fall_bp),
+    dOY = yday(date)
   )
-cat("done ( nrow =", nrow(df), ")\n")
+cat("done (nrow = ", nrow(df), ")\n", sep = "")
 
 cat("trimming to breakpoints...")
+rejects$values$outside_bp <- df %>%
+  filter(
+    dOY < spring_bp |
+    dOY > fall_bp
+  )
 df <- df %>%
-  mutate(
-    dOY = yday(date)
-  ) %>%
   filter(
     dOY >= spring_bp,
     dOY <= fall_bp
   )
-cat("done ( nrow =", nrow(df), ")\n")
+cat("done (nrow = ", nrow(df), ", n removed = ", nrow(rejects$values$outside_bp), ")\n", sep = "")
 
 cat("joining huc...")
 df <- df %>%
   left_join(df_huc, by = "featureid")
-cat("done ( nrow =", nrow(df), ")\n")
+cat("done (nrow = ", nrow(df), ")\n", sep = "")
 
 cat("selecting columns...")
 df <- df %>%
   select(
-    site, huc8, year, date, temp,
+    featureid, huc8, year, date, temp,
     airTemp, prcp2, prcp30, temp7p,
     AreaSqKM, forest, devel_hi, agriculture, impoundArea
   )
-cat("done ( nrow =", nrow(df), ")\n")
+cat("done (nrow = ", nrow(df), ")\n", sep = "")
 
 cat("removing NAs...")
+rejects$values$incomplete_case <- df[!complete.cases(df), ]
 df <- df[complete.cases(df), ]
-cat("done ( nrow =", nrow(df), ")\n")
+cat("done (nrow = ", nrow(df), ", n excluded = ", nrow(rejects$values$incomplete_case), ")\n", sep = "")
 
 cat("removing series w/ less than 5 days of data...")
 df <- df %>%
-  arrange(site, year, date) %>%
-  group_by(site, year) %>%
+  arrange(featureid, year, date) %>%
+  group_by(featureid, year) %>%
   mutate(
     delta_date = coalesce(as.numeric(difftime(date, lag(date), units = "day")), 1)
   ) %>%
   ungroup() %>%
   mutate(
     new_series = delta_date != 1,
-    new_site = coalesce(site != lag(site), TRUE),
+    new_featureid = coalesce(featureid != lag(featureid), TRUE),
     new_year = coalesce(year != lag(year), TRUE),
-    deploy_id = cumsum(1 * (new_series | new_site | new_year))
+    deploy_id = cumsum(1 * (new_series | new_featureid | new_year))
   )
 df <- df %>%
   group_by(deploy_id) %>%
@@ -131,14 +140,19 @@ df <- df %>%
     n = n()
   ) %>%
   ungroup()
+rejects$values$n_lt_5 <- df %>%
+  filter(n < 5)
 df <- df %>%
   filter(n >= 5) %>%
-  select(-delta_date, -new_series, -new_site, -new_year, -deploy_id, -n)
-cat("done\n")
+  select(-delta_date, -new_series, -new_featureid, -new_year, -deploy_id, -n)
+cat("done (nrow = ", nrow(df), ", n excluded = ", nrow(rejects$values$n_lt_5), ")\n", sep = "")
+
+
+# standardize -------------------------------------------------------------
 
 cat("converting to long format...")
 df_long <- df %>%
-  gather(var, value, -site, -huc8, -year, -date, -temp)
+  gather(var, value, -featureid, -huc8, -year, -date, -temp)
 cat("done\n")
 
 cat("computing mean/sd of each variable...")
@@ -157,7 +171,7 @@ df <- df_long %>%
     value = (value - mean(value)) / sd(value)
   ) %>%
   spread(var, value) %>%
-  arrange(huc8, site, year, date)
+  arrange(huc8, featureid, year, date)
 cat("done\n")
 
 cat("calculating derived covariates...")
@@ -175,67 +189,73 @@ df <- df %>%
     airTemp.impoundArea = airTemp * impoundArea,
     airTemp.agriculture = airTemp * agriculture
   )
-cat("done ( nrow =", nrow(df), ")\n")
+cat("done (nrow = ", nrow(df), ")\n", sep = "")
 
 cat("splitting dataset...")
-site_years <- df %>%
-  select(site, year) %>%
+featureid_years <- df %>%
+  select(featureid, year) %>%
   distinct()
 
 set.seed(4321)
-training <- sample(1:nrow(site_years), size = round(0.9 * nrow(site_years)))
-site_years_train <- site_years[training, ]
-site_years_test <- site_years[-training, ]
+training <- sample(1:nrow(featureid_years), size = round(0.9 * nrow(featureid_years)))
+featureid_years_train <- featureid_years[training, ]
+featureid_years_test <- featureid_years[-training, ]
 
-df_train <- site_years_train %>%
-  left_join(df, by = c("site", "year"))
-df_test <- site_years_test %>%
-  left_join(df, by = c("site", "year"))
-cat("done\n")
+df_train <- featureid_years_train %>%
+  left_join(df, by = c("featureid", "year"))
+df_test <- featureid_years_test %>%
+  left_join(df, by = c("featureid", "year"))
+cat("done (n train = ", nrow(df_train), ", n test = ", nrow(df_test), ")\n", sep = "")
 
 cat("indexing deployments...")
 df_train <- df_train %>%
   mutate(
-    site_id = as.numeric(as.factor(site)),
+    featureid_id = as.numeric(as.factor(featureid)),
     huc8_id = as.numeric(as.factor(huc8)),
     year_id = as.numeric(as.factor(year))
   ) %>%
-  arrange(huc8_id, site_id, date) %>%
+  arrange(huc8_id, featureid_id, date) %>%
   mutate(
     delta_date = as.numeric(difftime(date, lag(date), units = "day")),
     new_series = delta_date != 1,
-    new_site = coalesce(site_id != lag(site_id), TRUE),
+    new_featureid = coalesce(featureid_id != lag(featureid_id), TRUE),
     new_year = coalesce(year != lag(year), TRUE),
-    new_deploy = 1 * (new_series | new_site | new_year),
+    new_deploy = 1 * (new_series | new_featureid | new_year),
     deploy_id = cumsum(new_deploy),
-    site_id
+    featureid_id
   )
 df_test <- df_test %>%
   mutate(
-    site_id = as.numeric(as.factor(site)),
+    featureid_id = as.numeric(as.factor(featureid)),
     huc8_id = as.numeric(as.factor(huc8)),
     year_id = as.numeric(as.factor(year))
   ) %>%
-  arrange(huc8_id, site_id, date) %>%
+  arrange(huc8_id, featureid_id, date) %>%
   mutate(
     delta_date = as.numeric(difftime(date, lag(date), units = "day")),
     new_series = delta_date != 1,
-    new_site = coalesce(site_id != lag(site_id), TRUE),
+    new_featureid = coalesce(featureid_id != lag(featureid_id), TRUE),
     new_year = coalesce(year != lag(year), TRUE),
-    new_deploy = 1 * (new_series | new_site | new_year),
+    new_deploy = 1 * (new_series | new_featureid | new_year),
     deploy_id = cumsum(new_deploy)
   )
 
 ids <- list(
-  site = df_train %>% select(site, site_id) %>% distinct() %>% arrange(site_id),
+  featureid = df_train %>% select(featureid, featureid_id) %>% distinct() %>% arrange(featureid_id),
   huc8 = df_train %>% select(huc8, huc8_id) %>% distinct() %>% arrange(huc8_id),
   year = df_train %>% select(year, year_id) %>% distinct() %>% arrange(year_id)
 )
 
-# J = nrow(rand_ids$site)
-# M = nrow(rand_ids$huc8)
-# Ti = nrow(rand_ids$year)
+cat("done\n")
 
+# J = nrow(ids$featureid)
+# M = nrow(ids$huc8)
+# Ti = nrow(ids$year)
+
+
+# export ------------------------------------------------------------------
+
+cat("saving to model-input.rds...")
 list(
   train = df_train,
   test = df_test,
@@ -243,7 +263,10 @@ list(
   std = df_std
 ) %>%
   saveRDS(file.path(config$wd, "model-input.rds"))
+cat("done\n")
+
+# end ---------------------------------------------------------------------
 
 end <- lubridate::now(tzone = "US/Eastern")
 elapsed <- as.numeric(difftime(end, start, tz = "US/Eastern", units = "sec"))
-cat("finished model-input:", as.character(end, tz = "US/Eastern"), "( elapsed =", round(elapsed / 60, digits = 1), "min )\n")
+cat("finished model-input: ", as.character(end, tz = "US/Eastern"), " (elapsed = ", round(elapsed / 60, digits = 1), " min)\n", sep = "")
