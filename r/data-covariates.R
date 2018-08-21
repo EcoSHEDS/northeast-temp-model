@@ -1,5 +1,5 @@
 # fetch covariates from database
-# -> {wd}/covariates.rds
+# -> {wd}/data-covariates.rds
 
 start <- lubridate::now(tzone = "US/Eastern")
 cat("starting data-covariates:", as.character(start, tz = "US/Eastern"), "\n")
@@ -14,7 +14,7 @@ config <- load_config()
 
 # load data ---------------------------------------------------------------
 
-cat("connecting to db ( host =", config$db$host, ", dbname =", config$db$dbname, ")...")
+cat("connecting to db (host = ", config$db$host, ", dbname = ", config$db$dbname, ")...", sep = "")
 con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
 cat("done\n")
 
@@ -28,7 +28,7 @@ df_covariates_upstream <- tbl(con, "covariates") %>%
   ) %>%
   collect() %>%
   select(featureid, variable, value)
-cat("done ( nrow =", nrow(df_covariates_upstream), ")\n")
+cat("done (nrow = ", nrow(df_covariates_upstream), ")\n", sep = "")
 
 # riparian
 cat("fetching riparian covariates...")
@@ -40,23 +40,29 @@ df_covariates_riparian <- tbl(con, "covariates") %>%
   ) %>%
   collect() %>%
   select(featureid, variable, value)
-cat("done ( nrow =", nrow(df_covariates_riparian), ")\n")
+cat("done (nrow = ", nrow(df_covariates_riparian), ")\n", sep = "")
 
 cat("disconnecting from db...")
 diconnected <- dbDisconnect(con)
 cat("done\n")
+
+# merge -------------------------------------------------------------------
 
 cat("merging upstream and riparian covariates...")
 df_covariates <- bind_rows(df_covariates_upstream, df_covariates_riparian) %>%
   spread(variable, value)
 cat("done\n")
 
-cat("saving to data/covariates.rds...")
+# export ------------------------------------------------------------------
+
+cat("saving to data-covariates.rds...")
 df_covariates %>%
-  saveRDS(file.path(config$wd, "covariates.rds"))
+  saveRDS(file.path(config$wd, "data-covariates.rds"))
 cat("done\n")
+
+
+# end ---------------------------------------------------------------------
 
 end <- lubridate::now(tzone = "US/Eastern")
 elapsed <- as.numeric(difftime(end, start, tz = "US/Eastern", units = "sec"))
-cat("finished data-covariates:", as.character(end, tz = "US/Eastern"), "( elapsed =", round(elapsed / 60, digits = 1), "min )\n")
-
+cat("finished data-covariates: ", as.character(end, tz = "US/Eastern"), " (elapsed = ", round(elapsed / 60, digits = 1), " min)\n", sep = "")

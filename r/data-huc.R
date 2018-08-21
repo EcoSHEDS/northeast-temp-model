@@ -1,8 +1,8 @@
-# retrieve featureid-huc table
-# -> {wd}/huc.rds
+# fetch featureid-huc table
+# -> {wd}/data-huc.rds
 
 start <- lubridate::now(tzone = "US/Eastern")
-cat("starting data-huc:", as.character(start, tz = "US/Eastern"), "\n")
+cat("starting data-huc: ", as.character(start, tz = "US/Eastern"), "\n", sep = "")
 
 suppressPackageStartupMessages(library(RPostgreSQL))
 suppressPackageStartupMessages(library(tidyverse))
@@ -15,7 +15,7 @@ config <- load_config()
 
 # load data ---------------------------------------------------------------
 
-cat("connecting to db ( host =", config$db$host, ", dbname =", config$db$dbname, ")...")
+cat("connecting to db (host = ", config$db$host, ", dbname = ", config$db$dbname, ")...", sep = "")
 con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
 cat("done\n")
 
@@ -35,8 +35,18 @@ cat("disconnecting from db...")
 disconnected <- dbDisconnect(con)
 cat("done\n")
 
-cat("exporting huc8.rds...")
+
+# export ------------------------------------------------------------------
+
+cat("exporting data-huc.rds...")
 df_huc %>%
   select(featureid, huc2, huc4, huc8, huc10, huc12) %>%
-  saveRDS(file.path(config$wd, "huc.rds"))
+  saveRDS(file.path(config$wd, "data-huc.rds"))
 cat("done\n")
+
+
+# end ---------------------------------------------------------------------
+
+end <- lubridate::now(tzone = "US/Eastern")
+elapsed <- as.numeric(difftime(end, start, tz = "US/Eastern", units = "sec"))
+cat("finished data-huc: ", as.character(end, tz = "US/Eastern"), " (elapsed = ", round(elapsed / 60, digits = 1), " min)\n", sep = "")

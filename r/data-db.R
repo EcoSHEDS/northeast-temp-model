@@ -4,7 +4,7 @@
 # -> {wd}/daymet-featureid_year.csv
 
 start <- lubridate::now(tzone = "US/Eastern")
-cat("starting data-db:", as.character(start, tz = "US/Eastern"), "\n")
+cat("starting data-db: ", as.character(start, tz = "US/Eastern"), "\n", sep = "")
 
 suppressPackageStartupMessages(library(RPostgreSQL))
 suppressPackageStartupMessages(library(tidyverse))
@@ -14,6 +14,8 @@ suppressPackageStartupMessages(library(lubridate))
 source("functions.R")
 
 config <- load_config()
+
+EXCLUDE_AGENCY_IDS <- c("TEST")
 
 # load data ---------------------------------------------------------------
 
@@ -25,9 +27,9 @@ locations_exclude <- read_table(
     location_id = col_integer()
   )
 )
-cat("done ( n =", length(locations_exclude$location_id), ")\n")
+cat("done (n = ", length(locations_exclude$location_id), ")\n", sep = "")
 
-cat("connecting to db ( host =", config$db$host, ", dbname =", config$db$dbname, ")...")
+cat("connecting to db (host = ", config$db$host, ", dbname = ", config$db$dbname, ")...", sep = "")
 con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user)
 cat("done\n")
 
@@ -36,9 +38,9 @@ db_agencies <- tbl(con, "agencies")
 df_agencies <- collect(db_agencies)
 
 agencies_exclude <- df_agencies %>%
-  filter(name %in% config$dataset$agencies$exclude) %>%
+  filter(name %in% EXCLUDE_AGENCY_IDS) %>%
   select(agency_id = id)
-cat("done ( nrow =", nrow(df_agencies), ", excluding =", nrow(agencies_exclude), ")\n")
+cat("done (nrow = ", nrow(df_agencies), ", excluding = ", nrow(agencies_exclude), ")\n", sep = "")
 
 cat("retrieving locations...")
 db_locations <- tbl(con, "locations") %>%
@@ -47,7 +49,7 @@ db_locations <- tbl(con, "locations") %>%
     !agency_id %in% agencies_exclude$agency_id
   )
 df_locations <- collect(db_locations)
-cat("done ( nrow =", nrow(df_locations), ")\n")
+cat("done (nrow = ", nrow(df_locations), ")\n", sep = "")
 
 cat("retrieving series...")
 suppressWarnings({
@@ -59,7 +61,7 @@ suppressWarnings({
     )
   df_series <- collect(db_series)
 })
-cat("done ( nrow =", nrow(df_series), ")\n")
+cat("done (nrow = ", nrow(df_series), ")\n", sep = "")
 
 cat("retrieving values...")
 db_values <- tbl(con, "values") %>%
@@ -84,21 +86,22 @@ db_values <- tbl(con, "values") %>%
 #   user  system elapsed
 # 14.765   4.654 538.003 (9 min)
 df_values <- collect(db_values)
-cat("done ( nrow =", nrow(df_values), ")\n")
+cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
 
 cat("disconnecting from db...")
 disconnected <- dbDisconnect(con)
 cat("done\n")
 
-out_file <- file.path(config$wd, "data-db.rds")
-cat("saving db dataset to", out_file, "...")
+# export ------------------------------------------------------------------
+
+cat("saving db dataset to data-db.rds...")
 list(
   agencies = df_agencies,
   locations = df_locations,
   series = df_series,
   values = df_values
 ) %>%
-  saveRDS(out_file)
+  saveRDS(file.path(config$wd, "data-db.rds"))
 cat("done\n")
 
 cat("writing featureid/year list to daymet_featureid_year.csv...")
@@ -125,7 +128,9 @@ df_daymet %>%
   write_csv(path = file.path(config$wd, "daymet-featureid_year.csv"))
 cat("done\n")
 
+
+# end ---------------------------------------------------------------------
+
 end <- lubridate::now(tzone = "US/Eastern")
 elapsed <- as.numeric(difftime(end, start, tz = "US/Eastern", units = "sec"))
-
-cat("finished data-db:", as.character(end, tz = "US/Eastern"), "( elapsed =", round(elapsed / 60, digits = 1), "min )\n")
+cat("finished data-db: ", as.character(end, tz = "US/Eastern"), " (elapsed = ", round(elapsed / 60, digits = 1), " min)\n", sep = "")

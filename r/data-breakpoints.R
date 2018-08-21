@@ -3,7 +3,7 @@
 # -> {wd}/data-breakpoints.rds
 
 start <- lubridate::now(tzone = "US/Eastern")
-cat("starting data-breakpoints:", as.character(start, tz = "US/Eastern"), "\n")
+cat("starting data-breakpoints: ", as.character(start, tz = "US/Eastern"), "\n", sep = "")
 
 suppressPackageStartupMessages(library(RPostgreSQL))
 suppressPackageStartupMessages(library(tidyverse))
@@ -20,8 +20,11 @@ config <- load_config()
 
 # load data ---------------------------------------------------------------
 
-df <- readRDS(file.path(config$wd, "data-clean.rds"))
+cat("loading data-clean.rds...")
+df <- readRDS(file.path(config$wd, "data-clean.rds"))$data
+cat("done\n")
 
+cat("nesting data...")
 df <- df %>%
   mutate(
     year = year(date),
@@ -59,6 +62,7 @@ df <- df %>%
       )
     })
   )
+cat("done\n")
 
 df %>%
   unnest(breaks) %>%
@@ -73,6 +77,7 @@ df %>%
   ggplot(aes(q_hi-q_lo)) +
   geom_histogram()
 
+cat("computing breakpoints...")
 # Set range (dOY) and count for assigning spring BP
 complete_spring_jday <- c(15, 175)
 complete_spring_n <- round((complete_spring_jday[2] - complete_spring_jday[1]) * 0.9)
@@ -113,45 +118,6 @@ df <- df %>%
 #   geom_point() +
 #   geom_line() +
 #   facet_wrap(~var, ncol = 1)
-
-df_spring <- df %>%
-  filter(complete_spring) %>%
-  mutate(
-    data_sync = map2(data, breaks, function (x, breaks) {
-      x %>%
-        mutate(jday = yday(date)) %>%
-        filter(jday >= 1, jday <= (200 + numForwardSpring - 1)) %>%
-        complete(jday = 1:(200 + numForwardSpring - 1)) %>%
-        mutate(
-          sync = roll_temp_index >= breaks$q_lo & roll_temp_index <= breaks$q_hi,
-          sync = coalesce(sync, TRUE),
-          roll_sync = rollapply(sync, width = numForwardSpring, align = "left", all, fill = NA)
-        )
-    }),
-    spring_bp = map_int(data_sync, function (x) {
-      as.integer(min(yday(x$date[x$roll_sync]), na.rm = TRUE))
-    })
-  )
-
-df_fall <- df %>%
-  filter(complete_fall) %>%
-  mutate(
-    data_sync = map2(data, breaks, function (x, breaks) {
-      x %>%
-        mutate(jday = yday(date)) %>%
-        filter(jday >= 225, jday <= (350 + numForwardFall - 1)) %>%
-        complete(jday = 1:(350 + numForwardSpring - 1)) %>%
-        mutate(
-          sync = roll_temp_index >= breaks$q_lo & roll_temp_index <= breaks$q_hi,
-          sync = coalesce(sync, TRUE),
-          roll_sync = rollapply(sync, width = numForwardFall, align = "left", all, fill = NA)
-        )
-    }),
-    fall_bp = map_int(data_sync, function (x) {
-      as.integer(max(yday(x$date[x$roll_sync]), na.rm = TRUE))
-    })
-  )
-
 
 df <- df %>%
   mutate(
@@ -200,6 +166,7 @@ df <- df %>%
       out
     })
   )
+cat("done\n")
 
 df %>%
   select(spring_bp, fall_bp) %>%
@@ -268,7 +235,7 @@ df %>%
 # compute average breakpoints ---------------------------------------------
 
 cat("loading hucs...")
-df_huc <- readRDS(file.path(config$wd, "huc.rds"))
+df_huc <- readRDS(file.path(config$wd, "data-huc.rds"))
 cat("done\n")
 
 cat("joining huc...")
@@ -313,8 +280,6 @@ df_huc12 <- df %>%
     fall_bp_huc12_mean = mean(fall_bp, na.rm = TRUE)
   )
 cat("done\n")
-
-
 
 cat("fill missing breakpoints with featureid/huc means...")
 df_fill <- df %>%
@@ -471,12 +436,13 @@ df_fill <- df_fill %>%
       fall_bp
     )
   )
+cat("done\n")
 
 stopifnot(all(!is.na(df_fill$spring_bp)))
 stopifnot(all(!is.na(df_fill$fall_bp)))
 
-table(df_fill$spring_bp_src)
-table(df_fill$fall_bp_src)
+# table(df_fill$spring_bp_src)
+# table(df_fill$fall_bp_src)
 
 df_fill %>%
   ggplot(aes(spring_bp, fill = spring_bp_src)) +
@@ -489,6 +455,7 @@ df_fill %>%
 
 # export ------------------------------------------------------------------
 
+cat("saving to data-breakpoints.rds...")
 list(
   model = df_fill %>%
     select(featureid, year, featureid_year, spring_bp, fall_bp),
@@ -499,7 +466,10 @@ list(
   huc12 = df_huc12
 ) %>%
   saveRDS(file.path(config$wd, "data-breakpoints.rds"))
+cat("done\n")
+
+# end ---------------------------------------------------------------------
 
 end <- lubridate::now(tzone = "US/Eastern")
 elapsed <- as.numeric(difftime(end, start, tz = "US/Eastern", units = "sec"))
-cat("finished data-breakpoints:", as.character(end, tz = "US/Eastern"), "( elapsed =", round(elapsed / 60, digits = 1), "min )\n")
+cat("finished data-breakpoints: ", as.character(end, tz = "US/Eastern"), " (elapsed = ", round(elapsed / 60, digits = 1), " min)\n", sep = "")
