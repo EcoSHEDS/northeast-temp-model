@@ -2,7 +2,7 @@ model {
   for(i in 1:nFirstObsRows) {
     trend[firstObsRows[i]] <- inprod(B.0[], X.0[firstObsRows[i], ]) +
       inprod(B.site[site[firstObsRows[i]], ], X.site[firstObsRows[i], ]) +
-      inprod(B.huc[huc[firstObsRows[i]], ], X.site[firstObsRows[i], ]) +
+      inprod(B.huc[huc[firstObsRows[i]], ], X.huc[firstObsRows[i], ]) +
       inprod(B.year[year[firstObsRows[i]], ], X.year[firstObsRows[i]])
 
     stream.mu[firstObsRows[i]] <- trend[firstObsRows[i]]
@@ -11,7 +11,7 @@ model {
   for(i in 1:nEvalRows) {
     trend[evalRows[i]] <- inprod(B.0[], X.0[evalRows[i], ]) +
       inprod(B.site[site[evalRows[i]], ], X.site[evalRows[i], ]) +
-      inprod(B.huc[huc[evalRows[i]], ], X.site[evalRows[i], ]) +
+      inprod(B.huc[huc[evalRows[i]], ], X.huc[evalRows[i], ]) +
       inprod(B.year[year[evalRows[i]], ], X.year[evalRows[i]])
 
     stream.mu[evalRows[i]] <- trend[evalRows[i]] + B.ar1 * (temp[evalRows[i]-1] - trend[evalRows[i]-1])
@@ -35,49 +35,49 @@ model {
   }
 
   # SITE EFFECTS
-  for(k in 1:K) {
+  for(k in 1:K.site) {
     sigma.b.site[k] ~ dunif(0, 100)
     tau.b.site[k] <- 1 / (sigma.b.site[k] * sigma.b.site[k])
-    for(j in 1:J) {
-      B.site[j, k] ~ dnorm(0, tau.b.site[k])
+    for(i in 1:N.site) {
+      B.site[i, k] ~ dnorm(0, tau.b.site[k])
     }
   }
 
   # HUC EFFECTS
-  for(m in 1:M){
-    B.huc.raw[m, 1:K] ~ dmnorm(mu.huc.raw[1:K], tau.B.huc.raw[ , ])
+  for(i in 1:N.huc){
+    B.huc.raw[i, 1:N.huc] ~ dmnorm(mu.huc.raw[1:N.huc], tau.B.huc.raw[ , ])
   }
   mu.huc.raw[1] <- 0
   mu.huc[1] <- mu.huc.raw[1]
-  for(k in 2:K){
+  for(k in 2:K.huc){
     mu.huc.raw[k] ~ dnorm(0, 0.0001)
     mu.huc[k] <- mu.huc.raw[k]
   }
-  for(m in 1:M) {
-    for(k in 1:K) {
-      B.huc[m, k] <- B.huc.raw[m, k]
+  for(i in 1:N.huc) {
+    for(k in 1:K.huc) {
+      B.huc[i, k] <- B.huc.raw[i, k]
     }
   }
 
   # MULTIVARIATE NORMAL STD DEV PRIOR
-  tau.B.huc.raw[1:K, 1:K] ~ dwish(W.huc[ , ], df.huc)
-  df.huc <- K + 1
-  sigma.B.huc.raw[1:K, 1:K] <- inverse(tau.B.huc.raw[ , ])
-  for(k in 1:K){
-    for(k.prime in 1:K){
+  tau.B.huc.raw[1:K.huc, 1:K.huc] ~ dwish(W.huc[ , ], df.huc)
+  df.huc <- K.huc + 1
+  sigma.B.huc.raw[1:K.huc, 1:K.huc] <- inverse(tau.B.huc.raw[ , ])
+  for(k in 1:K.huc) {
+    for(k.prime in 1:K.huc){
       rho.B.huc[k, k.prime] <- sigma.B.huc.raw[k, k.prime]/sqrt(sigma.B.huc.raw[k, k]*sigma.B.huc.raw[k.prime, k.prime])
     }
   }
-  for(k in 1:K) {
+  for(k in 1:K.huc) {
     sigma.b.huc[k] <- sqrt(sigma.B.huc.raw[k, k])
   }
 
   # YEAR EFFECTS
-  for(l in 1:L) {
-    sigma.b.year[l] ~ dunif(0, 100)
-    tau.b.year[l] <- 1 / (sigma.b.year[l] * sigma.b.year[l])
-    for(t in 1:Ti){
-      B.year[t, l] ~ dnorm(0, tau.b.year[l])
+  for(k in 1:K.year) {
+    sigma.b.year[k] ~ dunif(0, 100)
+    tau.b.year[k] <- 1 / (sigma.b.year[k] * sigma.b.year[k])
+    for(i in 1:N.year) {
+      B.year[i, k] ~ dnorm(0, tau.b.year[k])
     }
   }
 }
