@@ -6,7 +6,7 @@
 set -eu
 set -o pipefail
 
-. ./load_config.sh
+. ./load-config.sh
 
 echo Identifying locations near impoundments...
 
