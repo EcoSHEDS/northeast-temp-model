@@ -5,12 +5,7 @@
 start <- lubridate::now(tzone = "US/Eastern")
 cat("starting model-execute: ", as.character(start, tz = "US/Eastern"), "\n", sep = "")
 
-suppressPackageStartupMessages(library(RPostgreSQL))
 suppressPackageStartupMessages(library(tidyverse))
-suppressPackageStartupMessages(library(jsonlite))
-suppressPackageStartupMessages(library(lubridate))
-suppressPackageStartupMessages(library(zoo))
-suppressPackageStartupMessages(library(stringr))
 suppressPackageStartupMessages(library(jagsUI))
 
 source("functions.R")
@@ -33,11 +28,9 @@ df <- df_inp %>%
   )
 first_rows <- which(df$new_deploy == 1)
 eval_rows <- which(df$new_deploy == 0)
-
 cat("done\n")
 
 cat("setting up model params...")
-
 cov.list <- list(
   fixed.ef = c(
     "intercept",
@@ -174,7 +167,7 @@ cat("done\n")
 cat("copying temp-model.jags...")
 copied <- file.copy("jags/temp-model.jags", file.path(config$wd, "temp-model.jags"), overwrite = TRUE)
 if (!copied) {
-  stop("Failed to copy JAGS model definition file")
+  stop("ERROR: Failed to copy JAGS model definition file")
 }
 cat("done\n")
 
