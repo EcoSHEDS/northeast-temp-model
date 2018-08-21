@@ -45,7 +45,7 @@ model {
 
   # HUC EFFECTS
   for(i in 1:N.huc){
-    B.huc.raw[i, 1:N.huc] ~ dmnorm(mu.huc.raw[1:N.huc], tau.B.huc.raw[ , ])
+    B.huc.raw[i, 1:K.huc] ~ dmnorm(mu.huc.raw[1:K.huc], tau.B.huc.raw[ , ])
   }
   mu.huc.raw[1] <- 0
   mu.huc[1] <- mu.huc.raw[1]
