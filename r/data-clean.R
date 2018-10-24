@@ -581,7 +581,7 @@ df_values %>%
   ggplot(aes(pour_distance_m, cumsum_n)) +
   geom_point()
 
-cat("excluding", length(unique(df_values[df_values$line_distance_m > 60, ]$location_id)), "locations with flowline distance > 100 m")
+cat("excluding", length(unique(df_values[df_values$line_distance_m > 60, ]$location_id)), "locations with flowline distance > 60 m")
 rejects$locations <- list(
   line_distance_gt_60m <- df_values %>%
     filter(line_distance_m > 60)
