@@ -1,6 +1,6 @@
 # generate predictions for all catchments
-# <- covariates.rds
-# <- huc.rds
+# <- data-covariates.rds
+# <- data-huc.rds
 # <- model-input.rds
 # <- model-output.rds
 # -> model-predict-year.rds
@@ -31,11 +31,11 @@ registerDoParallel(cl)
 # load --------------------------------------------------------------------
 
 cat("loading hucs...")
-df_huc <- readRDS(file.path(config$wd, "huc.rds"))
+df_huc <- readRDS(file.path(config$wd, "data-huc.rds"))
 cat("done (nrow = ", nrow(df_huc), ")\n", sep = "")
 
 cat("loading covariates...")
-df_covariates <- readRDS(file.path(config$wd, "covariates.rds")) %>%
+df_covariates <- readRDS(file.path(config$wd, "data-covariates.rds")) %>%
   filter(
     AreaSqKM <= 200,
     allonnet < 70
@@ -128,7 +128,6 @@ predict_daily <- function (featureids) {
     left_join(df_huc, by = "featureid") %>%
     left_join(df_daymet, by = "featureid") %>%
     mutate(
-      site = as.character(featureid),
       spring_bp = 75,
       fall_bp = 330
     ) %>%
@@ -140,14 +139,14 @@ predict_daily <- function (featureids) {
       dOY <= fall_bp
     ) %>%
     select(
-      site, huc8, year, date,
+      featureid, huc8, year, date,
       airTemp, prcp2, prcp30, temp7p,
       AreaSqKM, forest, devel_hi, agriculture, impoundArea
     )
 
   # standardize covariates
   df <- df %>%
-    gather(var, value, -site, -huc8, -year, -date) %>%
+    gather(var, value, -featureid, -huc8, -year, -date) %>%
     left_join(df_cov_std, by = "var") %>%
     mutate(value = (value - mean) / sd) %>%
     select(-mean, -sd) %>%
@@ -169,12 +168,13 @@ predict_daily <- function (featureids) {
       airTemp.agriculture = airTemp * agriculture,
       intercept = 1,
       intercept.site = 1,
+      intercept.huc = 1,
       intercept.year = 1
     )
 
   # add id columns
   df <- df %>%
-    left_join(ids_list$site, by = "site") %>%
+    left_join(ids_list$featureid, by = "featureid") %>%
     left_join(ids_list$huc8, by = "huc8") %>%
     left_join(ids_list$year, by = "year")
 
@@ -188,7 +188,7 @@ predict_daily <- function (featureids) {
   X.site <- df %>%
     select(one_of(cov_list$site.ef)) %>%
     as.matrix()
-  B.site <- coef_list$site[df$site_id, ]
+  B.site <- coef_list$site[df$featureid_id, ]
   for (i in seq_along(B.site.mean)) {
     B.site[is.na(B.site[, i]), i] <- B.site.mean[i]
   }
@@ -214,17 +214,16 @@ predict_daily <- function (featureids) {
 
   Y <- Y.0 + Y.site + Y.year + Y.huc
 
-  df %>%
+  df <- df %>%
     mutate(
       temp = Y
     ) %>%
     left_join(
       df_daymet %>%
-        select(site = featureid, date, airTemp_degC = airTemp) %>%
-        mutate(site = as.character(site)),
-      by = c("site", "date")
+        select(featureid, date, airTemp_degC = airTemp),
+      by = c("featureid", "date")
     ) %>%
-    group_by(site, year) %>%
+    group_by(featureid, year) %>%
     mutate(
       temp_30d = rollapply(
         data = temp,
@@ -236,14 +235,18 @@ predict_daily <- function (featureids) {
       )
     ) %>%
     ungroup()
+
+  df
 }
 
 # subset
 # set.seed(12345)
-# n_featureids <- 101
+# n_featureids <- 121
 # featureids <- as.integer(df_covariates$featureid) %>% sample(size = n_featureids, replace = FALSE)
 
+# full dataset
 featureids <- as.integer(df_covariates$featureid)
+
 n <- length(featureids)
 chunk_size <- 10
 n_chunks <- ceiling(n / chunk_size)
@@ -268,8 +271,8 @@ st <- system.time({
     # compute derived metrics
     df_nest <- df %>%
       mutate(month = month(date)) %>%
-      select(site, year, month, date, airTemp_degC, temp, temp_30d) %>%
-      group_by(site, year) %>%
+      select(featureid, year, month, date, airTemp_degC, temp, temp_30d) %>%
+      group_by(featureid, year) %>%
       nest()
 
     df_derived <- df_nest %>%
@@ -298,6 +301,7 @@ st <- system.time({
   }
 })
 cat("done (elapsed = ", round(unname(st[3]) / 60, 1), " min, ", round(unname(st[3]) / 60 / 60, 1), " hr)\n", sep = "")
+# 1.0
 # 20171117 - 32 hours
 
 # df_predict_year
@@ -306,8 +310,8 @@ saveRDS(df_predict_year, file.path(config$wd, "model-predict-year.rds"))
 # df_predict_year %>% write_csv(file.path(config$wd, "model-predict-year.csv"))
 
 # df_predict_year %>%
-#   gather(var, value, -site, -year) %>%
-#   group_by(site, var) %>%
+#   gather(var, value, -featureid, -year) %>%
+#   group_by(featureid, var) %>%
 #   summarise(
 #     mean = mean(value)
 #   ) %>%
