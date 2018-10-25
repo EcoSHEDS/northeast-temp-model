@@ -17,13 +17,13 @@ config <- load_config()
 # load --------------------------------------------------------------------
 
 cat("loading model-predict-year.rds...")
-df_site_year <- readRDS(file.path(config$wd, "model-predict-year.rds")) %>%
-  arrange(site, year)
+df_year <- readRDS(file.path(config$wd, "model-predict-year.rds")) %>%
+  arrange(featureid, year)
 cat("done\n")
 
-cat("computing derived metrics by site...")
-df_site <- df_site_year %>%
-  group_by(site) %>%
+cat("computing derived metrics by catchment...")
+df <- df_year %>%
+  group_by(featureid) %>%
   summarise(
     mean_max_temp = mean(max_temp),
     max_max_temp = max(max_temp),
@@ -40,34 +40,38 @@ df_site <- df_site_year %>%
     freq_temp_gt_22 = mean(max_temp > 22) * n(),
     resist = mean(resist)
   )
-cat("done (nrow = ", nrow(df_site), ")\n", sep = "")
+cat("done (nrow = ", nrow(df), ")\n", sep = "")
 
-summary(df_site)
+# summary(df)
 # NA's for 105 catchments due to missing daymet data
 # these catchments tend to be along coastline and associated with daymet points that have NA values
 # replace with nearest neighbor catchment that does have data ?
-df_site %>% filter(is.na(mean_max_temp)) %>% pull(site)
+# df %>% filter(is.na(mean_max_temp)) %>% pull(featureid)
 
-cat("dropping ", sum(is.na(df_site$mean_max_temp)), " catchments with null values (coastline)...", sep = "")
-df_site <- df_site %>%
+cat("dropping ", sum(is.na(df$mean_max_temp)), " catchments with null values (coastline)...", sep = "")
+df <- df %>%
   filter(!is.na(mean_max_temp))
-cat("done (nrow = ", nrow(df_site), ")\n", sep = "")
+cat("done (nrow = ", nrow(df), ")\n", sep = "")
 
 # plot --------------------------------------------------------------------
 
-df_site %>%
-  gather(var, value, -site) %>%
+df %>%
+  gather(var, value, -featureid) %>%
   ggplot(aes(value)) +
   geom_histogram() +
   facet_wrap(~ var, scales = "free")
 
 # exporting results -------------------------------------------------------
 
-df_site %>%
+cat("saving to model-predict-derived.rds...")
+df %>%
   saveRDS(file.path(config$wd, "model-predict-derived.rds"))
+cat("done\n")
 
-df_site %>%
+cat("saving to model-predict-derived.csv...")
+df %>%
   write_csv(file.path(config$wd, "model-predict-derived.csv"), na = "")
+cat("done\n")
 
 end <- lubridate::now(tzone = "US/Eastern")
 cat("finished model-predict-derived:", as.character(end, tz = "US/Eastern"), "\n")

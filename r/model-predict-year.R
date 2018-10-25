@@ -301,7 +301,7 @@ st <- system.time({
   }
 })
 cat("done (elapsed = ", round(unname(st[3]) / 60, 1), " min, ", round(unname(st[3]) / 60 / 60, 1), " hr)\n", sep = "")
-# 1.0
+# 1.0 - 13 hr
 # 20171117 - 32 hours
 
 # df_predict_year
