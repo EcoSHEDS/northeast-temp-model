@@ -91,7 +91,7 @@ param_fixed %>%
 
 ```{r}
 levels_huc8 <- c(
-  "intercept.huc8",
+  "intercept.huc",
   "airTemp",
   "temp7p"
 )
@@ -99,15 +99,14 @@ levels_huc8 <- c(
 params_huc8 <- bind_rows(
   setNames(as_data_frame(m_out$results$mean$B.huc), m_out$covs$huc.ef) %>% 
     mutate(stat = "mean") %>% 
-    bind_cols(m_out$ids$huc8),
+    bind_cols(m_out$ids$huc),
   setNames(as_data_frame(m_out$results$q2.5$B.huc), m_out$covs$huc.ef) %>% 
     mutate(stat = "q_025") %>% 
-    bind_cols(m_out$ids$huc8),
+    bind_cols(m_out$ids$huc),
   setNames(as_data_frame(m_out$results$q97.5$B.huc), m_out$covs$huc.ef) %>% 
     mutate(stat = "q_975") %>% 
-    bind_cols(m_out$ids$huc8)
+    bind_cols(m_out$ids$huc)
 ) %>% 
-  rename(intercept.huc8 = intercept.site) %>% 
   gather(var, value, -stat, -huc8, -huc8_id) %>% 
   mutate(
     huc8 = factor(huc8, levels = rev(sort(unique(huc8))), ordered = TRUE),
@@ -133,7 +132,7 @@ params_huc8 %>%
     y = "Estimated Mean and 95% CRI"
   ) +
   theme(
-    axis.text.y = element_text(size = 8)
+    axis.text.y = element_text(size = 6)
   )
 ```
 
@@ -176,13 +175,13 @@ params_site <- bind_rows(
     mutate(stat = "q_975") %>% 
     bind_cols(m_out$ids$site)
 ) %>% 
-  gather(var, value, -stat, -site, -site_id) %>% 
+  gather(var, value, -stat, -featureid, -featureid_id) %>% 
   mutate(
-    site = factor(site, levels = rev(sort(unique(site))), ordered = TRUE),
+    featureid = factor(featureid, levels = rev(sort(unique(featureid))), ordered = TRUE),
     var = factor(var, levels = levels_site, ordered = TRUE)
   ) %>%  
   spread(stat, value) %>% 
-  arrange(var, site_id)
+  arrange(var, featureid_id)
 ```
 
 Figure \@ref(fig:plot-params-catchment) shows the distribution of the estimated mean for each random effect term over all catchments. CRIs are not shown due to the large number of individual catchments (`r nrow(params_site)`). Table \@ref(tab:table-params-catchment) lists the estimated mean and 95% CRI of each parameter averaged over all catchments (mean value with standard deviation in parentheses).
@@ -547,7 +546,7 @@ df_deploy %>%
   filter(dataset == "calibration") %>% 
   unnest(data_best) %>% 
   mutate(
-    label = paste0("Catchment ID: ", catchment, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
+    label = paste0("Catchment ID: ", featureid, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
     label = factor(label, ordered = TRUE, levels = label)
   ) %>% 
   unnest(data) %>% 
@@ -574,7 +573,7 @@ df_deploy %>%
   filter(dataset == "calibration") %>% 
   unnest(data_worst) %>% 
   mutate(
-    label = paste0("Catchment ID: ", catchment, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
+    label = paste0("Catchment ID: ", featureid, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
     label = factor(label, ordered = TRUE, levels = label)
   ) %>% 
   unnest(data) %>% 
@@ -602,7 +601,7 @@ df_deploy %>%
   filter(dataset == "calibration") %>% 
   unnest(data_best) %>% 
   mutate(
-    label = paste0("Catchment ID: ", catchment, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
+    label = paste0("Catchment ID: ", featureid, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
     label = factor(label, ordered = TRUE, levels = label)
   ) %>% 
   unnest(data) %>% 
@@ -629,7 +628,7 @@ df_deploy %>%
   filter(dataset == "calibration") %>% 
   unnest(data_worst_trend) %>% 
   mutate(
-    label = paste0("Catchment ID: ", catchment, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
+    label = paste0("Catchment ID: ", featureid, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
     label = factor(label, ordered = TRUE, levels = label)
   ) %>% 
   unnest(data) %>% 
@@ -660,7 +659,7 @@ df_deploy %>%
   filter(dataset == "validation") %>% 
   unnest(data_best) %>% 
   mutate(
-    label = paste0("Catchment ID: ", catchment, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
+    label = paste0("Catchment ID: ", featureid, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
     label = factor(label, ordered = TRUE, levels = label)
   ) %>% 
   unnest(data) %>% 
@@ -687,7 +686,7 @@ df_deploy %>%
   filter(dataset == "validation") %>% 
   unnest(data_worst) %>% 
   mutate(
-    label = paste0("Catchment ID: ", catchment, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
+    label = paste0("Catchment ID: ", featureid, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
     label = factor(label, ordered = TRUE, levels = label)
   ) %>% 
   unnest(data) %>% 
@@ -715,7 +714,7 @@ df_deploy %>%
   filter(dataset == "validation") %>% 
   unnest(data_best) %>% 
   mutate(
-    label = paste0("Catchment ID: ", catchment, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
+    label = paste0("Catchment ID: ", featureid, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
     label = factor(label, ordered = TRUE, levels = label)
   ) %>% 
   unnest(data) %>% 
@@ -742,7 +741,7 @@ df_deploy %>%
   filter(dataset == "validation") %>% 
   unnest(data_worst_trend) %>% 
   mutate(
-    label = paste0("Catchment ID: ", catchment, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
+    label = paste0("Catchment ID: ", featureid, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
     label = factor(label, ordered = TRUE, levels = label)
   ) %>% 
   unnest(data) %>% 

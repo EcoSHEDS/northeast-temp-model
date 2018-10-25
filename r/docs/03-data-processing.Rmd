@@ -7,4 +7,58 @@ config <- load_config("../../")
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, comment = NA)
 ```
 
-Coming soon...
+A series of automated data screening and QA/QC procedures are used to process the raw stream temperature observations, and generate the final input dataset of mean daily stream temperatures, which is then used to calibrate and validate the model.
+
+Processing of the raw stream temperature observations involves the following steps:
+
+1. Screen monitoring stations based on location and drainage area characteristics
+2. Aggregate instantaneous observations to daily time steps
+3. Screen daily mean temperature values and time series according to various QA/QC tests
+4. Aggregate daily time series measured at multiple stations within a single catchment
+5. Screen time series to exclude cold weather conditions when air temperature and water temperature are de-coupled
+6. Split the final dataset into subsets for calibration (90% of time series) and validation (10% of time series)
+
+## Screen Monitoring Stations
+
+The full set of monitoring stations are first screened to exclude those that meet the following criteria:
+
+1. Located within 100 m of an impoundment
+2. Located within a tidal zone
+3. Located within a catchment having a drainage area greater than 200 sq km
+4. Located within a catchment having a drainage area with greater than 50% coverage by open water or wetlands
+
+## Screen Daily Mean Values
+
+After screening for the monitoring stations, the remaining time series are screened according to the following criteria:
+
+1. Remove daily values that have user-defined flag stored in the database
+2. Remove daily values with mean temp < -25 degC
+3. Remove daily values with mean or max temp > 35 degC
+4. Remove time series with a high correlation between daily mean water and air temperature, which are suspected to be measurements of air temperature
+5. Remove time series with fewer than 5 days of observations
+6. Remove first and/or last day of each timeseries if the number of observations on those days is less than the median number of observations per day for the whole series (i.e. the first and/or last day are incomplete)
+
+## Combine Overlapping Timeseries
+
+If there are two or more overlapping time series at a single monitoring station, then those time series are combined by:
+
+1. Compute the overall mean value on each date of the overlapping time series.
+2. Remove any daily values having more than one time series and a difference in mean observed temperature greater than 5 deg C between those time series
+
+## Screen Multiple Locations within Single Catchment
+
+If there are multiple stations within a single catchment, then only one station is retained to represent that catchment based on the following criteria:
+
+1. Exclude stations located more than 60 m from the main flowline of the catchment
+2. If more than one station remains, choose the stations with greatest number of observations between April and October
+3. If more than one station still remains, choose the station located nearest to the pour point of the catchment
+
+## Remove Cold Weather Periods
+
+Lastly, each time series are truncated to the seasonal period during which water temperature and air temperature are coupled to exclude observations during cold weather periods.
+
+## Split Dataset for Calibration and Validation
+
+The final dataset of mean daily stream temperature observations are then split for calibration and validation. The split is performed by randomly selecting 90% of the time series for calibration, and using the remaining 10% for validation.
+
+
