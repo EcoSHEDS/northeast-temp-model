@@ -161,10 +161,7 @@ df_valid <- readRDS(file.path(config$wd, "model-input.rds"))$test %>%
   left_join(out$ids$year, by = "year") %>%
   left_join(out$ids$huc, by = "huc8") %>%
   rename(
-    obs = temp,
-    catchment = featureid,
-    catchment_id = featureid_id,
-    new_catchment = new_featureid
+    obs = temp
   )
 # summary(df_valid)
 
@@ -178,7 +175,7 @@ X.catchment_valid <- df_valid %>%
   mutate(intercept.site = 1) %>%
   select(one_of(out$covs$site.ef))
 B.catchment.mean <- colMeans(out$results$mean$B.site)
-B.catchment_valid <- out$results$mean$B.site[df_valid$catchment_id, ]
+B.catchment_valid <- out$results$mean$B.site[df_valid$featureid_id, ]
 for (i in seq_along(B.catchment.mean)) {
   B.catchment_valid[is.na(B.catchment_valid[, i]), i] <- B.catchment.mean[i]
 }
@@ -216,10 +213,11 @@ df_valid <- df_valid %>%
     pred = if_else(deploy_row == 1, trend, trend + out$results$mean$B.ar1 * resid_lag),
     resid = obs - pred
   ) %>%
-  ungroup()
+  ungroup() %>%
+  select(date, huc8, featureid, year, deploy_id, obs, trend, deploy_row, resid_trend, resid_lag, pred, resid)
 
 df_valid_deploy <- df_valid %>%
-  group_by(catchment, year, deploy_id) %>%
+  group_by(featureid, year, deploy_id) %>%
   nest() %>%
   mutate(
     n = map_int(data, nrow),
@@ -232,7 +230,7 @@ df_valid_deploy <- df_valid %>%
   )
 
 df_valid_catchment <- df_valid %>%
-  group_by(catchment) %>%
+  group_by(featureid) %>%
   nest() %>%
   mutate(
     n = map_int(data, nrow),
@@ -243,7 +241,6 @@ df_valid_catchment <- df_valid %>%
       sqrt(mean(x$resid_trend^2))
     })
   )
-
 
 df_valid_huc8 <- df_valid %>%
   group_by(huc8) %>%
@@ -261,7 +258,7 @@ df_valid_huc8 <- df_valid %>%
 df_valid_summary <- df_valid %>%
   summarise(
     n_obs = n(),
-    n_catchment = length(unique(catchment)),
+    n_catchment = length(unique(featureid)),
     n_huc8 = length(unique(huc8)),
     n_deploy = length(unique(deploy_id)),
     n_year = length(unique(year)),
