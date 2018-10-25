@@ -38,4 +38,5 @@ scp -r _book/* jeff@ecosheds.org:/conte/www/static/models/temp-model/<vX.Y.Z>/
 ```
 - [ ] Update the stream temperature model homepage to list the newest version
 - [ ] Update the `/latest` redirect in the web server to point to the newest version
+- [ ] Add tag in github
 
