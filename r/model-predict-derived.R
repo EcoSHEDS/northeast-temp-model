@@ -35,9 +35,9 @@ df <- df_year %>%
     n_day_temp_gt_18 = mean(n_day_temp_gt_18),
     n_day_temp_gt_20 = mean(n_day_temp_gt_20),
     n_day_temp_gt_22 = mean(n_day_temp_gt_22),
-    freq_temp_gt_18 = mean(max_temp > 18) * n(),
-    freq_temp_gt_20 = mean(max_temp > 20) * n(),
-    freq_temp_gt_22 = mean(max_temp > 22) * n(),
+    # freq_temp_gt_18 = mean(max_temp > 18) * n(),
+    # freq_temp_gt_20 = mean(max_temp > 20) * n(),
+    # freq_temp_gt_22 = mean(max_temp > 22) * n(),
     resist = mean(resist)
   )
 cat("done (nrow = ", nrow(df), ")\n", sep = "")
@@ -55,11 +55,11 @@ cat("done (nrow = ", nrow(df), ")\n", sep = "")
 
 # plot --------------------------------------------------------------------
 
-df %>%
-  gather(var, value, -featureid) %>%
-  ggplot(aes(value)) +
-  geom_histogram() +
-  facet_wrap(~ var, scales = "free")
+# df %>%
+#   gather(var, value, -featureid) %>%
+#   ggplot(aes(value)) +
+#   geom_histogram(bins = 30) +
+#   facet_wrap(~ var, scales = "free")
 
 # exporting results -------------------------------------------------------
 
