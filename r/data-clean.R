@@ -275,9 +275,11 @@ df_values_airtemp %>%
 df_values_airtemp %>%
   head(3) %>%
   unnest(data) %>%
-  ggplot(aes(date)) +
-  geom_point(aes(y = mean), color = "red") +
-  geom_line(aes(y = airtemp)) +
+  select(series_id, date, watertemp = mean, airtemp) %>%
+  gather(var, value, -series_id, -date) %>%
+  ggplot(aes(date, value, color = var)) +
+  geom_line() +
+  scale_color_manual("", values = c("orangered", "deepskyblue")) +
   facet_wrap(~series_id, scales = "free", ncol = 1)
 
 
@@ -481,6 +483,7 @@ df_values_location %>%
   # geom_abline(color = "red") +
   # geom_point() +
   facet_wrap(~location_id, scales = "free")
+
 
 # some series seem to have surface/bottom measurements
 # just take the mean of each day
