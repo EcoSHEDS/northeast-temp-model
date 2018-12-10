@@ -49,3 +49,6 @@ Rscript model-predict-year.R            # -> model-predict-year.rds
 
 # calculate overall mean derived metrics of predictions for each catchment
 Rscript model-predict-derived.R         # -> model-predict-derived.[rds,csv]
+
+# save derived metrics to database
+Rscript export-db.R                     # -> db{stm_predict}
