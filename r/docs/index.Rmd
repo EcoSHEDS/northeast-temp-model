@@ -1,7 +1,7 @@
 --- 
 title: "SHEDS Stream Temperature Model"
 author: "[Jeff Walker](https://walkerenvres.com), [Ben Letcher](https://www.lsc.usgs.gov/?q=cafb-ben-letcher), and [Dan Hocking](https://hockinglab.weebly.com/)"
-date: "v1.0.1 (Nov 28, 2018)"
+date: "v1.0.1 (Dec 10, 2018)"
 site: bookdown::bookdown_site
 output: bookdown::gitbook
 documentclass: book
@@ -127,6 +127,8 @@ The source code for the model itself and this documentation is available in the 
 
 ## Change Log {#change-log}
 
+- **[v1.0.1 (Dec 10, 2018)](http://ecosheds.org/models/stream-temperature/v1.0.1/)**  
+Update documentation, remove auto-correlation term from goodness-of-fit summaries
 - **[v1.0.0 (Oct 25, 2018)](http://ecosheds.org/models/stream-temperature/v1.0.0/)**  
 Re-calibrated model, and finished documentation.
 - **[v0.9.2 (Jul 6, 2018)](http://ecosheds.org/models/stream-temperature/v0.9.2/)**  
