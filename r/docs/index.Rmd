@@ -1,7 +1,7 @@
 --- 
 title: "SHEDS Stream Temperature Model"
 author: "[Jeff Walker](https://walkerenvres.com), [Ben Letcher](https://www.lsc.usgs.gov/?q=cafb-ben-letcher), and [Dan Hocking](https://hockinglab.weebly.com/)"
-date: "v1.0.0 (Oct 25, 2018)"
+date: "v1.0.1 (Nov 28, 2018)"
 site: bookdown::bookdown_site
 output: bookdown::gitbook
 documentclass: book
@@ -56,20 +56,20 @@ Table \@ref(tab:table-intro-gof) provides a snapshot of the calibration and vali
 
 ```{r table-intro-gof}
 stat_labels <- c(
-  "n_obs" = "# Observations",
+  "n_obs" = "# Daily Observations",
   "n_deploy" = "# Time Series",
   "n_catchment" = "# Catchments",
   "n_huc8" = "# HUC8s",
   "n_year" = "# Years",
-  "lab_rmse" = "RMSE (degC)",
-  "lab_mean_resid" = "Mean Residual (degC)",
-  "lab_median_resid" = "Median Residual (degC)",
-  "lab_mean_abs_resid" = "Mean Absolute Residual (degC)",
-  "lab_median_abs_resid" = "Median Absolute Residual (degC)",
-  "lab_min_resid" = "Minimum Residual (degC)",
-  "lab_q01_resid" = "1st Percentile Residual (degC)",
-  "lab_q99_resid" = "99th Percentile Residual (degC)",
-  "lab_max_resid" = "Maximum Residual (degC)"
+  "rmse" = "RMSE (degC)",
+  "mean_resid" = "Mean Residual (degC)",
+  "median_resid" = "Median Residual (degC)",
+  "mean_abs_resid" = "Mean Absolute Residual (degC)",
+  "median_abs_resid" = "Median Absolute Residual (degC)",
+  "min_resid" = "Minimum Residual (degC)",
+  "q01_resid" = "1st Percentile Residual (degC)",
+  "q99_resid" = "99th Percentile Residual (degC)",
+  "max_resid" = "Maximum Residual (degC)"
 )
 bind_cols(
   data_frame(
@@ -82,30 +82,19 @@ bind_cols(
   mutate_at(vars(starts_with("n_")), scales::comma) %>% 
   mutate_at(
     vars(
-      rmse, rmse_trend,
-      mean_resid, mean_resid_trend,
-      median_resid, median_resid_trend,
-      mean_abs_resid, mean_abs_resid_trend,
-      median_abs_resid, median_abs_resid_trend,
-      min_resid, min_resid_trend,
-      q01_resid, q01_resid_trend,
-      q99_resid, q99_resid_trend,
-      max_resid, max_resid_trend
+      rmse,
+      mean_resid,
+      median_resid,
+      mean_abs_resid,
+      median_abs_resid,
+      min_resid,
+      q01_resid,
+      q99_resid,
+      max_resid
     ),
     ~ sprintf("%.3f", .)
   ) %>% 
-  mutate(
-    lab_rmse = paste0(rmse, " (", rmse_trend, ")"),
-    lab_mean_resid = paste0(mean_resid, " (", mean_resid_trend, ")"),
-    lab_median_resid = paste0(median_resid, " (", median_resid_trend, ")"),
-    lab_mean_abs_resid = paste0(mean_abs_resid, " (", mean_abs_resid_trend, ")"),
-    lab_median_abs_resid = paste0(median_abs_resid, " (", median_abs_resid_trend, ")"),
-    lab_min_resid = paste0(min_resid, " (", min_resid_trend, ")"),
-    lab_q01_resid = paste0(q01_resid, " (", q01_resid_trend, ")"),
-    lab_q99_resid = paste0(q99_resid, " (", q99_resid_trend, ")"),
-    lab_max_resid = paste0(max_resid, " (", max_resid_trend, ")")
-  ) %>% 
-  select(dataset, starts_with("n_"), starts_with("lab_")) %>% 
+  select(dataset, starts_with("n_"), rmse, mean_resid, median_resid, mean_abs_resid, median_abs_resid, min_resid, q01_resid, q99_resid, max_resid) %>% 
   gather(stat, value, -dataset) %>% 
   spread(dataset, value) %>% 
   mutate(
@@ -120,7 +109,7 @@ bind_cols(
   knitr::kable(
     align = "lrr", 
     col.names = c("", "Calibration", "Validation"),
-    caption = "Summary statistics of model calibration and validation (values in parentheses denote value when temporal auto-correlation term is excluded)"
+    caption = "Summary statistics of model calibration and validation"
   )
 ```
 
