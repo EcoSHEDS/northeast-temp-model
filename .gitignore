@@ -7,4 +7,5 @@ r/rmd/*_cache
 r/rmd/*_files
 r/rmd/*.html
 
+r/docs/_bookdown_files
 r/docs/_book
