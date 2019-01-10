@@ -1,6 +1,6 @@
 # export predictions to database
 # <- model-predict-derived.rds
-# -> db[stm_predictions]
+# -> db[temp_model]
 
 rm(list=ls())
 
@@ -21,7 +21,8 @@ cat("loading predictions...")
 df_wide <- readRDS(file.path(config$wd, "model-predict-derived.rds"))
 
 df <- df_wide %>%
-  gather(variable, value, -featureid)
+  gather(variable, value, -featureid) %>%
+  mutate(version = config$version)
 cat("done\n")
 
 # save --------------------------------------------------------------------
@@ -31,7 +32,7 @@ db <- src_postgres(host = config$db$host, dbname = config$db$dbname, user = conf
 cat("done\n")
 
 cat("saving to database...")
-done <- db_insert_into(db$con, "stm_predict", df)
+done <- db_insert_into(db$con, "temp_model", df)
 cat("done\n")
 
 # done --------------------------------------------------------------------
