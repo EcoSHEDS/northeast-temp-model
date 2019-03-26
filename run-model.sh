@@ -51,7 +51,7 @@ Rscript model-predict-year.R            # -> model-predict-year.rds
 Rscript model-predict-derived.R         # -> model-predict-derived.[rds,csv]
 
 # save derived metrics to database
-Rscript export-db.R                     # -> db{stm_predict}
+Rscript export-db.R                     # -> db{temp_model}
 
 # save derived metrics to csv
 Rscript export-csv.R                     # -> csv/sheds-temp-model-v{VERSION}.csv

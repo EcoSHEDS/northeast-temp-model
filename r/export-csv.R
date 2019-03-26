@@ -26,7 +26,7 @@ cat("\n")
 
 fname <- paste0("sheds-temp-model-v", config$version, ".csv")
 cat("saving to csv/", fname, "...", sep = "")
-write_csv(df, file.path("csv", fname))
+write_csv(df, file.path("csv", fname), na = "")
 cat("done\n")
 
 # done --------------------------------------------------------------------
