@@ -59,7 +59,7 @@ knitr::include_graphics("img/hydrologic-regions.png")
 
 The documentation for the catchment delineation is also available:
 
-> [Catchment Delineation (NHDHRDV2) Documentation (docx)](http://ecosheds.org/assets/nhdhrd/v2/NHDHRDV2_Documentation.docx)
+> **[Catchment Delineation (NHDHRDV2) Documentation (docx)](http://ecosheds.org/assets/nhdhrd/v2/NHDHRDV2_Documentation.docx)**
 
 ## Catchment Covariates Dataset
 
@@ -74,4 +74,4 @@ The [SHEDS catchment covariates](http://conte-ecology.github.io/shedsGisData/) a
 
 The documentation for catchment covariates is also available:
 
-> [Catchment Covariates Documentation](http://ecosheds.org/assets/nhdhrd/v2/NHDHRDV2_Covariate_Documentation.xlsx)
+> **[Catchment Covariates Documentation (docx)](http://ecosheds.org/assets/nhdhrd/v2/NHDHRDV2_Covariate_Documentation.xlsx)**
