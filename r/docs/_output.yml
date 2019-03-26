@@ -1,6 +1,5 @@
 bookdown::gitbook:
   css: style.css
-  lib_dir: "libs"
   config:
     toc:
       before: |
