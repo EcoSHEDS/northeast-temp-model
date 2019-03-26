@@ -9,3 +9,6 @@ r/rmd/*.html
 
 r/docs/_bookdown_files
 r/docs/_book
+r/docs/*.log
+
+r/csv/*.csv

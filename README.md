@@ -70,3 +70,4 @@ Use the `run-model.sh` script to run the full sequence of model steps. **Remembe
 
 Currently, I recommend that you **do not run this script directly**, but rather run each command within that script individually so you can check the output along the way. However, in theory you should be able to run this single command to perform all steps from gathering and processing the input data to fitting the model to generating the final prediction outputs.
 
+The results are exported to the database table `temp_model` (via `r/export-db.R`) and to a csv file `r/csv/sheds-temp-model-v{VERSION}.csv` (via `r/export-csv.R`).
