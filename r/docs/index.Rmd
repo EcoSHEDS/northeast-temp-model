@@ -29,7 +29,7 @@ valid <- diagnostics$valid
 
 # Introduction {#intro}
 
-The SHEDS stream temperature model was developed to predict daily stream temperatures at both gauged and un-gauged catchments across the northeast U.S. based on geospatial characteristics and weather conditions.
+The SHEDS stream temperature model was developed to predict daily stream temperatures at both gaged and un-gaged catchments across the northeast U.S. based on geospatial characteristics and weather conditions.
 
 The model is based on a linear mixed effects framework that accounts for spatial and temporal correlations using a hierachical Bayesian structure. @Letcher2016 describe the initial development of this model framework, and apply it to a small region in western Massachusetts. See the [Model Overview] section below for a brief introduction to the model, or the [Theory] section a more detailed explanation.
 
