@@ -17,7 +17,7 @@ editor_options:
 ```{r setup, echo = FALSE}
 library(tidyverse)
 source("../functions.R")
-config <- load_config()
+config <- load_config("../../")
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, comment = NA)
 
 theme_set(theme_bw())
@@ -47,7 +47,7 @@ The model will be periodically updated and re-calibrated (approximately once eve
 
 ## Model Overview
 
-The SHEDS stream temperature model predicts daily mean stream temperature based on geospatial characteristics and daily weather conditions. Predictions are made at a relatively fine spatial resultion based on a customized catchment delineation (average size about 2 km^2^) across the northeast U.S. from Maine to Virginia. Predictions are limited to streams and rivers with drainage areas less than 200 km^2^. Heavily impounded rivers are also excluded from the model.
+The SHEDS stream temperature model predicts daily mean stream temperature based on geospatial characteristics and daily weather conditions. Predictions are made at a relatively fine spatial resolution based on a customized catchment delineation (average size about 2 km^2^) across the northeast U.S. from Maine to Virginia. Predictions are limited to streams and rivers with drainage areas less than 200 km^2^. Heavily impounded rivers are also excluded from the model.
 
 The model uses a hierarchical Bayesian structure to account for spatial correlation in temperature between near-by locations through random effects for both the individual catchments and the larger watershed (HUC8) containing that catchment. Therefore, catchments within the same HUC8 watershed share a set of HUC-specific coefficients. Year to year variations in temperature are also accounted for using a random effect for the year.
 
