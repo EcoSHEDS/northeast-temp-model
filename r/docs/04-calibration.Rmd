@@ -454,7 +454,7 @@ df_deploy %>%
 
 #### Calibration Deployment Examples
 
-Figures \@ref(fig:plot-series-calib-best) to \@ref(fig:plot-series-calib-worst-trend) show example deployments from the calibration dataset with the highest and lowest RMSE.
+Figures \@ref(fig:plot-series-calib-best) to \@ref(fig:plot-series-calib-worst) show example deployments from the calibration dataset with the highest and lowest RMSE.
 
 ```{r plot-series-calib-best, fig.width=8, fig.height=10, fig.cap="Deployments with lowest RMSE in calibration dataset and n >= 30"}
 df_deploy %>% 
@@ -512,7 +512,7 @@ df_deploy %>%
 
 #### Validation Deployment Examples
 
-Figures \@ref(fig:plot-series-valid-best) to \@ref(fig:plot-series-valid-worst-trend) show example deployments from the validation dataset with the highest and lowest RMSE.
+Figures \@ref(fig:plot-series-valid-best) to \@ref(fig:plot-series-valid-worst) show example deployments from the validation dataset with the highest and lowest RMSE.
 
 ```{r plot-series-valid-best, fig.width=8, fig.height=10, fig.cap="Deployments with lowest RMSE in validation dataset and n >= 30"}
 df_deploy %>% 
