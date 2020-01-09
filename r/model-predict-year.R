@@ -66,7 +66,7 @@ coef_list <- list(
 )
 cat("done\n")
 
-predict_daily <- function (featureids) {
+predict_daily <- function (featureids, adjust_air_temps = c(0, 1, 2, 3, 4, 5, 6)) {
   # con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
   con <- dbConnect(PostgreSQL(), host = "localhost", dbname = "daymet")
   sql_daymet <- paste0("
@@ -93,34 +93,31 @@ predict_daily <- function (featureids) {
                        FROM t2
                        ")
   rs <- dbSendQuery(con, sql_daymet, featureids)
-
-  df_daymet <- dbFetch(rs) %>%
-    mutate(
-      airTemp = (tmin + tmax) / 2,
-      airTempLagged1 = lag(airTemp, n = 1, fill = NA),
-      temp7p = rollapply(
-        data = airTempLagged1,
-        width = 7,
-        FUN = mean,
-        align = "right",
-        fill = NA,
-        na.rm = TRUE
-      ),
-      prcp2 = rollsum(x = prcp, 2, align = "right", fill = NA),
-      prcp30 = rollsum(x = prcp, 30, align = "right", fill = NA)
-    ) %>%
-    select(-tmin, -tmax)
+  df_daymet_raw <- dbFetch(rs)
   dbClearResult(rs)
-
-  # df_huc <- tbl(con, "catchment_huc12") %>%
-  #   filter(featureid %in% featureids) %>%
-  #   collect() %>%
-  #   mutate(
-  #     huc8 = str_sub(huc12, 1, 8)
-  #   ) %>%
-  #   select(featureid, huc8)
-
   dbDisconnect(con)
+
+  df_daymet <- map_df(adjust_air_temps, function (x) {
+    df_daymet_raw %>%
+      as_tibble() %>%
+      mutate(
+        adjust_air_temp = x,
+        airTemp = (tmin + tmax) / 2 + adjust_air_temp,
+        airTempLagged1 = lag(airTemp, n = 1, fill = NA),
+        temp7p = rollapply(
+          data = airTempLagged1,
+          width = 7,
+          FUN = mean,
+          align = "right",
+          fill = NA,
+          na.rm = TRUE
+        ),
+        prcp2 = rollsum(x = prcp, 2, align = "right", fill = NA),
+        prcp30 = rollsum(x = prcp, 30, align = "right", fill = NA)
+      ) %>%
+      select(-tmin, -tmax)
+  })
+
 
   # merge covariates
   df <- df_covariates %>%
@@ -139,14 +136,14 @@ predict_daily <- function (featureids) {
       dOY <= fall_bp
     ) %>%
     select(
-      featureid, huc8, year, date,
+      adjust_air_temp, featureid, huc8, year, date,
       airTemp, prcp2, prcp30, temp7p,
       AreaSqKM, forest, devel_hi, agriculture, impoundArea
     )
 
   # standardize covariates
   df <- df %>%
-    gather(var, value, -featureid, -huc8, -year, -date) %>%
+    gather(var, value, -adjust_air_temp, -featureid, -huc8, -year, -date) %>%
     left_join(df_cov_std, by = "var") %>%
     mutate(value = (value - mean) / sd) %>%
     select(-mean, -sd) %>%
@@ -220,10 +217,10 @@ predict_daily <- function (featureids) {
     ) %>%
     left_join(
       df_daymet %>%
-        select(featureid, date, airTemp_degC = airTemp),
-      by = c("featureid", "date")
+        select(adjust_air_temp, featureid, date, airTemp_degC = airTemp),
+      by = c("adjust_air_temp", "featureid", "date")
     ) %>%
-    group_by(featureid, year) %>%
+    group_by(adjust_air_temp, featureid, year) %>%
     mutate(
       temp_30d = rollapply(
         data = temp,
@@ -271,8 +268,8 @@ st <- system.time({
     # compute derived metrics
     df_nest <- df %>%
       mutate(month = month(date)) %>%
-      select(featureid, year, month, date, airTemp_degC, temp, temp_30d) %>%
-      group_by(featureid, year) %>%
+      select(adjust_air_temp, featureid, year, month, date, airTemp_degC, temp, temp_30d) %>%
+      group_by(adjust_air_temp, featureid, year) %>%
       nest()
 
     df_derived <- df_nest %>%
@@ -280,7 +277,7 @@ st <- system.time({
         metrics = map(data, function (x) {
           x_summer <- x[x$month %in% 6:8, ]
 
-          data_frame(
+          tibble(
             max_temp = max(x[["temp"]]),
             mean_jun_temp = mean(x[["temp"]][x$month == 6]),
             mean_jul_temp = mean(x[["temp"]][x$month == 7]),
@@ -290,6 +287,8 @@ st <- system.time({
             n_day_temp_gt_18 = sum(x[["temp"]] > 18),
             n_day_temp_gt_20 = sum(x[["temp"]] > 20),
             n_day_temp_gt_22 = sum(x[["temp"]] > 22),
+            n_day_temp_gte_24_9 = sum(x[["temp"]] >= 24.9),
+            n_day_temp_gte_27 = sum(x[["temp"]] >= 27),
             resist = sum(abs(x_summer[["airTemp_degC"]] - x_summer[["temp"]]))
           )
         })
