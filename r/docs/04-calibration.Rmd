@@ -376,7 +376,12 @@ stat_labels_deploy <- c(
 df_deploy <- bind_cols(
   data_frame(
     dataset = c("calibration", "validation"),
-    data = list(calib$deploy, valid$deploy)
+    data = list(
+      calib$deploy %>% 
+        select(-dataset),
+      valid$deploy %>% 
+        select(-dataset)
+    )
   )
 ) %>% 
   mutate(
@@ -459,6 +464,7 @@ Figures \@ref(fig:plot-series-calib-best) to \@ref(fig:plot-series-calib-worst) 
 ```{r plot-series-calib-best, fig.width=8, fig.height=10, fig.cap="Deployments with lowest RMSE in calibration dataset and n >= 30"}
 df_deploy %>% 
   filter(dataset == "calibration") %>% 
+  select(-data) %>% 
   unnest(data_best) %>% 
   mutate(
     label = paste0("Catchment ID: ", featureid, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
@@ -485,6 +491,7 @@ df_deploy %>%
 
 ```{r plot-series-calib-worst, fig.width=8, fig.height=10, fig.cap="Deployments with highest RMSE in calibration dataset and n >= 30"}
 df_deploy %>% 
+  select(-data) %>% 
   filter(dataset == "calibration") %>% 
   unnest(data_worst) %>% 
   mutate(
@@ -516,6 +523,7 @@ Figures \@ref(fig:plot-series-valid-best) to \@ref(fig:plot-series-valid-worst) 
 
 ```{r plot-series-valid-best, fig.width=8, fig.height=10, fig.cap="Deployments with lowest RMSE in validation dataset and n >= 30"}
 df_deploy %>% 
+  select(-data) %>% 
   filter(dataset == "validation") %>% 
   unnest(data_best) %>% 
   mutate(
@@ -543,6 +551,7 @@ df_deploy %>%
 
 ```{r plot-series-valid-worst, fig.width=8, fig.height=8, fig.cap="Deployments with highest RMSE in validation dataset and n >= 30"}
 df_deploy %>% 
+  select(-data) %>% 
   filter(dataset == "validation") %>% 
   unnest(data_worst) %>% 
   mutate(
@@ -584,7 +593,12 @@ stat_labels_catchment <- c(
 df_catchment <- bind_cols(
   data_frame(
     dataset = c("calibration", "validation"),
-    data = list(calib$catchment, valid$catchment)
+    data = list(
+      calib$catchment %>% 
+        select(-dataset),
+      valid$catchment %>% 
+        select(-dataset)
+    )
   )
 )
 df_catchment %>%
