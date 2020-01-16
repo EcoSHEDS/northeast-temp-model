@@ -34,6 +34,8 @@ df <- df_year %>%
     n_day_temp_gt_18 = mean(n_day_temp_gt_18),
     n_day_temp_gt_20 = mean(n_day_temp_gt_20),
     n_day_temp_gt_22 = mean(n_day_temp_gt_22),
+    n_day_temp_gte_24_9 = mean(n_day_temp_gte_24_9),
+    n_day_temp_gte_27 = mean(n_day_temp_gte_27),
     resist = mean(resist)
   ) %>%
   ungroup()
@@ -49,6 +51,17 @@ cat("dropping ", sum(is.na(df$mean_max_temp)) / 4, " catchments with null values
 df <- df %>%
   filter(!is.na(mean_max_temp))
 cat("done (nrow = ", nrow(df), ")\n", sep = "")
+
+cat("merging variable and adjust_air_temp...", sep = "")
+df <- df %>%
+  gather(variable, value, -featureid, -adjust_air_temp) %>%
+  transmute(
+    featureid,
+    variable = if_else(adjust_air_temp == 0, variable, str_c(variable, "_air", adjust_air_temp)),
+    value = value
+  ) %>%
+  spread(variable, value)
+cat("done\n", sep = "")
 
 # plot --------------------------------------------------------------------
 
