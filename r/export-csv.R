@@ -24,9 +24,14 @@ cat("dataset structure:\n")
 str(df)
 cat("\n")
 
+cat("rounding values to 3 digits...")
+df_out <- df %>%
+  mutate_at(vars(-featureid), ~ sprintf("%.2f", .))
+cat("done\n")
+
 fname <- paste0("sheds-temp-model-v", config$version, ".csv")
 cat("saving to csv/", fname, "...", sep = "")
-write_csv(df, file.path("csv", fname), na = "")
+write_csv(df_out, file.path("csv", fname), na = "")
 cat("done\n")
 
 # done --------------------------------------------------------------------
