@@ -66,7 +66,7 @@ coef_list <- list(
 )
 cat("done\n")
 
-predict_daily <- function (featureids, adjust_air_temps = c(0, 1, 2, 3, 4, 5, 6)) {
+predict_daily <- function (featureids, adjust_air_temps = c(0, 2, 4, 6)) {
   # con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
   con <- dbConnect(PostgreSQL(), host = "localhost", dbname = "daymet")
   sql_daymet <- paste0("
@@ -209,12 +209,9 @@ predict_daily <- function (featureids, adjust_air_temps = c(0, 1, 2, 3, 4, 5, 6)
   }
   Y.year <- rowSums(X.year * B.year)
 
-  Y <- Y.0 + Y.site + Y.year + Y.huc
+  df$temp <- Y.0 + Y.site + Y.year + Y.huc
 
   df <- df %>%
-    mutate(
-      temp = Y
-    ) %>%
     left_join(
       df_daymet %>%
         select(adjust_air_temp, featureid, date, airTemp_degC = airTemp),
@@ -239,13 +236,14 @@ predict_daily <- function (featureids, adjust_air_temps = c(0, 1, 2, 3, 4, 5, 6)
 # subset
 # set.seed(12345)
 # n_featureids <- 121
+# n_featureids <- 4 * 12 * 10
 # featureids <- as.integer(df_covariates$featureid) %>% sample(size = n_featureids, replace = FALSE)
 
 # full dataset
 featureids <- as.integer(df_covariates$featureid)
 
 n <- length(featureids)
-chunk_size <- 10
+chunk_size <- 1
 n_chunks <- ceiling(n / chunk_size)
 
 # predict_daily(featureids[1:3]) %>% summary
@@ -270,7 +268,8 @@ st <- system.time({
       mutate(month = month(date)) %>%
       select(adjust_air_temp, featureid, year, month, date, airTemp_degC, temp, temp_30d) %>%
       group_by(adjust_air_temp, featureid, year) %>%
-      nest()
+      nest() %>%
+      ungroup()
 
     df_derived <- df_nest %>%
       mutate(

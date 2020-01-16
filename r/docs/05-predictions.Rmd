@@ -52,7 +52,8 @@ var_labels <- c(
 )
 
 df %>% 
-  gather(var, value, -featureid) %>% 
+  filter(adjust_air_temp == 0) %>% 
+  gather(var, value, -featureid, -adjust_air_temp) %>% 
   mutate(var = factor(var, levels = names(var_labels), ordered = TRUE)) %>% 
   ggplot(aes(value)) +
   geom_histogram(bins = 30) +
@@ -60,3 +61,16 @@ df %>%
   labs(x = "", y = "# Catchments")
 ```
 
+## Air Temperature Scenarios
+
+Beginning with `v1.1.1`, the prediction metrics described above are generated for a series of climate change scenarios with air temperatures increasing by 2, 4, and 6 degC. These scenarios are calculated by increasing each daily air temperature by the respective amount. In other words, these scenarios assume a uniform increase in air temperature, which does not vary seasonally.
+
+Figure \@ref(fig:plot-pred-air-temp) shows the distribution of mean July stream temperature among all catchments for each air temperature scenario.
+
+```{r plot-pred-air-temp, fig.width=6, fig.height=8, fig.cap="Distributions of Mean July Stream Temperature with Varying Air Temperature Increases"}
+df %>% 
+  ggplot(aes(mean_jul_temp)) +
+  geom_histogram(bins = 30) +
+  facet_wrap(~ str_c("Air Temp Increase: +", adjust_air_temp, " degC"), ncol = 1) +
+  labs(x = "Mean July Stream Temperature (degC)", y = "# Catchments")
+```

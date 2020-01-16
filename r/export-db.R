@@ -21,7 +21,7 @@ cat("loading predictions...")
 df_wide <- readRDS(file.path(config$wd, "model-predict-derived.rds"))
 
 df <- df_wide %>%
-  gather(variable, value, -featureid) %>%
+  gather(variable, value, -featureid, -adjust_air_temp) %>%
   mutate(version = config$version)
 cat("done\n")
 

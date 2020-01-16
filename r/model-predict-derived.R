@@ -17,13 +17,12 @@ config <- load_config()
 # load --------------------------------------------------------------------
 
 cat("loading model-predict-year.rds...")
-df_year <- readRDS(file.path(config$wd, "model-predict-year.rds")) %>%
-  arrange(featureid, year)
+df_year <- readRDS(file.path(config$wd, "model-predict-year.rds"))
 cat("done\n")
 
 cat("computing derived metrics by catchment...")
 df <- df_year %>%
-  group_by(featureid) %>%
+  group_by(featureid, adjust_air_temp) %>%
   summarise(
     mean_max_temp = mean(max_temp),
     max_max_temp = max(max_temp),
@@ -35,20 +34,18 @@ df <- df_year %>%
     n_day_temp_gt_18 = mean(n_day_temp_gt_18),
     n_day_temp_gt_20 = mean(n_day_temp_gt_20),
     n_day_temp_gt_22 = mean(n_day_temp_gt_22),
-    # freq_temp_gt_18 = mean(max_temp > 18) * n(),
-    # freq_temp_gt_20 = mean(max_temp > 20) * n(),
-    # freq_temp_gt_22 = mean(max_temp > 22) * n(),
     resist = mean(resist)
-  )
+  ) %>%
+  ungroup()
 cat("done (nrow = ", nrow(df), ")\n", sep = "")
 
 # summary(df)
 # NA's for 105 catchments due to missing daymet data
 # these catchments tend to be along coastline and associated with daymet points that have NA values
 # replace with nearest neighbor catchment that does have data ?
-# df %>% filter(is.na(mean_max_temp)) %>% pull(featureid)
+# df %>% filter(is.na(mean_max_temp)) %>% pull(featureid) %>% unique()
 
-cat("dropping ", sum(is.na(df$mean_max_temp)), " catchments with null values (coastline)...", sep = "")
+cat("dropping ", sum(is.na(df$mean_max_temp)) / 4, " catchments with null values (coastline)...", sep = "")
 df <- df %>%
   filter(!is.na(mean_max_temp))
 cat("done (nrow = ", nrow(df), ")\n", sep = "")
