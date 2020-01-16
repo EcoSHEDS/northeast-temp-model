@@ -21,12 +21,11 @@ The stream temperature model predictions can be downloaded as a static CSV file 
 
 > **[Stream Temperature Predictions v`r config$version` (csv)](http://ecosheds.org/models/stream-temperature/output/sheds-temp-model-v`r config$version`.csv)**
 
-This file contains the following headers:
+This file contains the following columns:
 
 ```{r}
-df_columns <- tribble(
+df_vars <- tribble(
   ~column, ~label,
-  "featureid", "Catchment ID",
   "mean_max_temp", "Mean Annual Max Temp (degC)",
   "max_max_temp", "Maximum Temp (degC)",
   "mean_jun_temp", "Mean June Temp (degC)",
@@ -37,8 +36,22 @@ df_columns <- tribble(
   "n_day_temp_gt_18", "Mean # Days per Year Temp > 18 C",
   "n_day_temp_gt_20", "Mean # Days per Year Temp > 20 C",
   "n_day_temp_gt_22", "Mean # Days per Year Temp > 22 C",
+  "n_day_temp_gte_24_9", "Mean # Days per Year Temp >= 24.9 C",
+  "n_day_temp_gte_27", "Mean # Days per Year Temp >= 27 C",
   "resist", "Resistivity"
-)
+) %>% 
+  crossing(air_temp = seq(0, 6, by = 2)) %>% 
+  mutate(
+    column = if_else(air_temp == 0, column, str_c(column, "_air", air_temp)),
+    label = if_else(air_temp == 0, label, str_c(label, " w/ Air Temp +", air_temp, " degC"))
+  ) %>% 
+  select(column, label)
+
+df_columns <- tribble(
+  ~column, ~label,
+  "featureid", "Catchment ID"
+) %>% 
+  bind_rows(df_vars)
 knitr::kable(df_columns, col.names = c("CSV Column", "Description"), align = "rl")
 ```
 

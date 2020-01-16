@@ -52,8 +52,8 @@ var_labels <- c(
 )
 
 df %>% 
-  filter(adjust_air_temp == 0) %>% 
-  gather(var, value, -featureid, -adjust_air_temp) %>% 
+  select(c("featureid", names(var_labels))) %>% 
+  gather(var, value, -featureid) %>% 
   mutate(var = factor(var, levels = names(var_labels), ordered = TRUE)) %>% 
   ggplot(aes(value)) +
   geom_histogram(bins = 30) +
@@ -68,9 +68,17 @@ Beginning with `v1.1.1`, the prediction metrics described above are generated fo
 Figure \@ref(fig:plot-pred-air-temp) shows the distribution of mean July stream temperature among all catchments for each air temperature scenario.
 
 ```{r plot-pred-air-temp, fig.width=6, fig.height=8, fig.cap="Distributions of Mean July Stream Temperature with Varying Air Temperature Increases"}
+mean_jul_temp_labels <- c(
+  "mean_jul_temp" = "Historical Air Temperature (Hindcast)",
+  "mean_jul_temp_air2" = "Air Temperature +2 degC",
+  "mean_jul_temp_air4" = "Air Temperature +4 degC",
+  "mean_jul_temp_air6" = "Air Temperature +6 degC"
+)
 df %>% 
-  ggplot(aes(mean_jul_temp)) +
+  select(c("featureid", names(mean_jul_temp_labels))) %>% 
+  gather(var, value, -featureid) %>% 
+  ggplot(aes(value)) +
   geom_histogram(bins = 30) +
-  facet_wrap(~ str_c("Air Temp Increase: +", adjust_air_temp, " degC"), ncol = 1) +
+  facet_wrap(~ var, ncol = 1, labeller = labeller(var = mean_jul_temp_labels)) +
   labs(x = "Mean July Stream Temperature (degC)", y = "# Catchments")
 ```

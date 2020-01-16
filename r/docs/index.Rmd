@@ -129,7 +129,7 @@ The source code for the model itself and this documentation is available in the 
 ## Change Log {#change-log}
 
 - **[v1.1.1 (Jan 16, 2020)](http://ecosheds.org/models/stream-temperature/v1.1.1/)**  
-Add air temperature scenarios (+2, +4, +6 degC) to prediction derived metrics.
+Add air temperature scenarios (+2, +4, +6 degC), and # days >= 24.9 and 27 degC to prediction derived metrics.
 - **[v1.1.0 (Dec 2, 2019)](http://ecosheds.org/models/stream-temperature/v1.1.0/)**  
 Add 2018 daymet data, re-calibrated full model.
 - **[v1.0.2 (Mar 26, 2019)](http://ecosheds.org/models/stream-temperature/v1.0.2/)**  
