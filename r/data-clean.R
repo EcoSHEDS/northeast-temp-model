@@ -142,7 +142,8 @@ cat("done ( nrow =", nrow(df_values), ")\n")
 cat("nesting values...")
 df_values <- df_values %>%
   group_by(series_id, location_id, featureid) %>%
-  nest()
+  nest() %>%
+  ungroup()
 cat("done ( nrow =", nrow(df_values), ")\n")
 
 cat("excluding", sum(is.na(df_values$featureid)), "series missing featureid...")
@@ -251,6 +252,7 @@ df_values_airtemp <- df_values %>%
   filter(n > 10) %>%
   group_by(series_id, location_id, featureid) %>%
   nest() %>%
+  ungroup() %>%
   mutate(
     lm = map(data, ~ lm(airtemp ~ mean, data = .)),
     glance = map(lm, glance),
@@ -282,7 +284,6 @@ df_values_airtemp %>%
   scale_color_manual("", values = c("orangered", "deepskyblue")) +
   facet_wrap(~series_id, scales = "free", ncol = 1)
 
-
 airtemp_exclude <- df_values_airtemp %>%
   filter(
     slope >= 0.95,
@@ -291,6 +292,15 @@ airtemp_exclude <- df_values_airtemp %>%
     intercept <= 1,
     r.squared > 0.95
   )
+
+airtemp_exclude %>%
+  unnest(data) %>%
+  select(series_id, date, watertemp = mean, airtemp) %>%
+  gather(var, value, -series_id, -date) %>%
+  ggplot(aes(date, value, color = var)) +
+  geom_line() +
+  scale_color_manual("", values = c("orangered", "deepskyblue")) +
+  facet_wrap(~series_id, scales = "free", ncol = 1)
 
 cat("removing", nrow(airtemp_exclude), "series with high air temp correlation...")
 rejects$series$airtemp_corr <- airtemp_exclude
@@ -337,7 +347,6 @@ rejects$series$n_lt_5 <- df_values %>%
 df_values <- df_values %>%
   filter(n >= 5)
 cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
-
 
 # persist(x) > 5 & x > 3
 df_values_sensor <- df_values %>%
@@ -394,7 +403,8 @@ cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
 cat("nesting values...")
 df_values <- df_values %>%
   group_by(series_id, location_id, featureid) %>%
-  nest()
+  nest() %>%
+  ungroup()
 cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
 
 
@@ -432,6 +442,7 @@ cat("nesting values...")
 df_values <- df_values %>%
   group_by(series_id, location_id, featureid) %>%
   nest() %>%
+  ungroup() %>%
   mutate(
     n = map_int(data, nrow)
   )
