@@ -45,8 +45,8 @@ cat("done (nrow = ", nrow(df_agencies), ", excluding = ", nrow(agencies_exclude)
 cat("retrieving locations...")
 db_locations <- tbl(con, "locations") %>%
   filter(
-    !id %in% locations_exclude$location_id,
-    !agency_id %in% agencies_exclude$agency_id
+    !id %in% !!locations_exclude$location_id,
+    !agency_id %in% !!agencies_exclude$agency_id
   )
 df_locations <- collect(db_locations)
 cat("done (nrow = ", nrow(df_locations), ")\n", sep = "")
@@ -55,7 +55,7 @@ cat("retrieving series...")
 suppressWarnings({
   db_series <- tbl(con, "series") %>%
     filter(
-      location_id %in% df_locations$id,
+      location_id %in% !!df_locations$id,
       reviewed == TRUE,
       value_count > 10
     )
@@ -66,7 +66,7 @@ cat("done (nrow = ", nrow(df_series), ")\n", sep = "")
 cat("retrieving values...")
 db_values <- tbl(con, "values") %>%
   filter(
-    series_id %in% df_series$id
+    series_id %in% !!df_series$id
   ) %>%
   mutate(
     date = date_trunc("day", datetime)

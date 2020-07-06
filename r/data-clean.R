@@ -457,17 +457,21 @@ cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
 
 # which locations have overlapping series with different means?
 df_values_location <- df_values %>%
+  select(-n) %>%
   unnest(data) %>%
   group_by(location_id, featureid) %>%
   nest() %>%
+  ungroup() %>%
   mutate(
     date_dups = map(data, function (x) {
       x %>%
         group_by(date) %>%
         summarise(
           n = length(mean),
-          range = diff(range(mean))
+          range = diff(range(mean)),
+          .groups = "drop"
         ) %>%
+        ungroup() %>%
         filter(
           n > 1,    # overlapping
           range > 0 # different values
@@ -518,7 +522,8 @@ df_values <- df_values_location %>%
           n_range = diff(range(n)),
           n = mean(n),
           airtemp = mean(airtemp),
-          prcp = mean(prcp)
+          prcp = mean(prcp),
+          .groups = "drop"
         )
     })
   ) %>%
@@ -616,7 +621,8 @@ df_values_featureid <- df_values %>%
         group_by(location_id, line_distance_m, pour_distance_m) %>%
         summarise(
           n = length(date),
-          n_summer = sum(month(date) %in% 4:10)
+          n_summer = sum(month(date) %in% 4:10),
+          .groups = "drop"
         )
     }),
     n_locations = map_int(locations, nrow)

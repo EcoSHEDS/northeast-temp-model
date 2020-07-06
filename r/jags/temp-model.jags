@@ -3,7 +3,7 @@ model {
     trend[firstObsRows[i]] <- inprod(B.0[], X.0[firstObsRows[i], ]) +
       inprod(B.site[site[firstObsRows[i]], ], X.site[firstObsRows[i], ]) +
       inprod(B.huc[huc[firstObsRows[i]], ], X.huc[firstObsRows[i], ]) +
-      inprod(B.year[year[firstObsRows[i]], ], X.year[firstObsRows[i]])
+      inprod(B.year[year[firstObsRows[i]], ], X.year[firstObsRows[i], ])
 
     stream.mu[firstObsRows[i]] <- trend[firstObsRows[i]]
   }
@@ -12,7 +12,7 @@ model {
     trend[evalRows[i]] <- inprod(B.0[], X.0[evalRows[i], ]) +
       inprod(B.site[site[evalRows[i]], ], X.site[evalRows[i], ]) +
       inprod(B.huc[huc[evalRows[i]], ], X.huc[evalRows[i], ]) +
-      inprod(B.year[year[evalRows[i]], ], X.year[evalRows[i]])
+      inprod(B.year[year[evalRows[i]], ], X.year[evalRows[i], ])
 
     stream.mu[evalRows[i]] <- trend[evalRows[i]] + B.ar1 * (temp[evalRows[i]-1] - trend[evalRows[i]-1])
   }
