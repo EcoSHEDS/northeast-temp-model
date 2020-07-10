@@ -71,6 +71,14 @@ df_out <- df %>%
   mutate_at(vars(-featureid), ~ sprintf("%.2f", .))
 cat("done\n")
 
+
+if (!dir.exists(file.path(config$wd, "csv"))) {
+  cat("creating csv directory...")
+  dir.create(file.path(config$wd, "csv"))
+  cat("done\n")
+}
+
+
 fname <- paste0("sheds-temp-model-v", config$version, ".csv")
 cat("saving to csv/", fname, "...", sep = "")
 write_csv(df_out, file.path(config$wd, "csv", fname), na = "")

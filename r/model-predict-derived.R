@@ -20,25 +20,31 @@ cat("loading model-predict-year.rds...")
 df_year <- readRDS(file.path(config$wd, "model-predict-year.rds"))
 cat("done\n")
 
+
 cat("computing derived metrics by catchment...")
 df <- df_year %>%
-  group_by(featureid, adjust_air_temp) %>%
-  summarise(
-    mean_max_temp = mean(max_temp),
-    max_max_temp = max(max_temp),
-    mean_jun_temp = mean(mean_jun_temp),
-    mean_jul_temp = mean(mean_jul_temp),
-    mean_aug_temp = mean(mean_aug_temp),
-    mean_summer_temp = mean(mean_summer_temp),
-    max_temp_30d = mean(max_temp_30d),
-    n_day_temp_gt_18 = mean(n_day_temp_gt_18),
-    n_day_temp_gt_20 = mean(n_day_temp_gt_20),
-    n_day_temp_gt_22 = mean(n_day_temp_gt_22),
-    n_day_temp_gte_24_9 = mean(n_day_temp_gte_24_9),
-    n_day_temp_gte_27 = mean(n_day_temp_gte_27),
-    resist = mean(resist)
-  ) %>%
-  ungroup()
+  group_split(adjust_air_temp) %>%
+  map_df(function (x) {
+    x %>%
+      group_by(featureid, adjust_air_temp) %>%
+      summarise(
+        mean_max_temp = mean(max_temp),
+        max_max_temp = max(max_temp),
+        mean_jun_temp = mean(mean_jun_temp),
+        mean_jul_temp = mean(mean_jul_temp),
+        mean_aug_temp = mean(mean_aug_temp),
+        mean_summer_temp = mean(mean_summer_temp),
+        max_temp_30d = mean(max_temp_30d),
+        n_day_temp_gt_18 = mean(n_day_temp_gt_18),
+        n_day_temp_gt_20 = mean(n_day_temp_gt_20),
+        n_day_temp_gt_22 = mean(n_day_temp_gt_22),
+        n_day_temp_gte_24_9 = mean(n_day_temp_gte_24_9),
+        n_day_temp_gte_27 = mean(n_day_temp_gte_27),
+        resist = mean(resist),
+        .groups = "drop"
+      )
+  })
+
 cat("done (nrow = ", nrow(df), ")\n", sep = "")
 
 # summary(df)
