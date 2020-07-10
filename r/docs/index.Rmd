@@ -1,7 +1,7 @@
 --- 
 title: "SHEDS Stream Temperature Model"
 author: "[Jeff Walker](https://walkerenvres.com), [Ben Letcher](https://www.lsc.usgs.gov/?q=cafb-ben-letcher), and [Dan Hocking](https://hockinglab.weebly.com/)"
-date: "v1.1.1 (Jan 16, 2020)"
+date: "v1.2.0 (Jul 10, 2020)"
 site: bookdown::bookdown_site
 output: bookdown::gitbook
 documentclass: book
@@ -128,6 +128,8 @@ The source code for the model itself and this documentation is available in the 
 
 ## Change Log {#change-log}
 
+- **[v1.2.0 (Jul 10, 2020)](http://ecosheds.org/models/stream-temperature/v1.2.0/)**  
+Add 2019 daymet, re-calibrate full model.
 - **[v1.1.1 (Jan 16, 2020)](http://ecosheds.org/models/stream-temperature/v1.1.1/)**  
 Add air temperature scenarios (+2, +4, +6 degC), and # days >= 24.9 and 27 degC to prediction derived metrics.
 - **[v1.1.0 (Dec 2, 2019)](http://ecosheds.org/models/stream-temperature/v1.1.0/)**  

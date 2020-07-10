@@ -52,7 +52,7 @@ levels_fixed <- c(
   "airTemp.prcp2.da",
   "airTemp.prcp30.da"
 )
-param_fixed <- data_frame(
+param_fixed <- tibble(
   var = factor(m_out$covs$fixed.ef, levels = levels_fixed, ordered = TRUE),
   mean = m_out$results$mean$B.0,
   q_025 = m_out$results$q2.5$B.0,
@@ -97,13 +97,13 @@ levels_huc8 <- c(
 )
 
 params_huc8 <- bind_rows(
-  setNames(as_data_frame(m_out$results$mean$B.huc), m_out$covs$huc.ef) %>% 
+  setNames(as_tibble(m_out$results$mean$B.huc), m_out$covs$huc.ef) %>% 
     mutate(stat = "mean") %>% 
     bind_cols(m_out$ids$huc),
-  setNames(as_data_frame(m_out$results$q2.5$B.huc), m_out$covs$huc.ef) %>% 
+  setNames(as_tibble(m_out$results$q2.5$B.huc), m_out$covs$huc.ef) %>% 
     mutate(stat = "q_025") %>% 
     bind_cols(m_out$ids$huc),
-  setNames(as_data_frame(m_out$results$q97.5$B.huc), m_out$covs$huc.ef) %>% 
+  setNames(as_tibble(m_out$results$q97.5$B.huc), m_out$covs$huc.ef) %>% 
     mutate(stat = "q_975") %>% 
     bind_cols(m_out$ids$huc)
 ) %>% 
@@ -165,13 +165,13 @@ levels_site <- c(
 )
 
 params_site <- bind_rows(
-  setNames(as_data_frame(m_out$results$mean$B.site), m_out$covs$site.ef) %>% 
+  setNames(as_tibble(m_out$results$mean$B.site), m_out$covs$site.ef) %>% 
     mutate(stat = "mean") %>% 
     bind_cols(m_out$ids$site),
-  setNames(as_data_frame(m_out$results$q2.5$B.site), m_out$covs$site.ef) %>% 
+  setNames(as_tibble(m_out$results$q2.5$B.site), m_out$covs$site.ef) %>% 
     mutate(stat = "q_025") %>% 
     bind_cols(m_out$ids$site),
-  setNames(as_data_frame(m_out$results$q97.5$B.site), m_out$covs$site.ef) %>% 
+  setNames(as_tibble(m_out$results$q97.5$B.site), m_out$covs$site.ef) %>% 
     mutate(stat = "q_975") %>% 
     bind_cols(m_out$ids$site)
 ) %>% 
@@ -227,13 +227,13 @@ levels_year <- c(
 )
 
 params_year <- bind_rows(
-  setNames(as_data_frame(m_out$results$mean$B.year), m_out$covs$year.ef) %>% 
+  setNames(as_tibble(m_out$results$mean$B.year), m_out$covs$year.ef) %>% 
     mutate(stat = "mean") %>% 
     bind_cols(m_out$ids$year),
-  setNames(as_data_frame(m_out$results$q2.5$B.year), m_out$covs$year.ef) %>% 
+  setNames(as_tibble(m_out$results$q2.5$B.year), m_out$covs$year.ef) %>% 
     mutate(stat = "q_025") %>% 
     bind_cols(m_out$ids$year),
-  setNames(as_data_frame(m_out$results$q97.5$B.year), m_out$covs$year.ef) %>% 
+  setNames(as_tibble(m_out$results$q97.5$B.year), m_out$covs$year.ef) %>% 
     mutate(stat = "q_975") %>% 
     bind_cols(m_out$ids$year)
 ) %>% 
@@ -295,10 +295,10 @@ stat_labels <- c(
   "max_resid" = "Maximum Residual (degC)"
 )
 bind_cols(
-  data_frame(
+  tibble(
     dataset = c("calibration", "validation")
   ),
-  as_data_frame(
+  as_tibble(
     bind_rows(calib$summary, valid$summary)
   )
 ) %>%
@@ -374,7 +374,7 @@ stat_labels_deploy <- c(
   "max_rmse" = "Maximum RMSE (degC)"
 )
 df_deploy <- bind_cols(
-  data_frame(
+  tibble(
     dataset = c("calibration", "validation"),
     data = list(
       calib$deploy %>% 
@@ -434,13 +434,15 @@ df_deploy %>%
 Figure \@ref(fig:plot-hist-series-rmse) shows the distribution of deployment RMSE.
 
 ```{r plot-hist-series-rmse, fig.width=8, fig.height=3, fig.cap="Distribution of deployment RMSE"}
-df_deploy %>% 
+df_deploy %>%
+  select(-dataset) %>% 
   unnest(data) %>% 
   ggplot(aes(rmse)) +
   geom_histogram(bins = 30) +
   geom_vline(
     data = df_deploy %>%
       mutate(
+        dataset = if_else(dataset == "calibration", "calib", "valid"),
         mean_rmse = map_dbl(data, ~ mean(.$rmse))
       ),
     aes(xintercept = mean_rmse, color = "Mean RMSE")
@@ -452,8 +454,8 @@ df_deploy %>%
     y = "# Deployments"
   ) +
   facet_wrap(~ dataset, nrow = 1, scales = "free_y", labeller = labeller(dataset = c(
-    "calibration" = "Calibration",
-    "validation" = "Validation"
+    "calib" = "Calibration",
+    "valid" = "Validation"
   )))
 ```
 
@@ -464,6 +466,7 @@ Figures \@ref(fig:plot-series-calib-best) to \@ref(fig:plot-series-calib-worst) 
 ```{r plot-series-calib-best, fig.width=8, fig.height=10, fig.cap="Deployments with lowest RMSE in calibration dataset and n >= 30"}
 df_deploy %>% 
   filter(dataset == "calibration") %>% 
+  select(-dataset) %>% 
   select(-data) %>% 
   unnest(data_best) %>% 
   mutate(
@@ -493,6 +496,7 @@ df_deploy %>%
 df_deploy %>% 
   select(-data) %>% 
   filter(dataset == "calibration") %>% 
+  select(-dataset) %>% 
   unnest(data_worst) %>% 
   mutate(
     label = paste0("Catchment ID: ", featureid, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
@@ -525,6 +529,7 @@ Figures \@ref(fig:plot-series-valid-best) to \@ref(fig:plot-series-valid-worst) 
 df_deploy %>% 
   select(-data) %>% 
   filter(dataset == "validation") %>% 
+  select(-dataset) %>% 
   unnest(data_best) %>% 
   mutate(
     label = paste0("Catchment ID: ", featureid, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
@@ -553,6 +558,7 @@ df_deploy %>%
 df_deploy %>% 
   select(-data) %>% 
   filter(dataset == "validation") %>% 
+  select(-dataset) %>% 
   unnest(data_worst) %>% 
   mutate(
     label = paste0("Catchment ID: ", featureid, "\nDeployment ID = ", deploy_id," \nRMSE = ", sprintf("%.3f", rmse), ", n = ", scales::comma(n)),
@@ -591,7 +597,7 @@ stat_labels_catchment <- c(
   "max_rmse" = "Maximum RMSE (degC)"
 )
 df_catchment <- bind_cols(
-  data_frame(
+  tibble(
     dataset = c("calibration", "validation"),
     data = list(
       calib$catchment %>% 
@@ -637,13 +643,15 @@ df_catchment %>%
 Figure \@ref(fig:plot-hist-catchment-rmse) shows the distribution of catchment RMSE.
 
 ```{r plot-hist-catchment-rmse, fig.width=8, fig.height=3, fig.cap="Distribution of catchment RMSE"}
-df_catchment %>% 
+df_catchment %>%
+  select(-dataset) %>% 
   unnest(data) %>% 
   ggplot(aes(rmse)) +
   geom_histogram(bins = 30) +
   geom_vline(
     data = df_deploy %>%
       mutate(
+        dataset = if_else(dataset == "calibration", "calib", "valid"),
         mean_rmse = map_dbl(data, ~ mean(.$rmse))
       ),
     aes(xintercept = mean_rmse, color = "Mean RMSE")
@@ -655,8 +663,8 @@ df_catchment %>%
     y = "# Catchments"
   ) +
   facet_wrap(~ dataset, nrow = 1, scales = "free_y", labeller = labeller(dataset = c(
-    "calibration" = "Calibration",
-    "validation" = "Validation"
+    "calib" = "Calibration",
+    "valid" = "Validation"
   )))
 ```
 
