@@ -8,6 +8,8 @@ start <- lubridate::now(tzone = "US/Eastern")
 cat("starting export-public-data:", as.character(start, tz = "US/Eastern"), "\n")
 
 suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(jsonlite))
 
 source("functions.R")
 
@@ -46,7 +48,7 @@ df_series_flags <- df_series %>%
     flags = coalesce(flags, "[]"),
     flags = map(flags, function(x) {
       if (x == "[]") {
-        return(data_frame())
+        return(tibble())
       }
       fromJSON(x)
     }),
@@ -157,3 +159,4 @@ cat("done\n")
 end <- lubridate::now(tzone = "US/Eastern")
 elapsed <- as.numeric(difftime(end, start, tz = "US/Eastern", units = "sec"))
 cat("finished export-public-data: ", as.character(end, tz = "US/Eastern"), " (elapsed = ", elapsed, " sec)\n", sep = "")
+
