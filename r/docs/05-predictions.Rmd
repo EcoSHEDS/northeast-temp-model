@@ -11,7 +11,7 @@ source("../functions.R")
 config <- load_config("../../")
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, comment = NA)
 
-df_year <- readRDS(file.path(config$wd, "model-predict-year.rds"))
+df_year <- map_df(sprintf("%02d", 1:6), ~ read_rds(file.path(config$wd, paste0("model-predict-year-", .x, ".rds"))))
 max_year <- max(df_year$year)
 rm(df_year)
 df <- readRDS(file.path(config$wd, "model-predict-derived.rds"))

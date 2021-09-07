@@ -9,7 +9,6 @@ suppressPackageStartupMessages(library(RPostgreSQL))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(jsonlite))
 suppressPackageStartupMessages(library(lubridate))
-suppressPackageStartupMessages(library(sensorQC))
 suppressPackageStartupMessages(library(stringr))
 suppressPackageStartupMessages(library(zoo))
 suppressPackageStartupMessages(library(broom))
@@ -55,7 +54,7 @@ df <- df %>%
         )
       stopifnot(all(!is.na(x$temp_index)))
       temp_index_qtiles <- quantile(x$temp_index, probs = c(0.001, 0.999))
-      data_frame(
+      tibble(
         q_n = nrow(x),
         q_lo = temp_index_qtiles[1],
         q_med = median(x$temp_index),
@@ -123,7 +122,7 @@ df <- df %>%
 df <- df %>%
   mutate(
     data_spring = pmap(list(data, breaks, complete_spring), function (x, breaks, complete) {
-      out <- data_frame()
+      out <- tibble()
       if (complete) {
         out <- x %>%
           mutate(jday = yday(date)) %>%
@@ -145,7 +144,7 @@ df <- df %>%
       out
     }),
     data_fall = pmap(list(data, breaks, complete_fall), function (x, breaks, complete) {
-      out <- data_frame()
+      out <- tibble()
       if (complete) {
         out <- x %>%
           mutate(jday = yday(date)) %>%
@@ -168,70 +167,70 @@ df <- df %>%
     })
   )
 cat("done\n")
-#
-# df %>%
-#   ungroup() %>%
-#   select(spring_bp, fall_bp) %>%
-#   gather(var, value) %>%
-#   ggplot(aes(value)) +
-#   geom_histogram() +
-#   facet_wrap(~ var, scales = "free")
-#
-# df %>%
-#   filter(!is.na(spring_bp)) %>%
-#   arrange(desc(spring_bp)) %>%
-#   head(20) %>%
-#   unnest(data_spring) %>%
-#   filter(yday(date) >= 1, yday(date) <= 200) %>%
-#   ggplot(aes(date, mean)) +
-#   geom_line(aes(y = airtemp)) +
-#   geom_point(aes(color = roll_sync)) +
-#   facet_wrap(~featureid_year, scales = "free_x")
-#
-# df %>%
-#   filter(!is.na(spring_bp)) %>%
-#   arrange(spring_bp) %>%
-#   head(20) %>%
-#   unnest(data_spring) %>%
-#   filter(yday(date) >= 1, yday(date) <= 200) %>%
-#   ggplot(aes(date, mean)) +
-#   geom_line(aes(y = airtemp)) +
-#   geom_point(aes(color = roll_sync)) +
-#   facet_wrap(~featureid_year, scales = "free_x")
-#
-# df %>%
-#   filter(!is.na(fall_bp)) %>%
-#   arrange(desc(fall_bp)) %>%
-#   head(20) %>%
-#   unnest(data_fall) %>%
-#   filter(yday(date) >= 225, yday(date) <= 365) %>%
-#   ggplot(aes(date, mean)) +
-#   geom_line(aes(y = airtemp)) +
-#   geom_point(aes(color = roll_sync)) +
-#   facet_wrap(~featureid_year, scales = "free_x")
-#
-# df %>%
-#   filter(!is.na(fall_bp)) %>%
-#   arrange(fall_bp) %>%
-#   head(20) %>%
-#   unnest(data_fall) %>%
-#   filter(yday(date) >= 225, yday(date) <= 350) %>%
-#   ggplot(aes(date, mean)) +
-#   geom_line(aes(y = airtemp)) +
-#   geom_point(aes(color = roll_sync)) +
-#   facet_wrap(~featureid_year, scales = "free_x")
-#
-# df %>%
-#   filter(
-#     !is.na(fall_bp),
-#     fall_bp > 350
-#   ) %>%
-#   unnest(data_fall) %>%
-#   filter(yday(date) >= 225, yday(date) <= 350) %>%
-#   ggplot(aes(date, mean)) +
-#   geom_line(aes(y = airtemp)) +
-#   geom_point(aes(color = roll_sync)) +
-#   facet_wrap(~featureid_year, scales = "free_x")
+
+df %>%
+  ungroup() %>%
+  select(spring_bp, fall_bp) %>%
+  gather(var, value) %>%
+  ggplot(aes(value)) +
+  geom_histogram() +
+  facet_wrap(~ var, scales = "free")
+
+df %>%
+  filter(!is.na(spring_bp)) %>%
+  arrange(desc(spring_bp)) %>%
+  head(20) %>%
+  unnest(data_spring) %>%
+  filter(yday(date) >= 1, yday(date) <= 200) %>%
+  ggplot(aes(date, mean)) +
+  geom_line(aes(y = airtemp)) +
+  geom_point(aes(color = roll_sync)) +
+  facet_wrap(~featureid_year, scales = "free_x")
+
+df %>%
+  filter(!is.na(spring_bp)) %>%
+  arrange(spring_bp) %>%
+  head(20) %>%
+  unnest(data_spring) %>%
+  filter(yday(date) >= 1, yday(date) <= 200) %>%
+  ggplot(aes(date, mean)) +
+  geom_line(aes(y = airtemp)) +
+  geom_point(aes(color = roll_sync)) +
+  facet_wrap(~featureid_year, scales = "free_x")
+
+df %>%
+  filter(!is.na(fall_bp)) %>%
+  arrange(desc(fall_bp)) %>%
+  head(20) %>%
+  unnest(data_fall) %>%
+  filter(yday(date) >= 225, yday(date) <= 365) %>%
+  ggplot(aes(date, mean)) +
+  geom_line(aes(y = airtemp)) +
+  geom_point(aes(color = roll_sync)) +
+  facet_wrap(~featureid_year, scales = "free_x")
+
+df %>%
+  filter(!is.na(fall_bp)) %>%
+  arrange(fall_bp) %>%
+  head(20) %>%
+  unnest(data_fall) %>%
+  filter(yday(date) >= 225, yday(date) <= 350) %>%
+  ggplot(aes(date, mean)) +
+  geom_line(aes(y = airtemp)) +
+  geom_point(aes(color = roll_sync)) +
+  facet_wrap(~featureid_year, scales = "free_x")
+
+df %>%
+  filter(
+    !is.na(fall_bp),
+    fall_bp > 350
+  ) %>%
+  unnest(data_fall) %>%
+  filter(yday(date) >= 225, yday(date) <= 350) %>%
+  ggplot(aes(date, mean)) +
+  geom_line(aes(y = airtemp)) +
+  geom_point(aes(color = roll_sync)) +
+  facet_wrap(~featureid_year, scales = "free_x")
 
 
 # compute average breakpoints ---------------------------------------------

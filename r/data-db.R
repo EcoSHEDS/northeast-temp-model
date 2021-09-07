@@ -110,7 +110,7 @@ df_daymet <- df_series %>%
   mutate(
     years = map2(start_datetime, end_datetime, function (x, y) {
       years <- seq(year(x), year(y), by = 1)
-      data_frame(year = years)
+      tibble(year = years)
     })
   ) %>%
   select(location_id, years) %>%

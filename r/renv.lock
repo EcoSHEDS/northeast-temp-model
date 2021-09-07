@@ -72,13 +72,6 @@
       "Repository": "CRAN",
       "Hash": "dab19adae4440ae55aa8a9d238b246bb"
     },
-    "RcppRoll": {
-      "Package": "RcppRoll",
-      "Version": "0.3.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "84a03997fbb5acfb3c9b43bad88fea1f"
-    },
     "askpass": {
       "Package": "askpass",
       "Version": "1.1",
@@ -443,13 +436,6 @@
       "Repository": "CRAN",
       "Hash": "fbd9285028b0263d76d18c95ae51a53d"
     },
-    "lazyeval": {
-      "Package": "lazyeval",
-      "Version": "0.2.2",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "d908914ae53b04d4c0c0fd72ecc35370"
-    },
     "lifecycle": {
       "Package": "lifecycle",
       "Version": "1.0.0",
@@ -723,18 +709,6 @@
       "Repository": "CRAN",
       "Hash": "3838071b66e0c566d55cc26bd6e27bf4"
     },
-    "sensorQC": {
-      "Package": "sensorQC",
-      "Version": "0.4.0",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "sensorQC",
-      "RemoteUsername": "USGS-R",
-      "RemoteRef": "master",
-      "RemoteSha": "21f36a290dae9b823a5d3231e78568389af7fc82",
-      "Hash": "80ca47b01fdff9566262f2f7ec5b274a"
-    },
     "shiny": {
       "Package": "shiny",
       "Version": "1.6.0",
@@ -748,6 +722,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "133639dc106955eee4ffb8ec73edac37"
+    },
+    "slider": {
+      "Package": "slider",
+      "Version": "0.2.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "5237bd176dc0c4dd7eb8dcdafe514de3"
     },
     "sourcetools": {
       "Package": "sourcetools",
@@ -828,10 +809,10 @@
     },
     "vctrs": {
       "Package": "vctrs",
-      "Version": "0.3.2",
+      "Version": "0.3.8",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "5ba3006888ac62fd5e97b208d00d3317"
+      "Hash": "ecf749a1b39ea72bd9b51b76292261f1"
     },
     "viridisLite": {
       "Package": "viridisLite",
@@ -839,6 +820,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "ce4f6271baa94776db692f1cb2055bee"
+    },
+    "warp": {
+      "Package": "warp",
+      "Version": "0.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "2982481615756e24e79fee95bdc95daa"
     },
     "whisker": {
       "Package": "whisker",

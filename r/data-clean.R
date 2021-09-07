@@ -10,7 +10,7 @@ suppressPackageStartupMessages(library(RPostgreSQL))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(jsonlite))
 suppressPackageStartupMessages(library(lubridate))
-suppressPackageStartupMessages(library(sensorQC))
+suppressPackageStartupMessages(library(slider))
 suppressPackageStartupMessages(library(zoo))
 suppressPackageStartupMessages(library(broom))
 
@@ -40,8 +40,7 @@ df_daymet <- read_csv(
 
 df_daymet_leap_years <- df_daymet %>%
   mutate(year = year(date)) %>%
-  select(featureid, year) %>%
-  distinct() %>%
+  distinct(featureid, year) %>%
   filter(leap_year(year)) %>%
   mutate(
     date = ymd(paste(year, "12", "30", sep = "-"))
@@ -73,7 +72,7 @@ df_series <- db_series %>%
     flags = coalesce(flags, "[]"),
     flags = map(flags, function(x) {
       if (x == "[]") {
-        return(data_frame())
+        return(tibble())
       }
       fromJSON(x)
     }),
@@ -91,7 +90,7 @@ df_series_flags <- df_series %>%
           start_date = as.character(as.Date(ymd_hms(start), tz = "US/Eastern")),
           end_date = as.character(as.Date(ymd_hms(end), tz = "US/Eastern")),
           date = map2(start_date, end_date, function (x, y) {
-            data_frame(date = seq.Date(from = as.Date(x, tz = "US/Eastern"), to = as.Date(y, tz = "US/Eastern"), by = "day"))
+            tibble(date = seq.Date(from = as.Date(x, tz = "US/Eastern"), to = as.Date(y, tz = "US/Eastern"), by = "day"))
           })
         ) %>%
         unnest(date) %>%
@@ -103,7 +102,7 @@ df_series_flags <- df_series %>%
 cat("done\n")
 
 cat("setting up values data frame...")
-df_values <- db_values %>%
+df_values_all <- db_values %>%
   mutate(date = as.Date(date, tz = "UTC")) %>%
   filter(year(date) <= MAX_YEAR) %>%
   left_join(
@@ -112,9 +111,7 @@ df_values <- db_values %>%
   ) %>%
   mutate(
     flagged = coalesce(flagged, FALSE)
-  )
-
-df_values <- df_values %>%
+  ) %>%
   left_join(
     db_series %>%
       select(id, location_id),
@@ -125,42 +122,42 @@ df_values <- df_values %>%
       select(id, featureid = catchment_id),
     by = c("location_id" = "id")
   )
-cat("done ( nrow =", nrow(df_values), ")\n")
+cat("done ( nrow =", nrow(df_values_all), ")\n")
 
 
-# filter ------------------------------------------------------------------
+# filter: values ------------------------------------------------------------------
 
-cat("removing", sum(df_values$flagged), "observations with user flag...")
+cat("removing", sum(df_values_all$flagged), "flagged values...")
 rejects$values <- list(
-  flagged = df_values %>% filter(flagged)
+  flagged = df_values_all %>% filter(flagged)
 )
-df_values <- df_values %>%
+df_values_unflagged <- df_values_all %>%
   filter(!flagged) %>%
   select(-flagged, -comment)
-cat("done ( nrow =", nrow(df_values), ")\n")
+cat("done ( nrow =", nrow(df_values_unflagged), ")\n")
 
 cat("nesting values...")
-df_values <- df_values %>%
+df_series_unflagged <- df_values_unflagged %>%
   group_by(series_id, location_id, featureid) %>%
   nest() %>%
   ungroup()
-cat("done ( nrow =", nrow(df_values), ")\n")
+cat("done ( nrow =", nrow(df_series_unflagged), ")\n")
 
-cat("excluding", sum(is.na(df_values$featureid)), "series missing featureid...")
+cat("excluding", sum(is.na(df_series_unflagged$featureid)), "series missing featureid...")
 rejects$series <- list(
-  missing_featureid = df_values %>%
+  missing_featureid = df_series_unflagged %>%
     filter(is.na(featureid))
 )
-df_values <- df_values %>%
+df_series_featureid <- df_series_unflagged %>%
   filter(!is.na(featureid))
-cat("done ( nrow =", nrow(df_values), ")\n")
+cat("done ( nrow =", nrow(df_series_featureid), ")\n")
 
 cat("connecting to db (host = ", config$db$host, ", dbname = ", config$db$dbname, ")...", sep = "")
 con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
 cat("done\n")
 
 cat("fetching drainage areas...")
-featureids <- unique(df_values$featureid)
+featureids <- unique(df_series_featureid$featureid)
 df_covariates <- tbl(con, "covariates") %>%
   filter(
     is.na(riparian_distance_ft),
@@ -182,313 +179,286 @@ df_covariates <- df_covariates %>%
   rename(area_km2 = AreaSqKM) %>%
   mutate(allonnet = coalesce(allonnet, 0))
 
-df_values <- df_values %>%
+df_series_featureid_cov <- df_series_featureid %>%
   left_join(
     df_covariates,
     by = "featureid"
   )
 
-stopifnot(all(!is.na(df_values$area_km2)))
-stopifnot(all(!is.na(df_values$allonnet)))
-cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
+stopifnot(all(!is.na(df_series_featureid_cov$area_km2)))
+stopifnot(all(!is.na(df_series_featureid_cov$allonnet)))
+cat("done (nrow = ", nrow(df_series_featureid_cov), ")\n", sep = "")
 
-
-cat("excluding", sum(df_values$area_km2 >= 200), "series with area_km2 >= 200...")
-rejects$series$area_km2_gte_200 <- df_values %>%
+cat("excluding", sum(df_series_featureid_cov$area_km2 >= 200), "series with area_km2 >= 200...")
+rejects$series$area_km2_gte_200 <- df_series_featureid_cov %>%
   filter(area_km2 <= 200)
-df_values <- df_values %>%
+df_series_small_area <- df_series_featureid_cov %>%
   filter(area_km2 < 200)
-cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
+cat("done (nrow = ", nrow(df_series_small_area), ")\n", sep = "")
 
-cat("excluding", sum(df_values$allonnet >= 50), "series with allonnet >= 50...")
-rejects$series$allonnet_gte_50 <- df_values %>%
+cat("excluding", sum(df_series_small_area$allonnet >= 50), "series with allonnet >= 50...")
+rejects$series$allonnet_gte_50 <- df_series_small_area %>%
   filter(allonnet >= 50)
-df_values <- df_values %>%
+df_series_unimpounded <- df_series_small_area %>%
   filter(allonnet < 50)
-cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
+cat("done (nrow = ", nrow(df_series_unimpounded), ")\n", sep = "")
 
 cat("unnesting values...")
-df_values <- df_values %>%
+df_values_start <- df_series_unimpounded %>%
   unnest(data) %>%
   select(-area_km2, -allonnet)
-cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
+cat("done (nrow = ", nrow(df_values_start), ")\n", sep = "")
 
 cat("joining daymet data...")
-df_values <- df_values %>%
+df_values_daymet <- df_values_start %>%
   left_join(
     df_daymet,
     by = c("featureid", "date")
   )
-cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
+cat("done (nrow = ", nrow(df_values_daymet), ")\n", sep = "")
 
-cat("removing", sum(df_values$mean < -25),"values where mean temp < -25 (assume NA indicators)...")
-rejects$values$mean_temp_lt_m25 <- df_values %>%
-  filter(mean < -25)
-df_values <- df_values %>%
-  filter(mean >= -25)
-cat("done ( nrow =", nrow(df_values), ")\n")
-
-cat("removing", sum(df_values$mean > 35),"values where mean temp > 35...")
-rejects$values$mean_temp_gt_35 <- df_values %>%
-  filter(mean > 35)
-df_values <- df_values %>%
-  filter(mean <= 35)
-cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
-
-cat("removing", sum(df_values$max > 35),"values where max temp > 35...")
-rejects$values$max_temp_gt_35 <- df_values %>%
-  filter(max > 35)
-df_values <- df_values %>%
-  filter(max <= 35)
-cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
-
-# air temperature correlation
-# n > 10, slope in [0.95, 1.05], intercept in [-0.5, 0.5]
-df_values_airtemp <- df_values %>%
-  group_by(series_id, location_id, featureid) %>%
-  mutate(
-    n = n()
-  ) %>%
-  filter(n > 10) %>%
-  group_by(series_id, location_id, featureid) %>%
-  nest() %>%
-  ungroup() %>%
-  mutate(
-    lm = map(data, ~ lm(airtemp ~ mean, data = .)),
-    glance = map(lm, glance),
-    r.squared = map_dbl(glance, "r.squared"),
-    intercept = map_dbl(lm, function (x) {
-      tidy(x)$estimate[1]
-    }),
-    slope = map_dbl(lm, function (x) {
-      tidy(x)$estimate[2]
-    })
-  ) %>%
-  arrange(desc(r.squared))
-
-df_values_airtemp %>%
-  head(20) %>%
-  unnest(data) %>%
-  ggplot(aes(mean, airtemp)) +
-  geom_point() +
-  geom_abline(color = "red") +
-  facet_wrap(~series_id, scales = "free")
-
-df_values_airtemp %>%
-  head(3) %>%
-  unnest(data) %>%
-  select(series_id, date, watertemp = mean, airtemp) %>%
-  gather(var, value, -series_id, -date) %>%
-  ggplot(aes(date, value, color = var)) +
-  geom_line() +
-  scale_color_manual("", values = c("orangered", "deepskyblue")) +
-  facet_wrap(~series_id, scales = "free", ncol = 1)
-
-airtemp_exclude <- df_values_airtemp %>%
+# remove values where min = mean = max = 0 (represent gaps)
+cat("removing zeros...")
+df_values_nonzeros <- df_values_daymet %>%
   filter(
-    slope >= 0.95,
-    slope <= 1.05,
-    intercept >= -1,
-    intercept <= 1,
-    r.squared > 0.95
+    !(min == 0 & mean == 0 & max == 0),
+    !(min == 0 & mean < 10 & airtemp > 20)
   )
+cat("done (nrow = ", nrow(df_values_nonzeros), ")\n", sep = "")
 
-airtemp_exclude %>%
-  unnest(data) %>%
-  select(series_id, date, watertemp = mean, airtemp) %>%
-  gather(var, value, -series_id, -date) %>%
-  ggplot(aes(date, value, color = var)) +
-  geom_line() +
-  scale_color_manual("", values = c("orangered", "deepskyblue")) +
-  facet_wrap(~series_id, scales = "free", ncol = 1)
+# remove outliers (max-min > 40)
+cat("removing outliers (max-min > 40)")
+df_values_nonoutliers <- df_values_nonzeros %>%
+  filter((max-min) < 40)
+cat("done (nrow = ", nrow(df_values_nonoutliers), ")\n", sep = "")
 
-cat("removing", nrow(airtemp_exclude), "series with high air temp correlation...")
-rejects$series$airtemp_corr <- airtemp_exclude
-df_values <- df_values %>%
-  filter(!series_id %in% airtemp_exclude$series_id)
-cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
+# manually remove series
+exclude_series_id <- 24039
+cat("removing manually selected series (n =", length(exclude_series_id), ")\n")
+df_values_exclude_series <- df_values_nonoutliers %>%
+  filter(!series_id %in% exclude_series_id)
+cat("done (nrow = ", nrow(df_values_exclude_series), ")\n", sep = "")
 
-# 502 - high correlation in winter, but not summer
-df_values %>%
-  filter(min < -10) %>%
-  select(series_id) %>%
-  unique() %>%
-  head() %>%
-  left_join(df_values, by = "series_id") %>%
-  ggplot(aes(date, mean)) +
-  geom_line(aes(y = airtemp)) +
-  geom_point() +
-  geom_point(aes(y = min), color = "red") +
-  facet_wrap(~series_id, scales = "free")
-
-df_values %>%
-  filter(min < -10) %>%
-  select(series_id) %>%
-  unique() %>%
-  head() %>%
-  left_join(df_values, by = "series_id") %>%
-  ggplot(aes(mean, airtemp)) +
-  geom_point() +
-  geom_abline(color = "red") +
-  facet_wrap(~series_id, scales = "free")
-
-cat("nesting values...")
-df_values <- df_values %>%
-  group_by(series_id, location_id, featureid) %>%
-  nest() %>%
+# split series into continuous chunks
+df_values_chunks <- df_values_exclude_series %>%
+  select(-featureid, -location_id) %>%
+  arrange(series_id, date) %>%
+  group_by(series_id) %>%
   mutate(
-    n = map_int(data, nrow)
-  )
-cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
-
-cat("removing", sum(df_values$n < 5),"series with count < 5...")
-rejects$series$n_lt_5 <- df_values %>%
-  filter(n < 5)
-df_values <- df_values %>%
-  filter(n >= 5)
-cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
-
-# persist(x) > 5 & x > 3
-df_values_sensor <- df_values %>%
-  mutate(
-    sensor = map(data, ~ sensor(data_frame(times = .$date, x = .$mean))),
-    flags = map(sensor, ~ flag(., 'persist(x) > 5', 'x > 3'))
-  )
-df_values_sensor_flags <- df_values_sensor %>%
-  mutate(
-    n_flag = map_int(flags, ~ length(.$flags[[1]]$flag.i)),
-    flag_i = map(flags, ~ intersect(.$flags[[1]]$flag.i, .$flags[[2]]$flag.i)),
-    n_exclude = map_int(flag_i, length),
-    data_flag = map2(data, flag_i, function (x, y) {
-      x$flagged <- FALSE
-      if (length(y) > 0) {
-        x[y, "flagged"] <- TRUE
-      }
-      x
-    }),
-    n_data_flag = map_int(data_flag, ~ sum(!.$flagged)),
-    check = (n_data_flag + n_exclude) == n
-  )
-stopifnot(all(df_values_sensor_flags$check))
-#
-# df_values_sensor_flags %>%
-#   select(-data, -sensor, -flags, -flag_i, -data_flag) %>%
-#   arrange(desc(n_exclude)) %>%
-#   filter(n_exclude > 0)
-#
-# df_values_sensor_flags %>%
-#   arrange(desc(n_exclude)) %>%
-#   filter(n_exclude > 0) %>%
-#   unnest(data_flag) %>%
-#   ggplot(aes(date, mean)) +
-#   geom_point(aes(color = flagged)) +
-#   geom_line(aes(y = airtemp)) +
-#   # ggplot(aes(mean, airtemp)) +
-#   # geom_abline(color = "red") +
-#   # geom_point() +
-#   facet_wrap(~series_id, scales = "free")
-
-df_values_sensor_flags <- df_values_sensor_flags %>%
-  select(series_id, location_id, featureid, data_flag) %>%
-  unnest(data_flag)
-
-cat("removing", sum(df_values_sensor_flags$flagged),"observations with persist(mean) > 5 and mean > 3...")
-rejects$values$sensor_persist <- df_values_sensor_flags %>%
-  filter(flagged)
-df_values <- df_values_sensor_flags %>%
-  filter(!flagged) %>%
-  select(-flagged)
-cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
-
-cat("nesting values...")
-df_values <- df_values %>%
-  group_by(series_id, location_id, featureid) %>%
-  nest() %>%
-  ungroup()
-cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
-
-
-# remove first or last day of each subseries if incomplete (frequency(t) != frequency(t-1 or t+1))
-cat("trimming start/end values of each series if freq differs from adjacent day...")
-df_values <- df_values %>%
-  mutate(
-    data = map(data, function (x_raw) {
-      f <- median(x_raw$n) # median frequency
-      x <- x_raw
-      x$trim <- FALSE
-
-      if (nrow(x) > 3) {
-        if (x[["n"]][1] < x[["n"]][2]) {
-          x <- x[-1, ]
-          x[1, "trim"] <- TRUE
-        }
-        if (x[["n"]][nrow(x)] < x[["n"]][nrow(x)-1]) {
-          x <- x[-nrow(x), ]
-          x[nrow(x), "trim"] <- TRUE
-        }
-      }
-      x
-    })
+    new_chunk = coalesce(as.numeric(difftime(date, lag(date), "day")), 0) > 1,
+    series_chunk = cumsum(new_chunk)
   ) %>%
-  unnest(data)
-rejects$values$trim_ends <- df_values %>%
-  filter(trim)
-df_values <- df_values %>%
-  filter(!trim) %>%
-  select(-trim)
-cat("done (nrow = ", nrow(df_values), ", n trimmed = ", nrow(rejects$values$trim_ends), ")\n", sep = "")
+  select(-new_chunk) %>%
+  relocate(series_chunk, .after = series_id)
 
-cat("nesting values...")
-df_values <- df_values %>%
-  group_by(series_id, location_id, featureid) %>%
-  nest() %>%
-  ungroup() %>%
+# trim chunks if n < median(n) on first or last day
+df_values_chunks_trim <- df_values_chunks %>%
+  group_by(series_id, series_chunk) %>%
   mutate(
-    n = map_int(data, nrow)
-  )
-cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
+    first = row_number() == 1,
+    last = row_number() == n(),
+    median_n = median(n),
+    trim = (first | last) & (n != median(n))
+  ) %>%
+  ungroup()
 
-cat("removing", sum(df_values$n < 5), "series with length < 5...")
-rejects$values$n_lt_5_2 <- df_values %>%
-  filter(n < 5)
-df_values <- df_values %>%
-  filter(n >= 5)
-cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
+df_values_chunks_trim %>%
+  filter(trim)
+
+# group by chunk
+df_chunks <- df_values_chunks_trim %>%
+  filter(!trim) %>%
+  select(-first, -last, -median_n, -trim) %>%
+  group_by(series_id, series_chunk) %>%
+  mutate(
+    dmin = coalesce(min - lag(min), 0),
+    dmax = coalesce(max - lag(max), 0),
+    dmean = coalesce(mean - lag(mean), 0),
+    `max-min` = max - min,
+    `airtemp-mean` = pmax(airtemp, 10) - pmax(mean, 10)
+  ) %>%
+  ungroup() %>%
+  nest(data = -c(series_id, series_chunk))
+
+# filter: chunks ------------------------------------------------------------------
+
+plot_ts <- function (x) {
+  x %>%
+    ggplot(aes(date)) +
+    geom_ribbon(aes(ymin = min, ymax = max), alpha = 0.25) +
+    geom_line(aes(y = airtemp), color = "goldenrod") +
+    geom_line(aes(y = mean), color = "deepskyblue") +
+    facet_wrap(vars(series_id, series_chunk), labeller = label_both, scales = "free")
+}
+plot_cor <- function (x) {
+  x %>%
+    ggplot(aes(mean, airtemp)) +
+    geom_abline() +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE, formula = y ~ x) +
+    facet_wrap(vars(series_id, series_chunk), labeller = label_both, scales = "free")
+}
+# df_chunks %>%
+#   filter(series_id == 19504) %>%
+#   unnest(data) %>%
+#   plot_ts()
+  # plot_cor()
+
+df_chunks_filter_1 <- df_chunks %>%
+  rowwise() %>%
+  mutate(
+    includes_summer = any(month(data$date) %in% 3:11),
+    n_values = nrow(data),
+    min_value = min(data$min),
+    min_mean = min(data$mean),
+    mean_mean = mean(data$mean),
+    median_mean = median(data$mean),
+    max_mean = max(data$mean),
+    max_value = max(data$max),
+    sd_mean = sd(data$mean),
+    max_dmin = max(data$dmin),
+    max_dmean = max(data$dmean),
+    max_dmax = max(data$dmax),
+    `max_max-min` = max(data$`max-min`),
+    `min_airtemp-mean` = min(data$`airtemp-mean`),
+    `q10_airtemp-mean` = quantile(data$`airtemp-mean`, probs = 0.1),
+    `q25_airtemp-mean` = quantile(data$`airtemp-mean`, probs = 0.25),
+    `median_airtemp-mean` = median(data$`airtemp-mean`),
+    `q75_airtemp-mean` = quantile(data$`airtemp-mean`, probs = 0.75),
+    `q90_airtemp-mean` = quantile(data$`airtemp-mean`, probs = 0.9),
+    `mean_airtemp-mean` = mean(data$`airtemp-mean`),
+    `max_airtemp-mean` = max(data$`airtemp-mean`),
+    `sd_airtemp-mean` = sd(data$`airtemp-mean`),
+    `q25_abs_airtemp-mean` = quantile(abs(data$`airtemp-mean`), probs = 0.25),
+    `median_abs_airtemp-mean` = median(abs(data$`airtemp-mean`)),
+    `q75_abs_airtemp-mean` = quantile(abs(data$`airtemp-mean`), probs = 0.75),
+    `mean_abs_airtemp-mean` = mean(abs(data$`airtemp-mean`)),
+    `max_abs_airtemp-mean` = max(abs(data$`airtemp-mean`)),
+    `sd_abs_airtemp-mean` = sd(abs(data$`airtemp-mean`)),
+    n_airtemp_gt_5 = sum(data$airtemp > 5),
+    pct_airtemp_gt_5 = n_airtemp_gt_5 / n_values
+  ) %>%
+  print()
+
+cat("removing", sum(df_chunks_filter_1$n_values <= 5),"chunks where n_values <= 5...")
+rejects$values$n_values_lt_5 <- df_chunks_filter_1 %>%
+  filter(n_values <= 5)
+df_chunks_filter_2 <- df_chunks_filter_1 %>%
+  filter(n_values > 5)
+cat("done (n series = ", nrow(df_chunks_filter_2), ")\n", sep = "")
+
+cat("removing", sum(!df_chunks_filter_2$includes_summer),"chunks that only include winter (Dec-Feb)...")
+rejects$values$winter_only <- df_chunks_filter_2 %>%
+  filter(!includes_summer)
+df_chunks_filter_3 <- df_chunks_filter_2 %>%
+  filter(includes_summer)
+cat("done (n series = ", nrow(df_chunks_filter_3), ")\n", sep = "")
+
+cat("removing", sum(df_chunks_filter_3$min_value > 30 & df_chunks_filter_3$max_value > 60),"series where min_value > 30 & max_value > 60 (suspect fahranheit)...")
+rejects$values$suspect_fahranheit <- df_chunks_filter_3 %>%
+  filter(min_value > 30 & max_value > 60)
+df_chunks_filter_4 <- df_chunks_filter_3 %>%
+  filter(!(min_value > 30 & max_value > 60)) %>%
+  mutate(
+    cor_airtemp = cor(data$mean, data$airtemp),
+    lm_airtemp = list(lm(airtemp ~ mean, data)),
+    intercept_airtemp = lm_airtemp$coefficients[[1]],
+    slope_airtemp = lm_airtemp$coefficients[[2]]
+  )
+cat("done (n series = ", nrow(df_chunks_filter_4), ")\n", sep = "")
+
+cat("removing", sum(df_chunks_filter_4$n_values > 100 & df_chunks_filter_4$min_value < -10 & df_chunks_filter_4$cor_airtemp > 0.98),"series where n_values > 100 & min_value < -10 & cor_airtemp > 0.98 (suspect air temp measurements)...")
+rejects$values$suspect_airtemp <- df_chunks_filter_4 %>%
+  filter(n_values > 100, min_value < -10, cor_airtemp > 0.98)
+df_chunks_filter_5 <- df_chunks_filter_4 %>%
+  filter(!(n_values > 100 & min_value < -10 & cor_airtemp > 0.98))
+cat("done (n series = ", nrow(df_chunks_filter_5), ")\n", sep = "")
+
+cat("removing", sum(df_chunks_filter_5$`sd_airtemp-mean` > 8),"series where `sd_airtemp-mean` > 8...")
+rejects$values$`sd_airtemp-mean_gt_8` <- df_chunks_filter_5 %>%
+  filter(`sd_airtemp-mean` > 8)
+df_chunks_filter_6 <- df_chunks_filter_5 %>%
+  filter(!(`sd_airtemp-mean` > 8))
+cat("done (n series = ", nrow(df_chunks_filter_6), ")\n", sep = "")
+
+cat("removing", sum(df_chunks_filter_6$pct_airtemp_gt_5 < 0.1),"series where pct(airtemp > 5) < 0.1 (freezing)...")
+rejects$values$freezing <- df_chunks_filter_6 %>%
+  filter(pct_airtemp_gt_5 < 0.1)
+df_chunks_filter_7 <- df_chunks_filter_6 %>%
+  filter(!(pct_airtemp_gt_5 < 0.1))
+cat("done (n series = ", nrow(df_chunks_filter_7), ")\n", sep = "")
+
+cat("removing", sum(df_chunks_filter_7$slope_airtemp < -5 | df_chunks_filter_7$slope_airtemp > 50),"series where slope_airtemp < -5 or > 50 (extreme slopes)...")
+rejects$values$slope_airtemp <- df_chunks_filter_7 %>%
+  filter(slope_airtemp < -5 | slope_airtemp > 50)
+df_chunks_filter_8 <- df_chunks_filter_7 %>%
+  filter(!(slope_airtemp < -5 | slope_airtemp > 50))
+cat("done (n series = ", nrow(df_chunks_filter_8), ")\n", sep = "")
+
+df_chunks_filter_8 %>%
+  arrange(desc(`sd_airtemp-mean`)) %>%
+  head(9) %>%
+  # select(-data, -lm_airtemp) %>% view
+  unnest(data) %>%
+  plot_ts()
+
+df_chunks_filter_8 %>%
+  ggplot(aes(intercept_airtemp, slope_airtemp)) +
+  geom_point(aes(color = pct_airtemp_gt_5)) +
+  scale_color_viridis_c()
+
+df_chunks_filter_8 %>%
+  ggplot(aes(n_values)) +
+  stat_ecdf() +
+  scale_x_log10()
+
+
+# filter: locations -------------------------------------------------------
 
 # which locations have overlapping series with different means?
-df_values_location <- df_values %>%
-  select(-n) %>%
+df_chunks_locations <- df_chunks_filter_8 %>%
+  select(series_id, series_chunk, data) %>%
+  left_join(
+    db_series %>%
+      select(series_id = id, location_id),
+    by = "series_id"
+  ) %>%
+  left_join(
+    db_locations %>%
+      select(location_id = id, featureid = catchment_id),
+    by = "location_id"
+  ) %>%
   unnest(data) %>%
-  group_by(location_id, featureid) %>%
-  nest() %>%
-  ungroup() %>%
+  select(featureid, location_id, series_id, series_chunk, date, min, mean, max, airtemp, prcp) %>%
+  # group_by(featureid, location_id, date) %>%
+  # mutate(n = n(), range = diff(range(mean))) %>%
+  nest(data = -c(featureid, location_id)) %>%
   mutate(
-    date_dups = map(data, function (x) {
+    dups = map(data, function (x) {
+      if (!any(duplicated(x$date))) {
+        return(tibble())
+      }
       x %>%
         group_by(date) %>%
         summarise(
-          n = length(mean),
+          n = n(),
           range = diff(range(mean)),
           .groups = "drop"
         ) %>%
-        ungroup() %>%
         filter(
           n > 1,    # overlapping
           range > 0 # different values
         )
-    }),
-    n_date_dups = map_int(date_dups, nrow),
-    max_range = map_dbl(date_dups, function (x) {
-      m <- 0
-      if (nrow(x) > 0) {
-        m <- max(x$range)
-      }
-      m
     })
+  ) %>%
+  rowwise() %>%
+  mutate(
+    n_dups = nrow(dups),
+    max_range = if_else(n_dups > 0, max(dups$range), NA_real_)
   )
 
-df_values_location %>%
-  filter(max_range > 5) %>%
+df_chunks_locations %>%
+  filter(n_dups > 0, max_range > 5) %>%
   unnest(data) %>%
   # filter(year(date) == 2009) %>%
   ggplot(aes(date, mean)) +
@@ -499,49 +469,25 @@ df_values_location %>%
   # geom_point() +
   facet_wrap(~location_id, scales = "free")
 
-
 # some series seem to have surface/bottom measurements
 # just take the mean of each day
 # exclude dates where diff(mean) > 5
 cat("calculating mean of duplicate dates by location...")
-df_values <- df_values_location %>%
-  select(-n_date_dups, -max_range, -date_dups) %>%
-  mutate(
-    data = map(data, function (x) {
-      x %>%
-        group_by(date) %>%
-        summarise(
-          series = paste(series_id, collapse = ","),
-          n_series = length(series_id),
-          min_range = diff(range(min)),
-          min = mean(min),
-          mean_range = diff(range(mean)),
-          mean = mean(mean),
-          max_range = diff(range(max)),
-          max = mean(max),
-          n_range = diff(range(n)),
-          n = mean(n),
-          airtemp = mean(airtemp),
-          prcp = mean(prcp),
-          .groups = "drop"
-        )
-    })
+df_locations_daily <- df_chunks_locations %>%
+  select(-dups, -n_dups, -max_range) %>%
+  unnest(data) %>%
+  group_by(featureid, location_id, date) %>%
+  summarise(
+    n = n(),
+    range = diff(range(mean)),
+    mean = mean(mean),
+    airtemp = mean(airtemp),
+    prcp = mean(prcp),
+    .groups = "drop"
   ) %>%
-  unnest(data)
+  ungroup()
+cat("done (nrow = ", nrow(df_locations_daily), ")\n", sep = "")
 
-rejects$values$mean_range_gt_5 <- df_values %>%
-  filter(
-    mean_range >= 5
-  )
-df_values <- df_values %>%
-  filter(
-    mean_range < 5
-  )
-cat("done (nrow = ", nrow(df_values), ", n filter = ", nrow(rejects$values$mean_range_gt_5), ")\n", sep = "")
-
-
-
-# multiple locations per featureid ----------------------------------------
 
 cat("joining location-flowline distance...")
 df_location_featureid_distance <- read_csv(
@@ -554,33 +500,27 @@ df_location_featureid_distance <- read_csv(
   )
 )
 
-df_values <- df_values %>%
+df_locations_daily_distance <- df_locations_daily %>%
   left_join(df_location_featureid_distance, by = c("location_id", "featureid"))
-cat("done ( nrow =", nrow(df_values), ")\n")
+cat("done ( nrow =", nrow(df_locations_daily_distance), ")\n")
 
-df_values %>%
-  select(featureid, location_id, line_distance_m, pour_distance_m) %>%
-  distinct() %>%
+df_locations_daily_distance %>%
+  distinct(featureid, location_id, line_distance_m, pour_distance_m) %>%
   gather(var, value, line_distance_m, pour_distance_m) %>%
   ggplot(aes(value)) +
   geom_histogram() +
   facet_wrap(~var, scales = "free")
 
-df_values %>%
-  group_by(featureid, location_id, line_distance_m, pour_distance_m) %>%
-  distinct() %>%
+df_locations_daily_distance %>%
+  distinct(featureid, location_id, line_distance_m, pour_distance_m) %>%
   ggplot(aes(line_distance_m, pour_distance_m)) +
   geom_point() +
   scale_x_log10() +
   scale_y_log10()
 
 # identify line_distance cutoff
-df_values %>%
-  group_by(featureid, location_id, line_distance_m, pour_distance_m) %>%
-  summarise(
-    n = n()
-  ) %>%
-  ungroup() %>%
+df_locations_daily_distance %>%
+  count(featureid, location_id, line_distance_m, pour_distance_m) %>%
   arrange(line_distance_m) %>%
   mutate(cumsum_n = cumsum(n) / sum(n)) %>%
   ggplot(aes(line_distance_m, cumsum_n)) +
@@ -588,39 +528,34 @@ df_values %>%
   geom_vline(xintercept = 60)
 
 # no good pour_distance cutoff
-df_values %>%
-  group_by(featureid, location_id, line_distance_m, pour_distance_m) %>%
-  summarise(
-    n = n()
-  ) %>%
-  ungroup() %>%
+df_locations_daily_distance %>%
+  count(featureid, location_id, line_distance_m, pour_distance_m) %>%
   filter(line_distance_m > 60) %>%
   arrange(pour_distance_m) %>%
   mutate(cumsum_n = cumsum(n) / sum(n)) %>%
   ggplot(aes(pour_distance_m, cumsum_n)) +
   geom_point()
 
-cat("excluding", length(unique(df_values[df_values$line_distance_m > 60, ]$location_id)), "locations with flowline distance > 60 m")
+cat("excluding", length(unique(df_locations_daily_distance[df_locations_daily_distance$line_distance_m > 60, ]$location_id)), "locations with flowline distance > 60 m")
 rejects$locations <- list(
-  line_distance_gt_60m <- df_values %>%
+  line_distance_gt_60m <- df_locations_daily_distance %>%
     filter(line_distance_m > 60)
 )
-df_values <- df_values %>%
+df_locations_near_flowline <- df_locations_daily_distance %>%
   filter(line_distance_m <= 60)
-cat("done (nrow = ", nrow(df_values), ")\n", sep = "")
+cat("done (nrow = ", nrow(df_locations_near_flowline), ")\n", sep = "")
 
 
-# filter multiple locations within catchment ------------------------------
+# filter: catchment multiple locations within catchment ------------------------------
 
-df_values_featureid <- df_values %>%
-  group_by(featureid) %>%
-  nest() %>%
+df_featureid_daily <- df_locations_near_flowline %>%
+  nest(data = -featureid) %>%
   mutate(
     locations = map(data, function (x) {
       x %>%
         group_by(location_id, line_distance_m, pour_distance_m) %>%
         summarise(
-          n = length(date),
+          n = n(),
           n_summer = sum(month(date) %in% 4:10),
           .groups = "drop"
         )
@@ -628,11 +563,11 @@ df_values_featureid <- df_values %>%
     n_locations = map_int(locations, nrow)
   )
 
-# df_values_featureid %>%
-#   filter(n_locations > 1) %>%
-#   arrange(desc(n_locations))
-#
-# df_values_featureid %>%
+df_featureid_daily %>%
+  filter(n_locations > 1) %>%
+  arrange(desc(n_locations))
+
+# df_featureid_daily %>%
 #   filter(featureid == 201492321) %>%
 #   unnest(data) %>%
 #   ggplot(aes(date, mean, color = factor(location_id))) +
@@ -652,7 +587,7 @@ df_values_featureid <- df_values %>%
 #   cor(use = "pairwise.complete.obs")
 
 cat("filtering for locations with most data points within each catchment...")
-df_featureid_locations <- df_values_featureid %>%
+df_featureid_daily_count <- df_featureid_daily %>%
   mutate(
     locations = map2(data, locations, function (x, y) {
       loc <- y %>%
@@ -665,22 +600,22 @@ df_featureid_locations <- df_values_featureid %>%
   select(-data, -n_locations) %>%
   unnest(locations)
 
-rejects$locations$rank_gt_1 <- df_featureid_locations %>%
+rejects$locations$rank_gt_1 <- df_featureid_daily_count %>%
   filter(location_rank > 1)
-df_values <- df_values %>%
+df_featureid_daily_location <- df_locations_near_flowline %>%
   filter(!location_id %in% rejects$locations$rank_gt_1$location_id)
-cat("done (nrow = ", nrow(df_values), ", n locations excluded = ", nrow(rejects$locations$rank_gt_1), ")\n", sep = "")
+cat("done (nrow = ", nrow(df_featureid_daily_location), ", n locations excluded = ", nrow(rejects$locations$rank_gt_1), ")\n", sep = "")
 
 
 # export ------------------------------------------------------------------
 
 cat("saving to data-clean.rds...")
 list(
-  data = df_values %>%
+  data = df_featureid_daily_location %>%
     select(featureid, location_id, date, mean, airtemp, prcp),
   rejects = rejects
 ) %>%
-  saveRDS(file.path(config$wd, "data-clean.rds"))
+  write_rds(file.path(config$wd, "data-clean.rds"))
 cat("done\n")
 
 

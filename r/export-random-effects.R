@@ -1,9 +1,9 @@
 
 params_huc8 <- bind_rows(
-  setNames(as_data_frame(m_out$results$mean$B.huc), m_out$covs$huc.ef) %>%
+  setNames(tibble(m_out$results$mean$B.huc), m_out$covs$huc.ef) %>%
     mutate(stat = "mean") %>%
     bind_cols(m_out$ids$huc),
-  setNames(as_data_frame(m_out$results$sd$B.huc), m_out$covs$huc.ef) %>%
+  setNames(tibble(m_out$results$sd$B.huc), m_out$covs$huc.ef) %>%
     mutate(stat = "sd") %>%
     bind_cols(m_out$ids$huc)
 ) %>%
@@ -16,10 +16,10 @@ params_huc8 <- bind_rows(
   select(-huc8_id)
 
 params_catchment <- bind_rows(
-  setNames(as_data_frame(m_out$results$mean$B.site), m_out$covs$site.ef) %>%
+  setNames(tibble(m_out$results$mean$B.site), m_out$covs$site.ef) %>%
     mutate(stat = "mean") %>%
     bind_cols(m_out$ids$site),
-  setNames(as_data_frame(m_out$results$sd$B.site), m_out$covs$site.ef) %>%
+  setNames(tibble(m_out$results$sd$B.site), m_out$covs$site.ef) %>%
     mutate(stat = "sd") %>%
     bind_cols(m_out$ids$site)
 ) %>%

@@ -16,10 +16,10 @@ config <- load_config()
 # load --------------------------------------------------------------------
 
 cat("loading predictions...")
-df_huc <- readRDS(file.path(config$wd, "data-huc.rds")) %>%
-  select(featureid, huc8) %>%
-  mutate(huc2 = str_sub(huc8, 1, 2))
-df_year <- readRDS(file.path(config$wd, "model-predict-year.rds"))
+# df_huc <- readRDS(file.path(config$wd, "data-huc.rds")) %>%
+#   select(featureid, huc8) %>%
+#   mutate(huc2 = str_sub(huc8, 1, 2))
+# df_year <- readRDS(file.path(config$wd, "model-predict-year.rds"))
 df <- readRDS(file.path(config$wd, "model-predict-derived.rds"))
 cat("done\n")
 

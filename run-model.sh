@@ -54,4 +54,10 @@ Rscript model-predict-derived.R         # -> model-predict-derived.[rds,csv]
 Rscript export-db.R                     # -> db{temp_model}
 
 # save derived metrics to csv
-Rscript export-csv.R                     # -> csv/sheds-temp-model-v{VERSION}.csv
+Rscript export-csv.R                    # -> csv/sheds-temp-model-v{VERSION}.csv
+
+# save public data to csv
+Rscript export-public-data.R            # -> public-data/public-data.zip
+
+# save residuals to csv
+Rscript export-residuals.R              # -> residuals/residuals-*.csv

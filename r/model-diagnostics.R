@@ -54,7 +54,7 @@ Y.huc8 <- rowSums(X.huc8 * B.huc8)
 
 Y <- Y.fixed + Y.catchment + Y.huc8 + Y.year
 
-df_calib <- data_frame(
+df_calib <- tibble(
   dataset = "calib",
   date = out$df$date,
   huc8 = out$df$huc8,

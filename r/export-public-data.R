@@ -63,7 +63,7 @@ df_series_flags <- df_series %>%
           start_date = as.character(as.Date(ymd_hms(start), tz = "US/Eastern")),
           end_date = as.character(as.Date(ymd_hms(end), tz = "US/Eastern")),
           date = map2(start_date, end_date, function (x, y) {
-            data_frame(date = seq.Date(from = as.Date(x, tz = "US/Eastern"), to = as.Date(y, tz = "US/Eastern"), by = "day"))
+            tibble(date = seq.Date(from = as.Date(x, tz = "US/Eastern"), to = as.Date(y, tz = "US/Eastern"), by = "day"))
           })
         ) %>%
         unnest(date) %>%

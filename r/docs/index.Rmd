@@ -1,7 +1,7 @@
 --- 
-title: "SHEDS Stream Temperature Model"
+title: "SHEDS Northeast Stream Temperature Model"
 author: "[Jeff Walker](https://walkerenvres.com), [Ben Letcher](https://www.lsc.usgs.gov/?q=cafb-ben-letcher), and [Dan Hocking](https://hockinglab.weebly.com/)"
-date: "v1.2.0 (Jul 10, 2020)"
+date: "v1.3.0 (Sep 7, 2021)"
 site: bookdown::bookdown_site
 output: bookdown::gitbook
 documentclass: book
@@ -9,7 +9,7 @@ bibliography: [book.bib]
 biblio-style: apalike
 link-citations: yes
 github-repo: walkerjeffd/sheds-temp-model
-description: "Documentation for the SHEDS stream temperature model."
+description: "Documentation for the SHEDS northeast stream temperature model."
 editor_options: 
   chunk_output_type: console
 ---
@@ -73,12 +73,10 @@ stat_labels <- c(
   "max_resid" = "Maximum Residual (degC)"
 )
 bind_cols(
-  data_frame(
+  tibble(
     dataset = c("calibration", "validation")
   ),
-  as_data_frame(
-    bind_rows(calib$summary, valid$summary)
-  )
+  bind_rows(calib$summary, valid$summary)
 ) %>%
   mutate_at(vars(starts_with("n_")), scales::comma) %>% 
   mutate_at(
@@ -128,6 +126,8 @@ The source code for the model itself and this documentation is available in the 
 
 ## Change Log {#change-log}
 
+- **[v1.3.0 (Sep 7, 2021)](https://ecosheds.org/models/stream-temperature/v1.3.0/)**  
+Add 2020 daymet, revise data screening procedures, re-calibrate full model.
 - **[v1.2.0 (Jul 10, 2020)](https://ecosheds.org/models/stream-temperature/v1.2.0/)**  
 Add 2019 daymet, re-calibrate full model.
 - **[v1.1.1 (Jan 16, 2020)](https://ecosheds.org/models/stream-temperature/v1.1.1/)**  

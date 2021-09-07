@@ -35,10 +35,12 @@ df_catchment <- bind_rows(
 ) %>%
   select(-data)
 
+dir.create(file.path(config$wd, "residuals"), showWarnings = FALSE)
+
 df_values %>%
   mutate_at(vars(obs:resid_ar1), signif, digits = 4) %>%
-  write_csv(file.path(config$wd, "residuals-daily.csv"), na = "")
+  write_csv(file.path(config$wd, "residuals/residuals-daily.csv"), na = "")
 df_deploy %>%
-  write_csv(file.path(config$wd, "residuals-deployments.csv"), na = "")
+  write_csv(file.path(config$wd, "residuals/residuals-deployments.csv"), na = "")
 df_catchment %>%
-  write_csv(file.path(config$wd, "residuals-catchments.csv"), na = "")
+  write_csv(file.path(config$wd, "residuals/residuals-catchments.csv"), na = "")
