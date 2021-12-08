@@ -47,7 +47,7 @@ df_daymet <- read_csv(
   ) %>%
   select(featureid, year, date, airTemp, prcp)
 df_huc <- readRDS(file.path(config$wd, "data-huc.rds")) %>%
-  select(featureid, huc8)
+  select(featureid, huc12)
 cat("done\n")
 
 
@@ -109,7 +109,7 @@ cat("done (nrow = ", nrow(df), ")\n", sep = "")
 cat("selecting columns...")
 df <- df %>%
   select(
-    featureid, huc8, year, date, temp,
+    featureid, huc12, year, date, temp,
     airTemp, prcp2, prcp30, temp7p,
     AreaSqKM, forest, devel_hi, agriculture, impoundArea
   )
@@ -152,7 +152,7 @@ cat("done (nrow = ", nrow(df), ", n excluded = ", nrow(rejects$values$n_lt_5), "
 
 cat("converting to long format...")
 df_long <- df %>%
-  gather(var, value, -featureid, -huc8, -year, -date, -temp)
+  gather(var, value, -featureid, -huc12, -year, -date, -temp)
 cat("done\n")
 
 cat("computing mean/sd of each variable...")
@@ -171,7 +171,7 @@ df <- df_long %>%
     value = (value - mean(value)) / sd(value)
   ) %>%
   spread(var, value) %>%
-  arrange(huc8, featureid, year, date)
+  arrange(huc12, featureid, year, date)
 cat("done\n")
 
 cat("calculating derived covariates...")
@@ -211,10 +211,10 @@ cat("indexing deployments...")
 df_train <- df_train %>%
   mutate(
     featureid_id = as.numeric(as.factor(featureid)),
-    huc8_id = as.numeric(as.factor(huc8)),
+    huc12_id = as.numeric(as.factor(huc12)),
     year_id = as.numeric(as.factor(year))
   ) %>%
-  arrange(huc8_id, featureid_id, date) %>%
+  arrange(huc12_id, featureid_id, date) %>%
   mutate(
     delta_date = as.numeric(difftime(date, lag(date), units = "day")),
     new_series = delta_date != 1,
@@ -227,10 +227,10 @@ df_train <- df_train %>%
 df_test <- df_test %>%
   mutate(
     featureid_id = as.numeric(as.factor(featureid)),
-    huc8_id = as.numeric(as.factor(huc8)),
+    huc12_id = as.numeric(as.factor(huc12)),
     year_id = as.numeric(as.factor(year))
   ) %>%
-  arrange(huc8_id, featureid_id, date) %>%
+  arrange(huc12_id, featureid_id, date) %>%
   mutate(
     delta_date = as.numeric(difftime(date, lag(date), units = "day")),
     new_series = delta_date != 1,
@@ -242,14 +242,14 @@ df_test <- df_test %>%
 
 ids <- list(
   featureid = df_train %>% select(featureid, featureid_id) %>% distinct() %>% arrange(featureid_id),
-  huc8 = df_train %>% select(huc8, huc8_id) %>% distinct() %>% arrange(huc8_id),
+  huc12 = df_train %>% select(huc12, huc12_id) %>% distinct() %>% arrange(huc12_id),
   year = df_train %>% select(year, year_id) %>% distinct() %>% arrange(year_id)
 )
 
 cat("done\n")
 
 # J = nrow(ids$featureid)
-# M = nrow(ids$huc8)
+# M = nrow(ids$huc12)
 # Ti = nrow(ids$year)
 
 

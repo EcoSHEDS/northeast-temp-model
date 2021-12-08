@@ -103,7 +103,7 @@ id.site <- df$featureid_id
 X.huc <- df %>%
   select(one_of(cov.list$huc.ef))
 var.huc <- names(X.huc)
-id.huc <- df$huc8_id
+id.huc <- df$huc12_id
 
 # RANDOM YEAR EFFECTS
 X.year <- df %>%
@@ -151,9 +151,9 @@ ids <- list(
     distinct() %>%
     arrange(featureid_id),
   huc = df %>%
-    select(huc8, huc8_id) %>%
+    select(huc12, huc12_id) %>%
     distinct() %>%
-    arrange(huc8_id),
+    arrange(huc12_id),
   year = df %>%
     select(year, year_id) %>%
     distinct() %>%

@@ -48,16 +48,16 @@ B.year <- as.matrix(out$results$mean$B.year[out$data$year, ])
 X.year <- out$data$X.year
 Y.year <- rowSums(X.year * B.year)
 
-B.huc8 <- as.matrix(out$results$mean$B.huc[out$data$huc, ])
-X.huc8 <- out$data$X.site
-Y.huc8 <- rowSums(X.huc8 * B.huc8)
+B.huc12 <- as.matrix(out$results$mean$B.huc[out$data$huc, ])
+X.huc12 <- out$data$X.site
+Y.huc12 <- rowSums(X.huc12 * B.huc12)
 
-Y <- Y.fixed + Y.catchment + Y.huc8 + Y.year
+Y <- Y.fixed + Y.catchment + Y.huc12 + Y.year
 
 df_calib <- tibble(
   dataset = "calib",
   date = out$df$date,
-  huc8 = out$df$huc8,
+  huc12 = out$df$huc12,
   featureid = out$df$featureid,
   year = out$df$year,
   deploy_id = out$df$deploy_id,
@@ -76,10 +76,10 @@ cat("done\n")
 cat("calculating validation statistics...")
 
 df_input_valid <- readRDS(file.path(config$wd, "model-input.rds"))$test %>%
-  select(-featureid_id, -huc8_id, -year_id) %>%
+  select(-featureid_id, -huc12_id, -year_id) %>%
   left_join(out$ids$site, by = "featureid") %>%
   left_join(out$ids$year, by = "year") %>%
-  left_join(out$ids$huc, by = "huc8") %>%
+  left_join(out$ids$huc, by = "huc12") %>%
   rename(
     obs = temp
   )
@@ -101,13 +101,13 @@ for (i in seq_along(B.catchment.mean)) {
 }
 Y.catchment_valid <- rowSums(X.catchment_valid * B.catchment_valid)
 
-X.huc8_valid <- X.catchment_valid
-B.huc8.mean <- colMeans(out$results$mean$B.huc)
-B.huc8_valid <- out$results$mean$B.huc[df_input_valid$huc8_id, ]
-for (i in seq_along(B.huc8.mean)) {
-  B.huc8_valid[is.na(B.huc8_valid[, i]), i] <- B.huc8.mean[i]
+X.huc12_valid <- X.catchment_valid
+B.huc12.mean <- colMeans(out$results$mean$B.huc)
+B.huc12_valid <- out$results$mean$B.huc[df_input_valid$huc12_id, ]
+for (i in seq_along(B.huc12.mean)) {
+  B.huc12_valid[is.na(B.huc12_valid[, i]), i] <- B.huc12.mean[i]
 }
-Y.huc8_valid <- rowSums(X.huc8_valid * B.huc8_valid)
+Y.huc12_valid <- rowSums(X.huc12_valid * B.huc12_valid)
 
 X.year_valid <- df_input_valid %>%
   mutate(intercept.year = 1) %>%
@@ -119,11 +119,11 @@ for (i in seq_along(B.year.mean)) {
 }
 Y.year_valid <- rowSums(X.year_valid * B.year_valid)
 
-Y_valid <- Y.fixed_valid + Y.huc8_valid + Y.catchment_valid + Y.year_valid
+Y_valid <- Y.fixed_valid + Y.huc12_valid + Y.catchment_valid + Y.year_valid
 
 df_valid <- df_input_valid %>%
   mutate(dataset = "valid") %>%
-  select(dataset, date, huc8, featureid, year, deploy_id, obs) %>%
+  select(dataset, date, huc12, featureid, year, deploy_id, obs) %>%
   mutate(
     pred = Y_valid,
     resid = obs - pred
@@ -173,9 +173,9 @@ df_catchment <- df %>%
   )
 cat("done\n")
 
-cat("computing stats by huc8...")
-df_huc8 <- df %>%
-  group_by(dataset, huc8) %>%
+cat("computing stats by huc12...")
+df_huc12 <- df %>%
+  group_by(dataset, huc12) %>%
   nest() %>%
   mutate(
     n = map_int(data, nrow),
@@ -213,7 +213,7 @@ stats <- lapply(c("calib", "valid"), function (dataset_) {
   x_n <- list(
     n_obs = nrow(x),
     n_catchment = length(unique(x$featureid)),
-    n_huc8 = length(unique(x$huc8)),
+    n_huc12 = length(unique(x$huc12)),
     n_deploy = length(unique(x$deploy_id)),
     n_year = length(unique(x$year))
   )
@@ -233,14 +233,14 @@ list(
     values = filter(df, dataset == "calib"),
     deploy = filter(df_deploy, dataset == "calib"),
     catchment = filter(df_catchment, dataset == "calib"),
-    huc8 = filter(df_huc8, dataset == "calib"),
+    huc12 = filter(df_huc12, dataset == "calib"),
     summary = stats$calib
   ),
   valid = list(
     values = filter(df, dataset == "valid"),
     deploy = filter(df_deploy, dataset == "valid"),
     catchment = filter(df_catchment, dataset == "valid"),
-    huc8 = filter(df_huc8, dataset == "valid"),
+    huc12 = filter(df_huc12, dataset == "valid"),
     summary = stats$valid
   )
 ) %>%
