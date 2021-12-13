@@ -147,12 +147,16 @@ df <- df %>%
   select(-delta_date, -new_series, -new_featureid, -new_year, -deploy_id, -n)
 cat("done (nrow = ", nrow(df), ", n excluded = ", nrow(rejects$values$n_lt_5), ")\n", sep = "")
 
+# add huc8
+df <- df %>%
+  mutate(huc8 = str_sub(huc12, 1, 8)) %>%
+  relocate(huc8, .after = huc12)
 
 # standardize -------------------------------------------------------------
 
 cat("converting to long format...")
 df_long <- df %>%
-  gather(var, value, -featureid, -huc12, -year, -date, -temp)
+  gather(var, value, -featureid, -huc12, -huc8, -year, -date, -temp)
 cat("done\n")
 
 cat("computing mean/sd of each variable...")
@@ -211,10 +215,11 @@ cat("indexing deployments...")
 df_train <- df_train %>%
   mutate(
     featureid_id = as.numeric(as.factor(featureid)),
+    huc8_id = as.numeric(as.factor(huc8)),
     huc12_id = as.numeric(as.factor(huc12)),
     year_id = as.numeric(as.factor(year))
   ) %>%
-  arrange(huc12_id, featureid_id, date) %>%
+  arrange(huc8_id, huc12_id, featureid_id, date) %>%
   mutate(
     delta_date = as.numeric(difftime(date, lag(date), units = "day")),
     new_series = delta_date != 1,
@@ -227,10 +232,11 @@ df_train <- df_train %>%
 df_test <- df_test %>%
   mutate(
     featureid_id = as.numeric(as.factor(featureid)),
+    huc8_id = as.numeric(as.factor(huc8)),
     huc12_id = as.numeric(as.factor(huc12)),
     year_id = as.numeric(as.factor(year))
   ) %>%
-  arrange(huc12_id, featureid_id, date) %>%
+  arrange(huc8_id, huc12_id, featureid_id, date) %>%
   mutate(
     delta_date = as.numeric(difftime(date, lag(date), units = "day")),
     new_series = delta_date != 1,
@@ -242,6 +248,7 @@ df_test <- df_test %>%
 
 ids <- list(
   featureid = df_train %>% select(featureid, featureid_id) %>% distinct() %>% arrange(featureid_id),
+  huc8 = df_train %>% select(huc8, huc8_id) %>% distinct() %>% arrange(huc8_id),
   huc12 = df_train %>% select(huc12, huc12_id) %>% distinct() %>% arrange(huc12_id),
   year = df_train %>% select(year, year_id) %>% distinct() %>% arrange(year_id)
 )

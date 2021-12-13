@@ -23,7 +23,8 @@ df <- df_inp %>%
   mutate(
     intercept = 1,
     intercept.site = 1,
-    intercept.huc = 1,
+    intercept.huc8 = 1,
+    intercept.huc12 = 1,
     intercept.year = 1
   )
 first_rows <- which(df$new_deploy == 1)
@@ -58,8 +59,13 @@ cov.list <- list(
     "airTemp",
     "temp7p"
   ),
-  huc.ef = c(
-    "intercept.huc",
+  huc12.ef = c(
+    "intercept.huc12",
+    "airTemp",
+    "temp7p"
+  ),
+  huc8.ef = c(
+    "intercept.huc8",
     "airTemp",
     "temp7p"
   ),
@@ -77,11 +83,16 @@ params <- c(
   # "stream.mu",
   # "trend",
   "sigma.b.site",
-  "B.huc",
-  "rho.B.huc",
-  "mu.huc",
-  "sigma.b.huc",
-  "tau.B.huc.raw",
+  "B.huc8",
+  "rho.B.huc8",
+  "mu.huc8",
+  "sigma.b.huc8",
+  "tau.B.huc8.raw",
+  "B.huc12",
+  "rho.B.huc12",
+  "mu.huc12",
+  "sigma.b.huc12",
+  "tau.B.huc12.raw",
   "B.year",
   "mu.year",
   "sigma.b.year"
@@ -99,11 +110,17 @@ X.site <- df %>%
 var.site <- names(X.site)
 id.site <- df$featureid_id
 
-# RANDOM HUC EFFECTS
-X.huc <- df %>%
-  select(one_of(cov.list$huc.ef))
-var.huc <- names(X.huc)
-id.huc <- df$huc12_id
+# RANDOM HUC8 EFFECTS
+X.huc8 <- df %>%
+  select(one_of(cov.list$huc8.ef))
+var.huc8 <- names(X.huc8)
+id.huc8 <- df$huc8_id
+
+# RANDOM HUC8 EFFECTS
+X.huc12 <- df %>%
+  select(one_of(cov.list$huc12.ef))
+var.huc12 <- names(X.huc12)
+id.huc12 <- df$huc12_id
 
 # RANDOM YEAR EFFECTS
 X.year <- df %>%
@@ -124,11 +141,17 @@ data.list <- list(
   N.site = max(id.site),             # no. of sites
   W.site = diag(length(var.site)),   # cov matrix for site effects
 
-  huc = id.huc,                      # huc group indices
-  X.huc = as.matrix(X.huc),          # huc effects data
-  K.huc = length(var.huc),           # no. of huc effect variables
-  N.huc = max(id.huc),               # no. of hucs
-  W.huc = diag(length(var.huc)),     # cov matrix for huc effects
+  huc8 = id.huc8,                      # huc8 group indices
+  X.huc8 = as.matrix(X.huc8),          # huc8 effects data
+  K.huc8 = length(var.huc8),           # no. of huc8 effect variables
+  N.huc8 = max(id.huc8),               # no. of huc8s
+  W.huc8 = diag(length(var.huc8)),     # cov matrix for huc8 effects
+
+  huc12 = id.huc12,                      # huc12 group indices
+  X.huc12 = as.matrix(X.huc12),          # huc12 effects data
+  K.huc12 = length(var.huc12),           # no. of huc12 effect variables
+  N.huc12 = max(id.huc12),               # no. of huc12s
+  W.huc12 = diag(length(var.huc12)),     # cov matrix for huc12 effects
 
   year = id.year,                    # year group indices
   X.year = as.matrix(X.year),        # year effects data
@@ -150,7 +173,11 @@ ids <- list(
     select(featureid, featureid_id) %>%
     distinct() %>%
     arrange(featureid_id),
-  huc = df %>%
+  huc8 = df %>%
+    select(huc8, huc8_id) %>%
+    distinct() %>%
+    arrange(huc8_id),
+  huc12 = df %>%
     select(huc12, huc12_id) %>%
     distinct() %>%
     arrange(huc12_id),

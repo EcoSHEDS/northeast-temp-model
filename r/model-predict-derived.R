@@ -16,16 +16,17 @@ config <- load_config()
 
 # load --------------------------------------------------------------------
 
-huc2s <- sprintf("%02d", 1:6)
+# huc2s <- sprintf("%02d", 1:6)
+huc8s <- "01030001"
 
-df <- map_df(huc2s, function (huc2) {
-  cat("loading model-predict-year-", huc2, ".rds...", sep = "")
-  df_year <- read_rds(file.path(config$wd, paste0("model-predict-year-", huc2, ".rds")))
+df <- map_df(huc8s, function (huc8) {
+  cat("loading model-predict-year-", huc8, ".rds...", sep = "")
+  df_year <- read_rds(file.path(config$wd, paste0("model-predict-year-", huc8, ".rds")))
   cat("done\n")
 
 
   cat("computing derived metrics by catchment...")
-  df_huc2 <- df_year %>%
+  df_huc8 <- df_year %>%
     group_split(adjust_air_temp) %>%
     map_df(function (x) {
       x %>%
@@ -47,9 +48,9 @@ df <- map_df(huc2s, function (huc2) {
           .groups = "drop"
         )
     })
-  cat("done (nrow = ", nrow(df_huc2), ")\n", sep = "")
+  cat("done (nrow = ", nrow(df_huc8), ")\n", sep = "")
 
-  df_huc2
+  df_huc8
 })
 
 # summary(df)
