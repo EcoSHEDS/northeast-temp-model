@@ -22,7 +22,6 @@ df_inp <- inp$train
 df <- df_inp %>%
   mutate(
     intercept = 1,
-    intercept.site = 1,
     intercept.huc = 1,
     intercept.year = 1
   )
@@ -53,11 +52,6 @@ cov.list <- list(
     "agriculture",
     "airTemp.agriculture"
   ),
-  site.ef = c(
-    "intercept.site",
-    "airTemp",
-    "temp7p"
-  ),
   huc.ef = c(
     "intercept.huc",
     "airTemp",
@@ -73,10 +67,6 @@ params <- c(
   "sigma",
   "B.ar1",
   "B.0",
-  "B.site",
-  # "stream.mu",
-  # "trend",
-  "sigma.b.site",
   "B.huc",
   "rho.B.huc",
   "mu.huc",
@@ -92,12 +82,6 @@ params <- c(
 X.0 <- df %>%
   select(one_of(cov.list$fixed.ef))
 var.0 <- names(X.0)
-
-# RANDOM SITE EFFECTS
-X.site <- df %>%
-  select(one_of(cov.list$site.ef))
-var.site <- names(X.site)
-id.site <- df$featureid_id
 
 # RANDOM HUC EFFECTS
 X.huc <- df %>%
@@ -117,12 +101,6 @@ data.list <- list(
 
   X.0 = as.matrix(X.0),              # fixed effects data
   K.0 = length(var.0),               # no. of fixed effect variables
-
-  site = id.site,                    # site group indices
-  X.site = as.matrix(X.site),        # site effects data
-  K.site = length(var.site),         # no. of site effect variables
-  N.site = max(id.site),             # no. of sites
-  W.site = diag(length(var.site)),   # cov matrix for site effects
 
   huc = id.huc,                      # huc group indices
   X.huc = as.matrix(X.huc),          # huc effects data
@@ -146,10 +124,6 @@ data.list <- list(
 
 # group ids
 ids <- list(
-  site = df %>%
-    select(featureid, featureid_id) %>%
-    distinct() %>%
-    arrange(featureid_id),
   huc = df %>%
     select(huc12, huc12_id) %>%
     distinct() %>%

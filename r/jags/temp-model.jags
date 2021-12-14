@@ -1,7 +1,6 @@
 model {
   for(i in 1:nFirstObsRows) {
     trend[firstObsRows[i]] <- inprod(B.0[], X.0[firstObsRows[i], ]) +
-      inprod(B.site[site[firstObsRows[i]], ], X.site[firstObsRows[i], ]) +
       inprod(B.huc[huc[firstObsRows[i]], ], X.huc[firstObsRows[i], ]) +
       inprod(B.year[year[firstObsRows[i]], ], X.year[firstObsRows[i], ])
 
@@ -10,7 +9,6 @@ model {
 
   for(i in 1:nEvalRows) {
     trend[evalRows[i]] <- inprod(B.0[], X.0[evalRows[i], ]) +
-      inprod(B.site[site[evalRows[i]], ], X.site[evalRows[i], ]) +
       inprod(B.huc[huc[evalRows[i]], ], X.huc[evalRows[i], ]) +
       inprod(B.year[year[evalRows[i]], ], X.year[evalRows[i], ])
 
@@ -32,15 +30,6 @@ model {
   # FIXED EFFECTS
   for(k in 1:K.0){
     B.0[k] ~ dnorm(0, 0.0001)
-  }
-
-  # SITE EFFECTS
-  for(k in 1:K.site) {
-    sigma.b.site[k] ~ dunif(0, 100)
-    tau.b.site[k] <- 1 / (sigma.b.site[k] * sigma.b.site[k])
-    for(i in 1:N.site) {
-      B.site[i, k] ~ dnorm(0, tau.b.site[k])
-    }
   }
 
   # HUC EFFECTS
