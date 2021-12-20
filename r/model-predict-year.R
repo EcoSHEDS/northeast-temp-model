@@ -25,14 +25,6 @@ config <- load_config()
 
 args <- commandArgs(trailingOnly = TRUE)
 
-if (length(args) > 0) {
-  huc2s <- args
-} else {
-  huc2s <- sprintf("%02d", 1:6)
-}
-
-cat("huc2s:", huc2s, "\n")
-
 # setup cluster -----------------------------------------------------------
 
 cl <- makeCluster(12)
@@ -64,13 +56,13 @@ df_cov_std <- m_in$std
 cov_list <- m_out$covs
 ids_list <- m_in$ids
 
-B.site.mean <- colMeans(m_out$results$mean$B.site)
+# B.site.mean <- colMeans(m_out$results$mean$B.site)
 B.huc.mean <- colMeans(m_out$results$mean$B.huc)
 B.year.mean <- colMeans(m_out$results$mean$B.year)
 
 coef_list <- list(
   fixed = m_out$results$mean$B.0,
-  site = m_out$results$mean$B.site,
+  # site = m_out$results$mean$B.site,
   huc = m_out$results$mean$B.huc,
   year = m_out$results$mean$B.year
 )
@@ -192,15 +184,6 @@ predict_daily <- function (featureids, adjust_air_temps = c(0, 2, 4, 6)) {
   B.0 <- as.matrix(coef_list$fixed)
   Y.0 <- (X.0 %*% B.0)[, 1]
 
-  X.site <- df %>%
-    select(one_of(cov_list$site.ef)) %>%
-    as.matrix()
-  B.site <- coef_list$site[df$featureid_id, ]
-  for (i in seq_along(B.site.mean)) {
-    B.site[is.na(B.site[, i]), i] <- B.site.mean[i]
-  }
-  Y.site <- rowSums(X.site * B.site)
-
   X.huc <- df %>%
     select(one_of(cov_list$huc.ef)) %>%
     as.matrix()
@@ -219,7 +202,7 @@ predict_daily <- function (featureids, adjust_air_temps = c(0, 2, 4, 6)) {
   }
   Y.year <- rowSums(X.year * B.year)
 
-  df$temp <- Y.0 + Y.site + Y.year + Y.huc
+  df$temp <- Y.0 + Y.year + Y.huc
 
   df <- df %>%
     left_join(
@@ -265,7 +248,7 @@ featureids <- df_huc %>%
   filter(huc8 == !!huc8, featureid %in% df_covariates$featureid) %>%
   pull(featureid)
 n <- length(featureids)
-chunk_size <- 10
+chunk_size <- 1
 n_chunks <- ceiling(n / chunk_size)
 
 # predict_daily(featureids[1:3]) %>% summary

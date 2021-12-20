@@ -40,19 +40,15 @@ B.fixed <- out$results$mean$B.0
 X.fixed <- out$data$X.0
 Y.fixed <- (X.fixed %*% as.matrix(B.fixed))[, 1]
 
-B.catchment <- out$results$mean$B.site[out$data$site, ]
-X.catchment <- out$data$X.site
-Y.catchment <- rowSums(X.catchment * B.catchment)
-
 B.year <- as.matrix(out$results$mean$B.year[out$data$year, ])
 X.year <- out$data$X.year
 Y.year <- rowSums(X.year * B.year)
 
 B.huc12 <- as.matrix(out$results$mean$B.huc[out$data$huc, ])
-X.huc12 <- out$data$X.site
+X.huc12 <- out$data$X.huc
 Y.huc12 <- rowSums(X.huc12 * B.huc12)
 
-Y <- Y.fixed + Y.catchment + Y.huc12 + Y.year
+Y <- Y.fixed + Y.huc12 + Y.year
 
 df_calib <- tibble(
   dataset = "calib",
@@ -77,7 +73,6 @@ cat("calculating validation statistics...")
 
 df_input_valid <- readRDS(file.path(config$wd, "model-input.rds"))$test %>%
   select(-featureid_id, -huc12_id, -year_id) %>%
-  left_join(out$ids$site, by = "featureid") %>%
   left_join(out$ids$year, by = "year") %>%
   left_join(out$ids$huc, by = "huc12") %>%
   rename(
@@ -91,17 +86,9 @@ X.fixed_valid <- df_input_valid %>%
 B.fixed_valid <- out$results$mean$B.0
 Y.fixed_valid <- (as.matrix(X.fixed_valid) %*% as.matrix(B.fixed_valid))[, 1]
 
-X.catchment_valid <- df_input_valid %>%
-  mutate(intercept.site = 1) %>%
-  select(one_of(out$covs$site.ef))
-B.catchment.mean <- colMeans(out$results$mean$B.site)
-B.catchment_valid <- out$results$mean$B.site[df_input_valid$featureid_id, ]
-for (i in seq_along(B.catchment.mean)) {
-  B.catchment_valid[is.na(B.catchment_valid[, i]), i] <- B.catchment.mean[i]
-}
-Y.catchment_valid <- rowSums(X.catchment_valid * B.catchment_valid)
-
-X.huc12_valid <- X.catchment_valid
+X.huc12_valid <- df_input_valid %>%
+  mutate(intercept.huc = 1) %>%
+  select(one_of(out$covs$huc.ef))
 B.huc12.mean <- colMeans(out$results$mean$B.huc)
 B.huc12_valid <- out$results$mean$B.huc[df_input_valid$huc12_id, ]
 for (i in seq_along(B.huc12.mean)) {
@@ -119,7 +106,7 @@ for (i in seq_along(B.year.mean)) {
 }
 Y.year_valid <- rowSums(X.year_valid * B.year_valid)
 
-Y_valid <- Y.fixed_valid + Y.huc12_valid + Y.catchment_valid + Y.year_valid
+Y_valid <- Y.fixed_valid + Y.huc12_valid + Y.year_valid
 
 df_valid <- df_input_valid %>%
   mutate(dataset = "valid") %>%
