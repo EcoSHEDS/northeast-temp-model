@@ -25,6 +25,14 @@ config <- load_config()
 
 args <- commandArgs(trailingOnly = TRUE)
 
+if (length(args) > 0) {
+  huc2s <- args
+} else {
+  huc2s <- sprintf("%02d", 1:6)
+}
+
+cat("huc2s:", huc2s, "\n")
+
 # setup cluster -----------------------------------------------------------
 
 cl <- makeCluster(12)
@@ -235,79 +243,74 @@ predict_daily <- function (featureids, adjust_air_temps = c(0, 2, 4, 6)) {
 # full dataset
 # featureids <- as.integer(df_covariates$featureid)
 
-# for (huc2 in huc2s) {
-#   cat("huc2:", huc2, "\n")
+for (huc2 in huc2s) {
+  cat("huc2:", huc2, "\n")
 
 # by huc2
-# featureids <- intersect(df_huc$featureid[df_huc$huc2 == huc2], df_covariates$featureid)
-# stopifnot(length(featureids) > 0)
+  featureids <- intersect(df_huc$featureid[df_huc$huc2 == huc2], df_covariates$featureid)
+  stopifnot(length(featureids) > 0)
 
-# by huc8
-huc8 <- "01030001"
-featureids <- df_huc %>%
-  filter(huc8 == !!huc8, featureid %in% df_covariates$featureid) %>%
-  pull(featureid)
-n <- length(featureids)
-chunk_size <- 1
-n_chunks <- ceiling(n / chunk_size)
+  n <- length(featureids)
+  chunk_size <- 1
+  n_chunks <- ceiling(n / chunk_size)
 
-# predict_daily(featureids[1:3]) %>% summary
+  # predict_daily(featureids[1:3]) %>% summary
 
-cat("generated predictions for ", n, " featureids (chunk_size = ", chunk_size, ", n_chunks = ", n_chunks, ")...", sep = "")
-st <- system.time({
-  df_predict_year <- foreach(i = 1:n_chunks, .combine = rbind, .packages = c("RPostgreSQL", "DBI", "dplyr", "tidyr", "purrr", "zoo", "lubridate", "stringr")) %dopar% {
-    # sink(log_file, append = TRUE)
+  cat("generated predictions for ", n, " featureids (chunk_size = ", chunk_size, ", n_chunks = ", n_chunks, ")...", sep = "")
+  st <- system.time({
+    df_predict_year <- foreach(i = 1:n_chunks, .combine = rbind, .packages = c("RPostgreSQL", "DBI", "dplyr", "tidyr", "purrr", "zoo", "lubridate", "stringr")) %dopar% {
+      # sink(log_file, append = TRUE)
 
-    start_i <- ((i - 1) * chunk_size) + 1
-    end_i <- i * chunk_size
-    if (end_i > length(featureids)) {
-      end_i <- length(featureids)
+      start_i <- ((i - 1) * chunk_size) + 1
+      end_i <- i * chunk_size
+      if (end_i > length(featureids)) {
+        end_i <- length(featureids)
+      }
+      x_featureids <- featureids[start_i:end_i]
+      cat(as.character(Sys.time()), " - i = ", i, " | ", paste(x_featureids, collapse = ","), "\n", sep = "")
+
+      df <- predict_daily(x_featureids, adjust_air_temps = 0)
+
+      # compute derived metrics
+      df_nest <- df %>%
+        mutate(month = month(date)) %>%
+        select(adjust_air_temp, featureid, year, month, date, airTemp_degC, temp, temp_30d) %>%
+        group_by(adjust_air_temp, featureid, year) %>%
+        nest() %>%
+        ungroup()
+
+      df_derived <- df_nest %>%
+        mutate(
+          metrics = map(data, function (x) {
+            x_summer <- x[x$month %in% 6:8, ]
+
+            tibble(
+              max_temp = max(x[["temp"]]),
+              mean_jun_temp = mean(x[["temp"]][x$month == 6]),
+              mean_jul_temp = mean(x[["temp"]][x$month == 7]),
+              mean_aug_temp = mean(x[["temp"]][x$month == 8]),
+              mean_summer_temp = mean(x_summer[["temp"]]),
+              max_temp_30d = max(x[["temp_30d"]], na.rm = TRUE),
+              n_day_temp_gt_18 = sum(x[["temp"]] > 18),
+              n_day_temp_gt_20 = sum(x[["temp"]] > 20),
+              n_day_temp_gt_22 = sum(x[["temp"]] > 22),
+              n_day_temp_gte_24_9 = sum(x[["temp"]] >= 24.9),
+              n_day_temp_gte_27 = sum(x[["temp"]] >= 27),
+              resist = sum(abs(x_summer[["airTemp_degC"]] - x_summer[["temp"]]))
+            )
+          })
+        ) %>%
+        select(-data) %>%
+        unnest(metrics)
+
+      df_derived
     }
-    x_featureids <- featureids[start_i:end_i]
-    cat(as.character(Sys.time()), " - i = ", i, " | ", paste(x_featureids, collapse = ","), "\n", sep = "")
-
-    df <- predict_daily(x_featureids, adjust_air_temps = 0)
-
-    # compute derived metrics
-    df_nest <- df %>%
-      mutate(month = month(date)) %>%
-      select(adjust_air_temp, featureid, year, month, date, airTemp_degC, temp, temp_30d) %>%
-      group_by(adjust_air_temp, featureid, year) %>%
-      nest() %>%
-      ungroup()
-
-    df_derived <- df_nest %>%
-      mutate(
-        metrics = map(data, function (x) {
-          x_summer <- x[x$month %in% 6:8, ]
-
-          tibble(
-            max_temp = max(x[["temp"]]),
-            mean_jun_temp = mean(x[["temp"]][x$month == 6]),
-            mean_jul_temp = mean(x[["temp"]][x$month == 7]),
-            mean_aug_temp = mean(x[["temp"]][x$month == 8]),
-            mean_summer_temp = mean(x_summer[["temp"]]),
-            max_temp_30d = max(x[["temp_30d"]], na.rm = TRUE),
-            n_day_temp_gt_18 = sum(x[["temp"]] > 18),
-            n_day_temp_gt_20 = sum(x[["temp"]] > 20),
-            n_day_temp_gt_22 = sum(x[["temp"]] > 22),
-            n_day_temp_gte_24_9 = sum(x[["temp"]] >= 24.9),
-            n_day_temp_gte_27 = sum(x[["temp"]] >= 27),
-            resist = sum(abs(x_summer[["airTemp_degC"]] - x_summer[["temp"]]))
-          )
-        })
-      ) %>%
-      select(-data) %>%
-      unnest(metrics)
-
-    df_derived
-  }
-})
-cat("done (elapsed = ", round(unname(st[3]) / 60, 1), " min, ", round(unname(st[3]) / 60 / 60, 1), " hr)\n", sep = "")
-# 1.0 - 13 hr
-# 20171117 - 32 hours
-write_rds(df_predict_year, file.path(config$wd, paste0("model-predict-year-", huc8, ".rds")))
-# }
+  })
+  cat("done (elapsed = ", round(unname(st[3]) / 60, 1), " min, ", round(unname(st[3]) / 60 / 60, 1), " hr)\n", sep = "")
+  # 1.0 - 13 hr
+  # 20171117 - 32 hours
+  write_rds(df_predict_year, file.path(config$wd, paste0("model-predict-year-", huc2, ".rds")))
+}
 
 
 stopCluster(cl)
