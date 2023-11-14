@@ -233,7 +233,7 @@ df_values_nonoutliers <- df_values_nonzeros %>%
 cat("done (nrow = ", nrow(df_values_nonoutliers), ")\n", sep = "")
 
 # manually remove series
-exclude_series_id <- 24039
+exclude_series_id <- c(643L, 3028L, 16013L, 16015L, 23364L, 24039L)
 cat("removing manually selected series (n =", length(exclude_series_id), ")\n")
 df_values_exclude_series <- df_values_nonoutliers %>%
   filter(!series_id %in% exclude_series_id)
@@ -275,7 +275,8 @@ df_chunks <- df_values_chunks_trim %>%
     dmax = coalesce(max - lag(max), 0),
     dmean = coalesce(mean - lag(mean), 0),
     `max-min` = max - min,
-    `airtemp-mean` = pmax(airtemp, 10) - pmax(mean, 10)
+    `airtemp-mean` = pmax(airtemp, 0) - pmax(mean, 0)
+    # `airtemp-mean` = pmax(airtemp, 10) - pmax(mean, 10)
   ) %>%
   ungroup() %>%
   nest(data = -c(series_id, series_chunk))
@@ -340,11 +341,11 @@ df_chunks_filter_1 <- df_chunks %>%
   ) %>%
   print()
 
-cat("removing", sum(df_chunks_filter_1$n_values <= 5),"chunks where n_values <= 5...")
+cat("removing", sum(df_chunks_filter_1$n_values <= 10),"chunks where n_values <= 10...")
 rejects$values$n_values_lt_5 <- df_chunks_filter_1 %>%
-  filter(n_values <= 5)
+  filter(n_values <= 10)
 df_chunks_filter_2 <- df_chunks_filter_1 %>%
-  filter(n_values > 5)
+  filter(n_values > 10)
 cat("done (n series = ", nrow(df_chunks_filter_2), ")\n", sep = "")
 
 cat("removing", sum(!df_chunks_filter_2$includes_summer),"chunks that only include winter (Dec-Feb)...")
@@ -364,7 +365,8 @@ df_chunks_filter_4 <- df_chunks_filter_3 %>%
     lm_airtemp = list(lm(airtemp ~ mean, data)),
     intercept_airtemp = lm_airtemp$coefficients[[1]],
     slope_airtemp = lm_airtemp$coefficients[[2]]
-  )
+  ) %>%
+  select(-lm_airtemp)
 cat("done (n series = ", nrow(df_chunks_filter_4), ")\n", sep = "")
 
 cat("removing", sum(df_chunks_filter_4$n_values > 100 & df_chunks_filter_4$min_value < -10 & df_chunks_filter_4$cor_airtemp > 0.98),"series where n_values > 100 & min_value < -10 & cor_airtemp > 0.98 (suspect air temp measurements)...")
@@ -396,21 +398,95 @@ df_chunks_filter_8 <- df_chunks_filter_7 %>%
 cat("done (n series = ", nrow(df_chunks_filter_8), ")\n", sep = "")
 
 df_chunks_filter_8 %>%
-  arrange(desc(`sd_airtemp-mean`)) %>%
+  arrange(desc(cor_airtemp)) %>%
   head(9) %>%
-  # select(-data, -lm_airtemp) %>% view
+  # select(-data) %>% view
   unnest(data) %>%
   plot_ts()
 
 df_chunks_filter_8 %>%
+  ggplot(aes(max_dmean)) +
+  geom_histogram()
+
+df_chunks_filter_9 <- df_chunks_filter_8 %>%
+  filter(min_value > -1, max_value < 35, `max_max-min` < 10, n_values >= 10) %>%
+  filter(max_dmean < 10, `mean_abs_airtemp-mean` < 5, `max_abs_airtemp-mean` < 10)
+# select(-data, -lm_airtemp) %>% summary()
+
+df_chunks_filter_9 %>%
+  arrange(desc(`max_max-min`)) %>%
+  head(9) %>%
+  mutate(series_id = fct_inorder(as.character(series_id))) %>%
+  unnest(data) %>%
+  plot_ts()
+
+df_chunks_filter_9 %>%
+  filter(series_id %in% c(744L)) %>%
+  # select(-data) %>% summary()
+  unnest(data) %>%
+  plot_ts()
+
+db_huc <- readRDS(file.path(config$wd, "data-huc.rds"))
+df_chunks_filter_9_huc <- df_chunks_filter_9 %>%
+  left_join(
+    db_series %>%
+      select(series_id = id, location_id),
+    by = "series_id"
+  ) %>%
+  left_join(
+    db_locations %>%
+      select(location_id = id, featureid = catchment_id),
+    by = "location_id"
+  ) %>%
+  left_join(
+    db_huc,
+    by = c("featureid")
+  )
+
+df_chunks_filter_9_huc %>%
+  select(huc2, huc4, location_id, featureid, series_id, series_chunk, data) %>%
+  # pull(huc2) %>% table()
+  # filter(huc2 == "04") %>%
+  # filter(series_id %in% c(643L, 3028L, 16013L, 16015L, 23364L)) %>%
+  unnest(data) %>%
+  # filter(yday(date) == 105, mean > 20)
+  ggplot(aes(yday(date), mean)) +
+  geom_line(aes(group = str_c(series_id, series_chunk, year(date), sep = ":")), alpha = 0.05)
+
+df_chunks_filter_9 %>%
   ggplot(aes(intercept_airtemp, slope_airtemp)) +
   geom_point(aes(color = pct_airtemp_gt_5)) +
   scale_color_viridis_c()
 
-df_chunks_filter_8 %>%
+df_chunks_filter_9 %>%
   ggplot(aes(n_values)) +
   stat_ecdf() +
   scale_x_log10()
+
+x <- df_chunks_filter_9 %>%
+  select(max_dmax, `max_max-min`, `mean_abs_airtemp-mean`, `max_abs_airtemp-mean`, cor_airtemp, intercept_airtemp, slope_airtemp)
+cor(x)
+df_chunks_filter_9$mahal <- mahalanobis(x, colMeans(x), cov(x))
+df_chunks_filter_9$mahal_p <- pchisq(df_chunks_filter_9$mahal, df=ncol(x) - 1, lower.tail=FALSE)
+
+df_chunks_filter_9 %>%
+  arrange(mahal_p) %>%
+  filter(mahal_p < 0.01) %>%
+  tail(16) %>%
+  mutate(series_id = fct_inorder(as.character(series_id))) %>%
+  unnest(data) %>%
+  plot_ts()
+
+df_chunks_filter_9 %>%
+  # select(huc2, huc4, location_id, featureid, series_id, series_chunk, data, mahal_p) %>%
+  # pull(huc2) %>% table()
+  # filter(huc2 == "04") %>%
+  # filter(series_id %in% c(643L, 3028L, 16013L, 16015L, 23364L)) %>%
+  unnest(data) %>%
+  # filter(yday(date) == 105, mean > 20)
+  ggplot(aes(yday(date), mean)) +
+  geom_line(aes(group = str_c(series_id, series_chunk, year(date), sep = ":")), alpha = 0.05) +
+  facet_wrap(vars(mahal_p < 0.001))
 
 
 # filter: locations -------------------------------------------------------
