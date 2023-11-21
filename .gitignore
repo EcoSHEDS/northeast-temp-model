@@ -12,3 +12,6 @@ r/docs/_book
 r/docs/*.log
 
 r/csv/*.csv
+
+r/data/neversink/Raw_Data
+r/data/**/*.rds
