@@ -13,7 +13,7 @@
   
   
   <meta property="og:description" content="Documentation for the SHEDS northeast stream temperature model." />
-  <meta name="github-repo" content="walkerjeffd/sheds-temp-model" />
+  <meta name="github-repo" content="ecosheds/northeast-temp-model" />
 
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="Section 3 Data Sources | SHEDS Northeast Stream Temperature Model" />
@@ -73,7 +73,7 @@
       <nav role="navigation">
 
 <ul class="summary">
-<li><a href="./">SHEDS Stream Temperature Model</a></li>
+<li><a href="./">Northeast Stream Temperature Model</a></li>
 
 <li class="divider"></li>
 <li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a><ul>
@@ -155,22 +155,22 @@
 <h2><span class="header-section-number">3.1</span> Covariate Datasets</h2>
 <div id="catchment-delineation" class="section level3">
 <h3><span class="header-section-number">3.1.1</span> Catchment Delineation</h3>
-<p>The stream temperature model uses the <a href="https://conte-ecology.github.io/shedsGisData/">National Hydrography Dataset High Resolution Delineation Version 2 (NHDHRDV2)</a> catchment delineation.</p>
-<p>Shapefiles of the catchments can be downloaded from: <a href="https://ecosheds.org/assets/nhdhrd/v2/" class="uri">https://ecosheds.org/assets/nhdhrd/v2/</a></p>
+<p>The stream temperature model uses the EcoSHEDS <a href="https://ecosheds.github.io/necd/">Northeast Catchment Delineation (NECD)</a> catchment delineation.</p>
+<p>Shapefiles of the catchments can be downloaded from: <a href="https://ecosheds.github.io/necd/downloads.html" class="uri">https://ecosheds.github.io/necd/downloads.html</a></p>
 <p>The <code>spatial_XX.zip</code> files contain pre-staged datasets for each HUC2 region (e.g. spatial_01.zip contains the catchments for the HUC2 region 01).</p>
 </div>
 <div id="climate-data" class="section level3">
 <h3><span class="header-section-number">3.1.2</span> Climate Data</h3>
-<p>Daily air temperature and precipitation were obtained from the <a href="https://daymet.ornl.gov/">Daymet V3</a> gridded estimates of daily weather parameters for North America. The raw Daymet datasets (NetCDF4 files) were processed using the code in <a href="https://github.com/walkerjeffd/sheds-daymet"><code>walkerjeffd/sheds-daymet</code></a>.</p>
+<p>Daily air temperature and precipitation were obtained from the <a href="https://daymet.ornl.gov/">Daymet V3</a> gridded estimates of daily weather parameters for North America. The raw Daymet datasets (NetCDF4 files) were processed using the code in <a href="https://github.com/EcoSHEDS/necd/tree/main/daymet"><code>EcoSHEDS/necd</code></a>.</p>
 </div>
 <div id="geospatial-characteristics" class="section level3">
 <h3><span class="header-section-number">3.1.3</span> Geospatial Characteristics</h3>
-<p>Geospatial characteristics of each catchment were generated using the code in <a href="https://github.com/Conte-Ecology/shedsGisData/tree/master/basinCharacteristics">basinCharacteristics</a>. More information can be found on the <a href="https://conte-ecology.github.io/shedsGisData/">SHEDS GIS Data</a> page.</p>
+<p>Geospatial characteristics of each catchment were generated as part of the EcoSHEDS NECD catchment delineation <a href="https://ecosheds.github.io/necd/basin-characteristics.html">Basin Characteristics</a>. More information can be found on the <a href="https://ecosheds.github.io/necd/">EcoSHEDS NECD</a> website.</p>
 </div>
 </div>
 <div id="stream-temperature-observations" class="section level2">
 <h2><span class="header-section-number">3.2</span> Stream Temperature Observations</h2>
-<p>Temperature observations extractd from the <a href="http://db.ecosheds.org">SHEDS Stream Temperature Database</a>, which contains data uploaded from numerous state and federal agencies, universities, and non-profit organizations.</p>
+<p>Temperature observations extractd from the <a href="http://db.ecosheds.org">Northeast Stream Temperature Database</a>, which contains data uploaded from numerous state and federal agencies, universities, and non-profit organizations.</p>
 <div id="data-summary" class="section level3">
 <h3><span class="header-section-number">3.2.1</span> Data Summary</h3>
 <p>The following table summarizes the number of monitoring stations, deployments, and total observations for each agency and organization.</p>

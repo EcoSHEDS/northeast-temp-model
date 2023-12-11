@@ -13,7 +13,7 @@
   
   
   <meta property="og:description" content="Documentation for the SHEDS northeast stream temperature model." />
-  <meta name="github-repo" content="walkerjeffd/sheds-temp-model" />
+  <meta name="github-repo" content="ecosheds/northeast-temp-model" />
 
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="Section 7 Download | SHEDS Northeast Stream Temperature Model" />
@@ -73,7 +73,7 @@
       <nav role="navigation">
 
 <ul class="summary">
-<li><a href="./">SHEDS Stream Temperature Model</a></li>
+<li><a href="./">Northeast Stream Temperature Model</a></li>
 
 <li class="divider"></li>
 <li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a><ul>
@@ -155,7 +155,7 @@
 <h2><span class="header-section-number">7.1</span> Stream Temperature Model Predictions Dataset</h2>
 <p>The stream temperature model predictions can be downloaded as a static CSV file from the following link.</p>
 <blockquote>
-<p><strong><a href="https://ecosheds.org/models/stream-temperature/output/sheds-temp-model-v1.3.0.csv">Stream Temperature Predictions v1.3.0 (csv)</a></strong></p>
+<p><strong><a href="https://ecosheds.s3.amazonaws.com/northeast-temp-model/output/sheds-temp-model-v1.3.0.csv">Stream Temperature Predictions v1.3.0 (csv)</a></strong></p>
 </blockquote>
 <p>This file contains the following columns:</p>
 <table>
@@ -383,35 +383,35 @@
 </div>
 <div id="catchment-delineation-shapefiles" class="section level2">
 <h2><span class="header-section-number">7.2</span> Catchment Delineation Shapefiles</h2>
-<p>The <a href="https://conte-ecology.github.io/shedsGisData/">SHEDS catchment delineation</a> (NHDHRDV2) are available as a series of shapefiles, pre-staged by 2-digit hydrologic unit codes (HUCs). The model predictions and covariates CSV files can be joined to these shapefiles using the mutual <code>featureid</code> column.</p>
+<p>The <a href="https://ecosheds.github.io/necd/">EcoSHEDS Northeast Catchment Delineation (NECD)</a> is available as a series of shapefiles, pre-staged by 2-digit hydrologic unit codes (HUCs). The model predictions and covariates CSV files can be joined to these shapefiles using the mutual <code>featureid</code> column.</p>
 <p><img src="img/hydrologic-regions.png" /><!-- --></p>
 <ul>
-<li><a href="https://ecosheds.org/assets/nhdhrd/v2/spatial_01.zip">Region 01 Catchments (zipped shp)</a></li>
-<li><a href="https://ecosheds.org/assets/nhdhrd/v2/spatial_02.zip">Region 02 Catchments (zipped shp)</a></li>
-<li><a href="https://ecosheds.org/assets/nhdhrd/v2/spatial_03.zip">Region 03 Catchments (zipped shp)</a></li>
-<li><a href="https://ecosheds.org/assets/nhdhrd/v2/spatial_04.zip">Region 04 Catchments (zipped shp)</a></li>
-<li><a href="https://ecosheds.org/assets/nhdhrd/v2/spatial_05.zip">Region 05 Catchments (zipped shp)</a></li>
-<li><a href="https://ecosheds.org/assets/nhdhrd/v2/spatial_06.zip">Region 06 Catchments (zipped shp)</a></li>
+<li><a href="https://ecosheds.s3.amazonaws.com/necd/delineation/spatial_01.zip">Region 01 Catchments (zipped shp)</a></li>
+<li><a href="https://ecosheds.s3.amazonaws.com/necd/delineation/spatial_02.zip">Region 02 Catchments (zipped shp)</a></li>
+<li><a href="https://ecosheds.s3.amazonaws.com/necd/delineation/spatial_03.zip">Region 03 Catchments (zipped shp)</a></li>
+<li><a href="https://ecosheds.s3.amazonaws.com/necd/delineation/spatial_04.zip">Region 04 Catchments (zipped shp)</a></li>
+<li><a href="https://ecosheds.s3.amazonaws.com/necd/delineation/spatial_05.zip">Region 05 Catchments (zipped shp)</a></li>
+<li><a href="https://ecosheds.s3.amazonaws.com/necd/delineation/spatial_06.zip">Region 06 Catchments (zipped shp)</a></li>
 </ul>
 <p>The documentation for the catchment delineation is also available:</p>
 <blockquote>
-<p><strong><a href="https://ecosheds.org/assets/nhdhrd/v2/NHDHRDV2_Documentation.docx">Catchment Delineation (NHDHRDV2) Documentation (docx)</a></strong></p>
+<p><strong><a href="https://ecosheds.s3.amazonaws.com/necd/docs/NECD_Delineation_Documentation.docx">NECD Catchment Delineation Documentation (docx)</a></strong></p>
 </blockquote>
 </div>
 <div id="catchment-covariates-dataset" class="section level2">
 <h2><span class="header-section-number">7.3</span> Catchment Covariates Dataset</h2>
-<p>The <a href="https://conte-ecology.github.io/shedsGisData/">SHEDS catchment covariates</a> are available as a series of CSV files, pre-staged by 2-digit hydrologic unit codes (HUCs). The covariates contain the catchment characteristics that are used as input variables to the stream temperature model.</p>
+<p>The <a href="https://ecosheds.github.io/necd/basin-characteristics.html">EcoSHEDS NECD Covariates</a> are available as a series of CSV files, pre-staged by 2-digit hydrologic unit codes (HUCs). The covariates contain the catchment characteristics that are used as input variables to the stream temperature model.</p>
 <ul>
-<li><a href="https://ecosheds.org/assets/nhdhrd/v2/covariates_01.zip">Region 01 Covariates (zipped csv)</a></li>
-<li><a href="https://ecosheds.org/assets/nhdhrd/v2/covariates_02.zip">Region 02 Covariates (zipped csv)</a></li>
-<li><a href="https://ecosheds.org/assets/nhdhrd/v2/covariates_03.zip">Region 03 Covariates (zipped csv)</a></li>
-<li><a href="https://ecosheds.org/assets/nhdhrd/v2/covariates_04.zip">Region 04 Covariates (zipped csv)</a></li>
-<li><a href="https://ecosheds.org/assets/nhdhrd/v2/covariates_05.zip">Region 05 Covariates (zipped csv)</a></li>
-<li><a href="https://ecosheds.org/assets/nhdhrd/v2/covariates_06.zip">Region 06 Covariates (zipped csv)</a></li>
+<li><a href="https://ecosheds.s3.amazonaws.com/necd/covariates/covariates_01.zip">Region 01 Covariates (zipped csv)</a></li>
+<li><a href="https://ecosheds.s3.amazonaws.com/necd/covariates/covariates_02.zip">Region 02 Covariates (zipped csv)</a></li>
+<li><a href="https://ecosheds.s3.amazonaws.com/necd/covariates/covariates_03.zip">Region 03 Covariates (zipped csv)</a></li>
+<li><a href="https://ecosheds.s3.amazonaws.com/necd/covariates/covariates_04.zip">Region 04 Covariates (zipped csv)</a></li>
+<li><a href="https://ecosheds.s3.amazonaws.com/necd/covariates/covariates_05.zip">Region 05 Covariates (zipped csv)</a></li>
+<li><a href="https://ecosheds.s3.amazonaws.com/necd/covariates/covariates_06.zip">Region 06 Covariates (zipped csv)</a></li>
 </ul>
 <p>The documentation for catchment covariates is also available:</p>
 <blockquote>
-<p><strong><a href="https://ecosheds.org/assets/nhdhrd/v2/NHDHRDV2_Covariate_Documentation.xlsx">Catchment Covariates Documentation (docx)</a></strong></p>
+<p><strong><a href="https://ecosheds.s3.amazonaws.com/necd/docs/NECD_Covariate_Documentation.xlsx">NECD Covariates Documentation (xlsx)</a></strong></p>
 </blockquote>
 
 </div>
