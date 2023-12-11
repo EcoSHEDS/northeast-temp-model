@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>SHEDS Northeast Stream Temperature Model</title>
+  <meta name="description" content="Documentation for the SHEDS northeast stream temperature model." />
+  <meta name="generator" content="bookdown 0.19 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="SHEDS Northeast Stream Temperature Model" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta property="og:description" content="Documentation for the SHEDS northeast stream temperature model." />
+  <meta name="github-repo" content="walkerjeffd/sheds-temp-model" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="SHEDS Northeast Stream Temperature Model" />
+  
+  <meta name="twitter:description" content="Documentation for the SHEDS northeast stream temperature model." />
+  
+
+<meta name="author" content="Jeff Walker, Ben Letcher, and Dan Hocking" />
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+
+<link rel="next" href="theory.html"/>
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-CBK3R7N2WQ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-CBK3R7N2WQ');
+</script>
+
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">SHEDS Stream Temperature Model</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a><ul>
+<li class="chapter" data-level="1.1" data-path="index.html"><a href="index.html#model-overview"><i class="fa fa-check"></i><b>1.1</b> Model Overview</a></li>
+<li class="chapter" data-level="1.2" data-path="index.html"><a href="index.html#current-snapshot"><i class="fa fa-check"></i><b>1.2</b> Current Snapshot</a></li>
+<li class="chapter" data-level="1.3" data-path="index.html"><a href="index.html#model-versioning"><i class="fa fa-check"></i><b>1.3</b> Model Versioning</a></li>
+<li class="chapter" data-level="1.4" data-path="index.html"><a href="index.html#source-code"><i class="fa fa-check"></i><b>1.4</b> Source Code</a></li>
+<li class="chapter" data-level="1.5" data-path="index.html"><a href="index.html#change-log"><i class="fa fa-check"></i><b>1.5</b> Change Log</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="theory.html"><a href="theory.html"><i class="fa fa-check"></i><b>2</b> Theory</a><ul>
+<li class="chapter" data-level="2.1" data-path="theory.html"><a href="theory.html#fixed-effects"><i class="fa fa-check"></i><b>2.1</b> Fixed Effects</a></li>
+<li class="chapter" data-level="2.2" data-path="theory.html"><a href="theory.html#catchment-random-effects"><i class="fa fa-check"></i><b>2.2</b> Catchment Random Effects</a></li>
+<li class="chapter" data-level="2.3" data-path="theory.html"><a href="theory.html#huc-random-effects"><i class="fa fa-check"></i><b>2.3</b> HUC Random Effects</a></li>
+<li class="chapter" data-level="2.4" data-path="theory.html"><a href="theory.html#year-random-effects"><i class="fa fa-check"></i><b>2.4</b> Year Random Effects</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="data-sources.html"><a href="data-sources.html"><i class="fa fa-check"></i><b>3</b> Data Sources</a><ul>
+<li class="chapter" data-level="3.1" data-path="data-sources.html"><a href="data-sources.html#covariate-datasets"><i class="fa fa-check"></i><b>3.1</b> Covariate Datasets</a><ul>
+<li class="chapter" data-level="3.1.1" data-path="data-sources.html"><a href="data-sources.html#catchment-delineation"><i class="fa fa-check"></i><b>3.1.1</b> Catchment Delineation</a></li>
+<li class="chapter" data-level="3.1.2" data-path="data-sources.html"><a href="data-sources.html#climate-data"><i class="fa fa-check"></i><b>3.1.2</b> Climate Data</a></li>
+<li class="chapter" data-level="3.1.3" data-path="data-sources.html"><a href="data-sources.html#geospatial-characteristics"><i class="fa fa-check"></i><b>3.1.3</b> Geospatial Characteristics</a></li>
+</ul></li>
+<li class="chapter" data-level="3.2" data-path="data-sources.html"><a href="data-sources.html#stream-temperature-observations"><i class="fa fa-check"></i><b>3.2</b> Stream Temperature Observations</a><ul>
+<li class="chapter" data-level="3.2.1" data-path="data-sources.html"><a href="data-sources.html#data-summary"><i class="fa fa-check"></i><b>3.2.1</b> Data Summary</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="data-processing.html"><a href="data-processing.html"><i class="fa fa-check"></i><b>4</b> Data Processing</a><ul>
+<li class="chapter" data-level="4.1" data-path="data-processing.html"><a href="data-processing.html#screen-monitoring-stations"><i class="fa fa-check"></i><b>4.1</b> Screen Monitoring Stations</a></li>
+<li class="chapter" data-level="4.2" data-path="data-processing.html"><a href="data-processing.html#screen-daily-mean-values"><i class="fa fa-check"></i><b>4.2</b> Screen Daily Mean Values</a></li>
+<li class="chapter" data-level="4.3" data-path="data-processing.html"><a href="data-processing.html#combine-overlapping-timeseries"><i class="fa fa-check"></i><b>4.3</b> Combine Overlapping Timeseries</a></li>
+<li class="chapter" data-level="4.4" data-path="data-processing.html"><a href="data-processing.html#screen-multiple-locations-within-single-catchment"><i class="fa fa-check"></i><b>4.4</b> Screen Multiple Locations within Single Catchment</a></li>
+<li class="chapter" data-level="4.5" data-path="data-processing.html"><a href="data-processing.html#remove-cold-weather-periods"><i class="fa fa-check"></i><b>4.5</b> Remove Cold Weather Periods</a></li>
+<li class="chapter" data-level="4.6" data-path="data-processing.html"><a href="data-processing.html#split-dataset-for-calibration-and-validation"><i class="fa fa-check"></i><b>4.6</b> Split Dataset for Calibration and Validation</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html"><i class="fa fa-check"></i><b>5</b> Calibration and Validation</a><ul>
+<li class="chapter" data-level="5.1" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#parameter-estimates"><i class="fa fa-check"></i><b>5.1</b> Parameter Estimates</a><ul>
+<li class="chapter" data-level="5.1.1" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#fixed-effects-1"><i class="fa fa-check"></i><b>5.1.1</b> Fixed Effects</a></li>
+<li class="chapter" data-level="5.1.2" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#huc8-random-effects"><i class="fa fa-check"></i><b>5.1.2</b> HUC8 Random Effects</a></li>
+<li class="chapter" data-level="5.1.3" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#catchment-random-effects-1"><i class="fa fa-check"></i><b>5.1.3</b> Catchment Random Effects</a></li>
+<li class="chapter" data-level="5.1.4" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#year-random-effects-1"><i class="fa fa-check"></i><b>5.1.4</b> Year Random Effects</a></li>
+</ul></li>
+<li class="chapter" data-level="5.2" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#goodness-of-fit"><i class="fa fa-check"></i><b>5.2</b> Goodness-of-Fit</a><ul>
+<li class="chapter" data-level="5.2.1" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#all-observations"><i class="fa fa-check"></i><b>5.2.1</b> All Observations</a></li>
+<li class="chapter" data-level="5.2.2" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#deployments"><i class="fa fa-check"></i><b>5.2.2</b> Deployments</a></li>
+<li class="chapter" data-level="5.2.3" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#catchments"><i class="fa fa-check"></i><b>5.2.3</b> Catchments</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="predictions.html"><a href="predictions.html"><i class="fa fa-check"></i><b>6</b> Predictions</a><ul>
+<li class="chapter" data-level="6.1" data-path="predictions.html"><a href="predictions.html#air-temperature-scenarios"><i class="fa fa-check"></i><b>6.1</b> Air Temperature Scenarios</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="download.html"><a href="download.html"><i class="fa fa-check"></i><b>7</b> Download</a><ul>
+<li class="chapter" data-level="7.1" data-path="download.html"><a href="download.html#stream-temperature-model-predictions-dataset"><i class="fa fa-check"></i><b>7.1</b> Stream Temperature Model Predictions Dataset</a></li>
+<li class="chapter" data-level="7.2" data-path="download.html"><a href="download.html#catchment-delineation-shapefiles"><i class="fa fa-check"></i><b>7.2</b> Catchment Delineation Shapefiles</a></li>
+<li class="chapter" data-level="7.3" data-path="download.html"><a href="download.html#catchment-covariates-dataset"><i class="fa fa-check"></i><b>7.3</b> Catchment Covariates Dataset</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+<li class="divider"></li>
+<li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">SHEDS Northeast Stream Temperature Model</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="header">
+<h1 class="title">SHEDS Northeast Stream Temperature Model</h1>
+<p class="author"><em><a href="https://walkerenvres.com">Jeff Walker</a>, <a href="https://www.lsc.usgs.gov/?q=cafb-ben-letcher">Ben Letcher</a>, and <a href="https://hockinglab.weebly.com/">Dan Hocking</a></em></p>
+<p class="date"><em>v1.3.0 (Sep 7, 2021)</em></p>
+</div>
+<div id="intro" class="section level1">
+<h1><span class="header-section-number">Section 1</span> Introduction</h1>
+<p>The SHEDS stream temperature model was developed to predict daily stream temperatures at both gaged and un-gaged catchments across the northeast U.S. based on geospatial characteristics and weather conditions.</p>
+<p>The model is based on a linear mixed effects framework that accounts for spatial and temporal correlations using a hierachical Bayesian structure. <span class="citation">Letcher et al. (<a href="#ref-Letcher2016">2016</a>)</span> describe the initial development of this model framework, and apply it to a small region in western Massachusetts. See the <a href="index.html#model-overview">Model Overview</a> section below for a brief introduction to the model, or the <a href="theory.html#theory">Theory</a> section a more detailed explanation.</p>
+<p>The documentation is divided into the following sections:</p>
+<ol style="list-style-type: decimal">
+<li><a href="index.html#intro">Introduction</a> : provides an overview the stream temperature model and documentation, as well as a snapshot of the current calibration</li>
+<li><a href="theory.html#theory">Theory</a> : describes how the model works including the underlying structure and theory</li>
+<li><a href="data-sources.html#data-sources">Data Sources</a> : describes the datasets used as inputs to the model</li>
+<li><a href="data-processing.html#data-processing">Data Processing</a> : describes how input datasets are processed prior to model fitting (i.e. QAQC procedures)</li>
+<li><a href="calibration-and-validation.html#calibration-and-validation">Calibration and Validation</a> : describes how well the model predicts stream temperature based on observations that were included (calibration) and excluded (validation) from the model fitting process</li>
+<li><a href="predictions.html#predictions">Predictions</a> : describes how predictions are generated after the model is calibrated and describes the various summary metrics that are computed for each catchment</li>
+<li><a href="download.html#download">Download</a> : provides links to download the model predictions, catchment delineation (shapefiles), and covariates dataset.</li>
+</ol>
+<p>The model will be periodically updated and re-calibrated (approximately once every 6 months) to incorporate any new temperature observations, and to make any necessary revisions to the data processing and/or model structure. With each update, a new version will be assigned to the model, and this documentation website will be updated to reflect the most recent performance of the model. A brief summary of the changes associated with each new version is provided in the <a href="index.html#change-log">Change Log</a> below.</p>
+<div id="model-overview" class="section level2">
+<h2><span class="header-section-number">1.1</span> Model Overview</h2>
+<p>The SHEDS stream temperature model predicts daily mean stream temperature based on geospatial characteristics and daily weather conditions. Predictions are made at a relatively fine spatial resolution based on a customized catchment delineation (average size about 2 km<sup>2</sup>) across the northeast U.S. from Maine to Virginia. Predictions are limited to streams and rivers with drainage areas less than 200 km<sup>2</sup>. Heavily impounded rivers are also excluded from the model.</p>
+<p>The model uses a hierarchical Bayesian structure to account for spatial correlation in temperature between near-by locations through random effects for both the individual catchments and the larger watershed (HUC8) containing that catchment. Therefore, catchments within the same HUC8 watershed share a set of HUC-specific coefficients. Year to year variations in temperature are also accounted for using a random effect for the year.</p>
+</div>
+<div id="current-snapshot" class="section level2">
+<h2><span class="header-section-number">1.2</span> Current Snapshot</h2>
+<p>Table <a href="index.html#tab:table-intro-gof">1.1</a> provides a snapshot of the calibration and validation performance for the current version of the model (v1.3.0). More details about the model performance can be found in the <a href="calibration-and-validation.html#calibration-and-validation">Calibration and Validation</a> section.</p>
+<table>
+<caption><span id="tab:table-intro-gof">Table 1.1: </span>Summary statistics of model calibration and validation</caption>
+<thead>
+<tr class="header">
+<th></th>
+<th align="right">Calibration</th>
+<th align="right">Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td># Daily Observations</td>
+<td align="right">749,327</td>
+<td align="right">85,228</td>
+</tr>
+<tr class="even">
+<td># Time Series</td>
+<td align="right">8,495</td>
+<td align="right">959</td>
+</tr>
+<tr class="odd">
+<td># Catchments</td>
+<td align="right">3,077</td>
+<td align="right">614</td>
+</tr>
+<tr class="even">
+<td># HUC8s</td>
+<td align="right">142</td>
+<td align="right">104</td>
+</tr>
+<tr class="odd">
+<td># Years</td>
+<td align="right">29.0</td>
+<td align="right">25.0</td>
+</tr>
+<tr class="even">
+<td>RMSE (degC)</td>
+<td align="right">1.152</td>
+<td align="right">1.589</td>
+</tr>
+<tr class="odd">
+<td>Mean Residual (degC)</td>
+<td align="right">0.076</td>
+<td align="right">0.137</td>
+</tr>
+<tr class="even">
+<td>Median Residual (degC)</td>
+<td align="right">0.087</td>
+<td align="right">0.150</td>
+</tr>
+<tr class="odd">
+<td>Mean Absolute Residual (degC)</td>
+<td align="right">0.866</td>
+<td align="right">1.148</td>
+</tr>
+<tr class="even">
+<td>Median Absolute Residual (degC)</td>
+<td align="right">0.678</td>
+<td align="right">0.883</td>
+</tr>
+<tr class="odd">
+<td>Minimum Residual (degC)</td>
+<td align="right">-12.129</td>
+<td align="right">-15.074</td>
+</tr>
+<tr class="even">
+<td>1st Percentile Residual (degC)</td>
+<td align="right">-2.918</td>
+<td align="right">-3.875</td>
+</tr>
+<tr class="odd">
+<td>99th Percentile Residual (degC)</td>
+<td align="right">2.944</td>
+<td align="right">4.215</td>
+</tr>
+<tr class="even">
+<td>Maximum Residual (degC)</td>
+<td align="right">13.775</td>
+<td align="right">14.658</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="model-versioning" class="section level2">
+<h2><span class="header-section-number">1.3</span> Model Versioning</h2>
+<p>The SHEDS stream temperature model uses semantic versioning of the form: <code>vX.Y.Z</code></p>
+<ul>
+<li><code>X</code> is the <strong>major</strong> version, which will be incremented when there is a major change to the model theory, code, or datasets.</li>
+<li><code>Y</code> is the <strong>minor</strong> version, which will be incremented when there is a new set of results due to changes in the model code, datasets, processing procedures, etc.</li>
+<li><code>Z</code> is the <strong>patch</strong> version, which will be incremented only when there is a change to the documentation or code that <em>does not</em> yield different results.</li>
+</ul>
+</div>
+<div id="source-code" class="section level2">
+<h2><span class="header-section-number">1.4</span> Source Code</h2>
+<p>The source code for the model itself and this documentation is available in the Github repository <a href="https://github.com/walkerjeffd/sheds-temp-model">walkerjeffd/sheds-temp-model</a>. Each version of the model will be included under the list of <a href="https://github.com/walkerjeffd/sheds-temp-model/releases">Releases</a>.</p>
+</div>
+<div id="change-log" class="section level2">
+<h2><span class="header-section-number">1.5</span> Change Log</h2>
+<ul>
+<li><strong><a href="https://ecosheds.org/models/stream-temperature/v1.3.0/">v1.3.0 (Sep 7, 2021)</a></strong><br />
+Add 2020 daymet, revise data screening procedures, re-calibrate full model.</li>
+<li><strong><a href="https://ecosheds.org/models/stream-temperature/v1.2.0/">v1.2.0 (Jul 10, 2020)</a></strong><br />
+Add 2019 daymet, re-calibrate full model.</li>
+<li><strong><a href="https://ecosheds.org/models/stream-temperature/v1.1.1/">v1.1.1 (Jan 16, 2020)</a></strong><br />
+Add air temperature scenarios (+2, +4, +6 degC), and # days &gt;= 24.9 and 27 degC to prediction derived metrics.</li>
+<li><strong><a href="https://ecosheds.org/models/stream-temperature/v1.1.0/">v1.1.0 (Dec 2, 2019)</a></strong><br />
+Add 2018 daymet data, re-calibrated full model.</li>
+<li><strong><a href="https://ecosheds.org/models/stream-temperature/v1.0.2/">v1.0.2 (Mar 26, 2019)</a></strong><br />
+Update documentation, add <a href="download.html#download">Download</a> section containing links to model predictions, catchment delineation, and covariates.</li>
+<li><strong><a href="https://ecosheds.org/models/stream-temperature/v1.0.1/">v1.0.1 (Dec 10, 2018)</a></strong><br />
+Update documentation, remove auto-correlation term from goodness-of-fit summaries</li>
+<li><strong><a href="https://ecosheds.org/models/stream-temperature/v1.0.0/">v1.0.0 (Oct 25, 2018)</a></strong><br />
+Re-calibrated model, and finished documentation.</li>
+<li><strong><a href="https://ecosheds.org/models/stream-temperature/v0.9.2/">v0.9.2 (Jul 6, 2018)</a></strong><br />
+Major updates to documentation (introduction, theory, calibration and validation sections).</li>
+<li><strong><a href="https://ecosheds.org/models/stream-temperature/v0.9.1/">v0.9.1 (Jun 6, 2018)</a></strong><br />
+Updates to model versioning and configuration framework, and minor updates to documentation (still incomplete).</li>
+<li><strong><a href="https://ecosheds.org/models/stream-temperature/v0.9.0/">v0.9.0 (May 30, 2018)</a></strong><br />
+Preliminary release of the new model framework and documentation.</li>
+<li><strong><a href="https://conte-ecology.github.io/conteStreamTemperature_northeast/">Previous Versions</a> (prior to 2018)</strong><br />
+Previous versions of the stream temperature model can be found <a href="https://conte-ecology.github.io/conteStreamTemperature_northeast/">here</a>. That website is now deprecated, but will remain available for future reference. Beginning with v1.0.0 of the new framework and codebase, all model changes and results will be tracked and made available.</li>
+</ul>
+
+</div>
+</div>
+<h3>References</h3>
+<div id="refs" class="references">
+<div id="ref-Letcher2016">
+<p>Letcher, Benjamin H., Daniel J. Hocking, Kyle O’Neil, Andrew R. Whiteley, Keith H. Nislow, and Matthew J. O’Donnell. 2016. “A Hierarchical Model of Daily Stream Temperature Using Air-Water Temperature Synchronization, Autocorrelation, and Time Lags.” <em>PeerJ</em> 4: e1727. <a href="https://doi.org/10.7717/peerj.1727">https://doi.org/10.7717/peerj.1727</a>.</p>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+
+<a href="theory.html" class="navigation navigation-next navigation-unique" aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": ["sheds-temp-model.pdf", "sheds-temp-model.epub"],
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

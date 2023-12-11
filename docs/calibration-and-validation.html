@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Section 5 Calibration and Validation | SHEDS Northeast Stream Temperature Model</title>
+  <meta name="description" content="Documentation for the SHEDS northeast stream temperature model." />
+  <meta name="generator" content="bookdown 0.19 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Section 5 Calibration and Validation | SHEDS Northeast Stream Temperature Model" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta property="og:description" content="Documentation for the SHEDS northeast stream temperature model." />
+  <meta name="github-repo" content="walkerjeffd/sheds-temp-model" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Section 5 Calibration and Validation | SHEDS Northeast Stream Temperature Model" />
+  
+  <meta name="twitter:description" content="Documentation for the SHEDS northeast stream temperature model." />
+  
+
+<meta name="author" content="Jeff Walker, Ben Letcher, and Dan Hocking" />
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="data-processing.html"/>
+<link rel="next" href="predictions.html"/>
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-CBK3R7N2WQ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-CBK3R7N2WQ');
+</script>
+
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">SHEDS Stream Temperature Model</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a><ul>
+<li class="chapter" data-level="1.1" data-path="index.html"><a href="index.html#model-overview"><i class="fa fa-check"></i><b>1.1</b> Model Overview</a></li>
+<li class="chapter" data-level="1.2" data-path="index.html"><a href="index.html#current-snapshot"><i class="fa fa-check"></i><b>1.2</b> Current Snapshot</a></li>
+<li class="chapter" data-level="1.3" data-path="index.html"><a href="index.html#model-versioning"><i class="fa fa-check"></i><b>1.3</b> Model Versioning</a></li>
+<li class="chapter" data-level="1.4" data-path="index.html"><a href="index.html#source-code"><i class="fa fa-check"></i><b>1.4</b> Source Code</a></li>
+<li class="chapter" data-level="1.5" data-path="index.html"><a href="index.html#change-log"><i class="fa fa-check"></i><b>1.5</b> Change Log</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="theory.html"><a href="theory.html"><i class="fa fa-check"></i><b>2</b> Theory</a><ul>
+<li class="chapter" data-level="2.1" data-path="theory.html"><a href="theory.html#fixed-effects"><i class="fa fa-check"></i><b>2.1</b> Fixed Effects</a></li>
+<li class="chapter" data-level="2.2" data-path="theory.html"><a href="theory.html#catchment-random-effects"><i class="fa fa-check"></i><b>2.2</b> Catchment Random Effects</a></li>
+<li class="chapter" data-level="2.3" data-path="theory.html"><a href="theory.html#huc-random-effects"><i class="fa fa-check"></i><b>2.3</b> HUC Random Effects</a></li>
+<li class="chapter" data-level="2.4" data-path="theory.html"><a href="theory.html#year-random-effects"><i class="fa fa-check"></i><b>2.4</b> Year Random Effects</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="data-sources.html"><a href="data-sources.html"><i class="fa fa-check"></i><b>3</b> Data Sources</a><ul>
+<li class="chapter" data-level="3.1" data-path="data-sources.html"><a href="data-sources.html#covariate-datasets"><i class="fa fa-check"></i><b>3.1</b> Covariate Datasets</a><ul>
+<li class="chapter" data-level="3.1.1" data-path="data-sources.html"><a href="data-sources.html#catchment-delineation"><i class="fa fa-check"></i><b>3.1.1</b> Catchment Delineation</a></li>
+<li class="chapter" data-level="3.1.2" data-path="data-sources.html"><a href="data-sources.html#climate-data"><i class="fa fa-check"></i><b>3.1.2</b> Climate Data</a></li>
+<li class="chapter" data-level="3.1.3" data-path="data-sources.html"><a href="data-sources.html#geospatial-characteristics"><i class="fa fa-check"></i><b>3.1.3</b> Geospatial Characteristics</a></li>
+</ul></li>
+<li class="chapter" data-level="3.2" data-path="data-sources.html"><a href="data-sources.html#stream-temperature-observations"><i class="fa fa-check"></i><b>3.2</b> Stream Temperature Observations</a><ul>
+<li class="chapter" data-level="3.2.1" data-path="data-sources.html"><a href="data-sources.html#data-summary"><i class="fa fa-check"></i><b>3.2.1</b> Data Summary</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="data-processing.html"><a href="data-processing.html"><i class="fa fa-check"></i><b>4</b> Data Processing</a><ul>
+<li class="chapter" data-level="4.1" data-path="data-processing.html"><a href="data-processing.html#screen-monitoring-stations"><i class="fa fa-check"></i><b>4.1</b> Screen Monitoring Stations</a></li>
+<li class="chapter" data-level="4.2" data-path="data-processing.html"><a href="data-processing.html#screen-daily-mean-values"><i class="fa fa-check"></i><b>4.2</b> Screen Daily Mean Values</a></li>
+<li class="chapter" data-level="4.3" data-path="data-processing.html"><a href="data-processing.html#combine-overlapping-timeseries"><i class="fa fa-check"></i><b>4.3</b> Combine Overlapping Timeseries</a></li>
+<li class="chapter" data-level="4.4" data-path="data-processing.html"><a href="data-processing.html#screen-multiple-locations-within-single-catchment"><i class="fa fa-check"></i><b>4.4</b> Screen Multiple Locations within Single Catchment</a></li>
+<li class="chapter" data-level="4.5" data-path="data-processing.html"><a href="data-processing.html#remove-cold-weather-periods"><i class="fa fa-check"></i><b>4.5</b> Remove Cold Weather Periods</a></li>
+<li class="chapter" data-level="4.6" data-path="data-processing.html"><a href="data-processing.html#split-dataset-for-calibration-and-validation"><i class="fa fa-check"></i><b>4.6</b> Split Dataset for Calibration and Validation</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html"><i class="fa fa-check"></i><b>5</b> Calibration and Validation</a><ul>
+<li class="chapter" data-level="5.1" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#parameter-estimates"><i class="fa fa-check"></i><b>5.1</b> Parameter Estimates</a><ul>
+<li class="chapter" data-level="5.1.1" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#fixed-effects-1"><i class="fa fa-check"></i><b>5.1.1</b> Fixed Effects</a></li>
+<li class="chapter" data-level="5.1.2" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#huc8-random-effects"><i class="fa fa-check"></i><b>5.1.2</b> HUC8 Random Effects</a></li>
+<li class="chapter" data-level="5.1.3" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#catchment-random-effects-1"><i class="fa fa-check"></i><b>5.1.3</b> Catchment Random Effects</a></li>
+<li class="chapter" data-level="5.1.4" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#year-random-effects-1"><i class="fa fa-check"></i><b>5.1.4</b> Year Random Effects</a></li>
+</ul></li>
+<li class="chapter" data-level="5.2" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#goodness-of-fit"><i class="fa fa-check"></i><b>5.2</b> Goodness-of-Fit</a><ul>
+<li class="chapter" data-level="5.2.1" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#all-observations"><i class="fa fa-check"></i><b>5.2.1</b> All Observations</a></li>
+<li class="chapter" data-level="5.2.2" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#deployments"><i class="fa fa-check"></i><b>5.2.2</b> Deployments</a></li>
+<li class="chapter" data-level="5.2.3" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#catchments"><i class="fa fa-check"></i><b>5.2.3</b> Catchments</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="predictions.html"><a href="predictions.html"><i class="fa fa-check"></i><b>6</b> Predictions</a><ul>
+<li class="chapter" data-level="6.1" data-path="predictions.html"><a href="predictions.html#air-temperature-scenarios"><i class="fa fa-check"></i><b>6.1</b> Air Temperature Scenarios</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="download.html"><a href="download.html"><i class="fa fa-check"></i><b>7</b> Download</a><ul>
+<li class="chapter" data-level="7.1" data-path="download.html"><a href="download.html#stream-temperature-model-predictions-dataset"><i class="fa fa-check"></i><b>7.1</b> Stream Temperature Model Predictions Dataset</a></li>
+<li class="chapter" data-level="7.2" data-path="download.html"><a href="download.html#catchment-delineation-shapefiles"><i class="fa fa-check"></i><b>7.2</b> Catchment Delineation Shapefiles</a></li>
+<li class="chapter" data-level="7.3" data-path="download.html"><a href="download.html#catchment-covariates-dataset"><i class="fa fa-check"></i><b>7.3</b> Catchment Covariates Dataset</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+<li class="divider"></li>
+<li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">SHEDS Northeast Stream Temperature Model</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="calibration-and-validation" class="section level1">
+<h1><span class="header-section-number">Section 5</span> Calibration and Validation</h1>
+<p>After processing all of the data, the model was fitted using jags. The observation dataset was split into 80% for calibration, 20% for validation.</p>
+<div id="parameter-estimates" class="section level2">
+<h2><span class="header-section-number">5.1</span> Parameter Estimates</h2>
+<div id="fixed-effects-1" class="section level3">
+<h3><span class="header-section-number">5.1.1</span> Fixed Effects</h3>
+<p>Figure <a href="calibration-and-validation.html#fig:plot-params-fixed">5.1</a> and Table <a href="calibration-and-validation.html#tab:table-params-fixed">5.1</a> present the estimated mean and 95% credible region interval (CRI) of each fixed effect parameter. The intercept term is not shown in the figure because the values are much larger than the other parameters, and would thus skew the scale.</p>
+<div class="figure"><span id="fig:plot-params-fixed"></span>
+<img src="sheds-temp-model_files/figure-html/plot-params-fixed-1.png" alt="Estimated Mean and 95% CRI of Fixed Effects" width="672" />
+<p class="caption">
+Figure 5.1: Estimated Mean and 95% CRI of Fixed Effects
+</p>
+</div>
+<table>
+<caption><span id="tab:table-params-fixed">Table 5.1: </span>Estimated Mean and 95% CRI of Fixed Effects</caption>
+<thead>
+<tr class="header">
+<th align="left">Variable</th>
+<th align="right">Mean</th>
+<th align="right">Lower CRI</th>
+<th align="right">Upper CRI</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">intercept</td>
+<td align="right">16.833421530</td>
+<td align="right">16.67617588</td>
+<td align="right">16.9867338349</td>
+</tr>
+<tr class="even">
+<td align="left">AreaSqKM</td>
+<td align="right">0.395116342</td>
+<td align="right">0.30627141</td>
+<td align="right">0.4840870247</td>
+</tr>
+<tr class="odd">
+<td align="left">impoundArea</td>
+<td align="right">0.349202949</td>
+<td align="right">0.26441219</td>
+<td align="right">0.4384439730</td>
+</tr>
+<tr class="even">
+<td align="left">agriculture</td>
+<td align="right">-0.231818023</td>
+<td align="right">-0.29860379</td>
+<td align="right">-0.1662348226</td>
+</tr>
+<tr class="odd">
+<td align="left">devel_hi</td>
+<td align="right">-0.113091616</td>
+<td align="right">-0.17117577</td>
+<td align="right">-0.0548478596</td>
+</tr>
+<tr class="even">
+<td align="left">forest</td>
+<td align="right">-0.449975232</td>
+<td align="right">-0.52445930</td>
+<td align="right">-0.3751637908</td>
+</tr>
+<tr class="odd">
+<td align="left">prcp2</td>
+<td align="right">0.037811292</td>
+<td align="right">0.03591343</td>
+<td align="right">0.0395934936</td>
+</tr>
+<tr class="even">
+<td align="left">prcp30</td>
+<td align="right">0.044143933</td>
+<td align="right">0.03778849</td>
+<td align="right">0.0505761489</td>
+</tr>
+<tr class="odd">
+<td align="left">prcp2.da</td>
+<td align="right">-0.043839749</td>
+<td align="right">-0.04582635</td>
+<td align="right">-0.0418767171</td>
+</tr>
+<tr class="even">
+<td align="left">prcp30.da</td>
+<td align="right">-0.083451495</td>
+<td align="right">-0.09003666</td>
+<td align="right">-0.0767409762</td>
+</tr>
+<tr class="odd">
+<td align="left">airTemp.da</td>
+<td align="right">0.055426531</td>
+<td align="right">0.03046611</td>
+<td align="right">0.0804564704</td>
+</tr>
+<tr class="even">
+<td align="left">airTemp.impoundArea</td>
+<td align="right">-0.075351885</td>
+<td align="right">-0.10018257</td>
+<td align="right">-0.0489819699</td>
+</tr>
+<tr class="odd">
+<td align="left">airTemp.agriculture</td>
+<td align="right">-0.018888556</td>
+<td align="right">-0.03803921</td>
+<td align="right">0.0001204872</td>
+</tr>
+<tr class="even">
+<td align="left">airTemp.forest</td>
+<td align="right">-0.001042650</td>
+<td align="right">-0.02127786</td>
+<td align="right">0.0203067821</td>
+</tr>
+<tr class="odd">
+<td align="left">airTemp.devel_hi</td>
+<td align="right">-0.004110505</td>
+<td align="right">-0.02032762</td>
+<td align="right">0.0124983349</td>
+</tr>
+<tr class="even">
+<td align="left">airTemp.prcp2</td>
+<td align="right">0.024049145</td>
+<td align="right">0.02223997</td>
+<td align="right">0.0257588483</td>
+</tr>
+<tr class="odd">
+<td align="left">airTemp.prcp30</td>
+<td align="right">-0.052055111</td>
+<td align="right">-0.05564053</td>
+<td align="right">-0.0485377100</td>
+</tr>
+<tr class="even">
+<td align="left">airTemp.prcp2.da</td>
+<td align="right">-0.011881446</td>
+<td align="right">-0.01361107</td>
+<td align="right">-0.0101528157</td>
+</tr>
+<tr class="odd">
+<td align="left">airTemp.prcp30.da</td>
+<td align="right">-0.006500592</td>
+<td align="right">-0.01012480</td>
+<td align="right">-0.0029489054</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="huc8-random-effects" class="section level3">
+<h3><span class="header-section-number">5.1.2</span> HUC8 Random Effects</h3>
+<p>Figure <a href="calibration-and-validation.html#fig:plot-params-huc8">5.2</a> shows the estimated mean and 95% credible region interval (CRI) for each random effect and HUC8. Table <a href="calibration-and-validation.html#tab:table-params-huc8">5.2</a> lists the estimated mean and 95% CRI of each parameter averaged over all HUC8s (mean value with standard deviation in parentheses).</p>
+<div class="figure"><span id="fig:plot-params-huc8"></span>
+<img src="sheds-temp-model_files/figure-html/plot-params-huc8-1.png" alt="Estimated Mean and 95% CRI of HUC Random Effects for Each HUC8" width="768" />
+<p class="caption">
+Figure 5.2: Estimated Mean and 95% CRI of HUC Random Effects for Each HUC8
+</p>
+</div>
+<table>
+<caption><span id="tab:table-params-huc8">Table 5.2: </span>Mean and 95% CRI of HUC8 Random Effects Averaged Over All HUC8s (Mean Value and Std. Dev. in Parentheses)</caption>
+<thead>
+<tr class="header">
+<th align="left">Variable</th>
+<th align="right">Count</th>
+<th align="right">Mean</th>
+<th align="right">Lower CRI</th>
+<th align="right">Upper CRI</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">intercept.huc</td>
+<td align="right">142</td>
+<td align="right">-0.001 (0.475)</td>
+<td align="right">-0.764 (0.537)</td>
+<td align="right">0.764 (0.550)</td>
+</tr>
+<tr class="even">
+<td align="left">airTemp</td>
+<td align="right">142</td>
+<td align="right">1.989 (0.185)</td>
+<td align="right">1.736 (0.224)</td>
+<td align="right">2.241 (0.206)</td>
+</tr>
+<tr class="odd">
+<td align="left">temp7p</td>
+<td align="right">142</td>
+<td align="right">1.434 (0.321)</td>
+<td align="right">1.065 (0.362)</td>
+<td align="right">1.803 (0.368)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="catchment-random-effects-1" class="section level3">
+<h3><span class="header-section-number">5.1.3</span> Catchment Random Effects</h3>
+<p>Figure <a href="calibration-and-validation.html#fig:plot-params-catchment">5.3</a> shows the distribution of the estimated mean for each random effect term over all catchments. CRIs are not shown due to the large number of individual catchments (9231). Table <a href="calibration-and-validation.html#tab:table-params-catchment">5.3</a> lists the estimated mean and 95% CRI of each parameter averaged over all catchments (mean value with standard deviation in parentheses).</p>
+<div class="figure"><span id="fig:plot-params-catchment"></span>
+<img src="sheds-temp-model_files/figure-html/plot-params-catchment-1.png" alt="Distribution of estimated mean for each random effect over all catchments" width="768" />
+<p class="caption">
+Figure 5.3: Distribution of estimated mean for each random effect over all catchments
+</p>
+</div>
+<table>
+<caption><span id="tab:table-params-catchment">Table 5.3: </span>Estimated mean and 95% CRI for each random effect averaged over all catchments (mean value with std. dev. in parentheses)</caption>
+<thead>
+<tr class="header">
+<th align="left">Variable</th>
+<th align="right">Count</th>
+<th align="right">Mean</th>
+<th align="right">Lower CRI</th>
+<th align="right">Upper CRI</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">intercept.site</td>
+<td align="right">3,077</td>
+<td align="right">0.001 (1.477)</td>
+<td align="right">-0.799 (1.488)</td>
+<td align="right">0.800 (1.509)</td>
+</tr>
+<tr class="even">
+<td align="left">airTemp</td>
+<td align="right">3,077</td>
+<td align="right">-0.000 (0.370)</td>
+<td align="right">-0.300 (0.381)</td>
+<td align="right">0.300 (0.389)</td>
+</tr>
+<tr class="odd">
+<td align="left">temp7p</td>
+<td align="right">3,077</td>
+<td align="right">0.000 (0.394)</td>
+<td align="right">-0.528 (0.467)</td>
+<td align="right">0.529 (0.400)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="year-random-effects-1" class="section level3">
+<h3><span class="header-section-number">5.1.4</span> Year Random Effects</h3>
+<p>Figure <a href="calibration-and-validation.html#fig:plot-params-year">5.4</a> and Table <a href="calibration-and-validation.html#tab:table-params-year">5.4</a> present the mean and 95% CRI of the intercept term for each year. Recall that there are no random effects for years other than the intercept.</p>
+<div class="figure"><span id="fig:plot-params-year"></span>
+<img src="sheds-temp-model_files/figure-html/plot-params-year-1.png" alt="Estimated Mean and 95% CRI of Intercept Random Effect for Each Year" width="672" />
+<p class="caption">
+Figure 5.4: Estimated Mean and 95% CRI of Intercept Random Effect for Each Year
+</p>
+</div>
+<table>
+<caption><span id="tab:table-params-year">Table 5.4: </span>Estimated Mean and 95% CRI of Intercept Random Effect for Each Year</caption>
+<thead>
+<tr class="header">
+<th align="left">Year</th>
+<th align="right">Mean</th>
+<th align="right">Lower CRI</th>
+<th align="right">Upper CRI</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1991</td>
+<td align="right">-0.002</td>
+<td align="right">-0.341</td>
+<td align="right">0.336</td>
+</tr>
+<tr class="even">
+<td align="left">1993</td>
+<td align="right">0.142</td>
+<td align="right">-0.161</td>
+<td align="right">0.473</td>
+</tr>
+<tr class="odd">
+<td align="left">1994</td>
+<td align="right">0.031</td>
+<td align="right">-0.242</td>
+<td align="right">0.317</td>
+</tr>
+<tr class="even">
+<td align="left">1995</td>
+<td align="right">-0.058</td>
+<td align="right">-0.290</td>
+<td align="right">0.161</td>
+</tr>
+<tr class="odd">
+<td align="left">1996</td>
+<td align="right">-0.263</td>
+<td align="right">-0.505</td>
+<td align="right">-0.052</td>
+</tr>
+<tr class="even">
+<td align="left">1997</td>
+<td align="right">-0.003</td>
+<td align="right">-0.205</td>
+<td align="right">0.195</td>
+</tr>
+<tr class="odd">
+<td align="left">1998</td>
+<td align="right">0.200</td>
+<td align="right">0.011</td>
+<td align="right">0.404</td>
+</tr>
+<tr class="even">
+<td align="left">1999</td>
+<td align="right">0.101</td>
+<td align="right">-0.074</td>
+<td align="right">0.277</td>
+</tr>
+<tr class="odd">
+<td align="left">2000</td>
+<td align="right">-0.309</td>
+<td align="right">-0.430</td>
+<td align="right">-0.190</td>
+</tr>
+<tr class="even">
+<td align="left">2001</td>
+<td align="right">0.123</td>
+<td align="right">0.020</td>
+<td align="right">0.227</td>
+</tr>
+<tr class="odd">
+<td align="left">2002</td>
+<td align="right">-0.043</td>
+<td align="right">-0.150</td>
+<td align="right">0.064</td>
+</tr>
+<tr class="even">
+<td align="left">2003</td>
+<td align="right">-0.002</td>
+<td align="right">-0.112</td>
+<td align="right">0.110</td>
+</tr>
+<tr class="odd">
+<td align="left">2004</td>
+<td align="right">0.109</td>
+<td align="right">0.001</td>
+<td align="right">0.219</td>
+</tr>
+<tr class="even">
+<td align="left">2005</td>
+<td align="right">0.101</td>
+<td align="right">-0.008</td>
+<td align="right">0.210</td>
+</tr>
+<tr class="odd">
+<td align="left">2006</td>
+<td align="right">-0.136</td>
+<td align="right">-0.232</td>
+<td align="right">-0.041</td>
+</tr>
+<tr class="even">
+<td align="left">2007</td>
+<td align="right">-0.190</td>
+<td align="right">-0.290</td>
+<td align="right">-0.096</td>
+</tr>
+<tr class="odd">
+<td align="left">2008</td>
+<td align="right">0.074</td>
+<td align="right">-0.020</td>
+<td align="right">0.173</td>
+</tr>
+<tr class="even">
+<td align="left">2009</td>
+<td align="right">0.072</td>
+<td align="right">-0.026</td>
+<td align="right">0.169</td>
+</tr>
+<tr class="odd">
+<td align="left">2010</td>
+<td align="right">0.117</td>
+<td align="right">0.035</td>
+<td align="right">0.202</td>
+</tr>
+<tr class="even">
+<td align="left">2011</td>
+<td align="right">-0.100</td>
+<td align="right">-0.184</td>
+<td align="right">-0.018</td>
+</tr>
+<tr class="odd">
+<td align="left">2012</td>
+<td align="right">0.199</td>
+<td align="right">0.119</td>
+<td align="right">0.280</td>
+</tr>
+<tr class="even">
+<td align="left">2013</td>
+<td align="right">0.139</td>
+<td align="right">0.059</td>
+<td align="right">0.221</td>
+</tr>
+<tr class="odd">
+<td align="left">2014</td>
+<td align="right">-0.025</td>
+<td align="right">-0.104</td>
+<td align="right">0.051</td>
+</tr>
+<tr class="even">
+<td align="left">2015</td>
+<td align="right">-0.223</td>
+<td align="right">-0.303</td>
+<td align="right">-0.145</td>
+</tr>
+<tr class="odd">
+<td align="left">2016</td>
+<td align="right">0.164</td>
+<td align="right">0.082</td>
+<td align="right">0.244</td>
+</tr>
+<tr class="even">
+<td align="left">2017</td>
+<td align="right">-0.211</td>
+<td align="right">-0.294</td>
+<td align="right">-0.130</td>
+</tr>
+<tr class="odd">
+<td align="left">2018</td>
+<td align="right">0.156</td>
+<td align="right">0.070</td>
+<td align="right">0.242</td>
+</tr>
+<tr class="even">
+<td align="left">2019</td>
+<td align="right">-0.128</td>
+<td align="right">-0.221</td>
+<td align="right">-0.040</td>
+</tr>
+<tr class="odd">
+<td align="left">2020</td>
+<td align="right">-0.042</td>
+<td align="right">-0.139</td>
+<td align="right">0.059</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="goodness-of-fit" class="section level2">
+<h2><span class="header-section-number">5.2</span> Goodness-of-Fit</h2>
+<div id="all-observations" class="section level3">
+<h3><span class="header-section-number">5.2.1</span> All Observations</h3>
+<p>Table <a href="calibration-and-validation.html#tab:table-gof">5.5</a> summarizes the model goodness-of-fit for all observations in the calibration and validation datasets.</p>
+<table>
+<caption><span id="tab:table-gof">Table 5.5: </span>Summary statistics of model calibration and validation</caption>
+<thead>
+<tr class="header">
+<th></th>
+<th align="right">Calibration</th>
+<th align="right">Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td># Daily Observations</td>
+<td align="right">749,327</td>
+<td align="right">85,228</td>
+</tr>
+<tr class="even">
+<td># Time Series</td>
+<td align="right">8,495</td>
+<td align="right">959</td>
+</tr>
+<tr class="odd">
+<td># Catchments</td>
+<td align="right">3,077</td>
+<td align="right">614</td>
+</tr>
+<tr class="even">
+<td># HUC8s</td>
+<td align="right">142</td>
+<td align="right">104</td>
+</tr>
+<tr class="odd">
+<td># Years</td>
+<td align="right">29.0</td>
+<td align="right">25.0</td>
+</tr>
+<tr class="even">
+<td>RMSE (degC)</td>
+<td align="right">1.152</td>
+<td align="right">1.589</td>
+</tr>
+<tr class="odd">
+<td>Mean Residual (degC)</td>
+<td align="right">0.076</td>
+<td align="right">0.137</td>
+</tr>
+<tr class="even">
+<td>Median Residual (degC)</td>
+<td align="right">0.087</td>
+<td align="right">0.150</td>
+</tr>
+<tr class="odd">
+<td>Mean Absolute Residual (degC)</td>
+<td align="right">0.866</td>
+<td align="right">1.148</td>
+</tr>
+<tr class="even">
+<td>Median Absolute Residual (degC)</td>
+<td align="right">0.678</td>
+<td align="right">0.883</td>
+</tr>
+<tr class="odd">
+<td>Minimum Residual (degC)</td>
+<td align="right">-12.129</td>
+<td align="right">-15.074</td>
+</tr>
+<tr class="even">
+<td>1st Percentile Residual (degC)</td>
+<td align="right">-2.918</td>
+<td align="right">-3.875</td>
+</tr>
+<tr class="odd">
+<td>99th Percentile Residual (degC)</td>
+<td align="right">2.944</td>
+<td align="right">4.215</td>
+</tr>
+<tr class="even">
+<td>Maximum Residual (degC)</td>
+<td align="right">13.775</td>
+<td align="right">14.658</td>
+</tr>
+</tbody>
+</table>
+<p>Figure <a href="calibration-and-validation.html#fig:splot-calib-valid-pred">5.5</a> presents scatterplots of predicted vs. observed daily mean temperature for the calibration and validation datasets. The black line is the 1:1 line of equality. The red line is a linear regression trend line.</p>
+<div class="figure"><span id="fig:splot-calib-valid-pred"></span>
+<img src="sheds-temp-model_files/figure-html/splot-calib-valid-pred-1.png" alt="Predicted versus Observed Daily Mean Temperature (degC) for Calibration and Validation Datasets" width="768" />
+<p class="caption">
+Figure 5.5: Predicted versus Observed Daily Mean Temperature (degC) for Calibration and Validation Datasets
+</p>
+</div>
+</div>
+<div id="deployments" class="section level3">
+<h3><span class="header-section-number">5.2.2</span> Deployments</h3>
+<p>Table <a href="calibration-and-validation.html#tab:table-gof-series">5.6</a> summarises the mean, median, minimum and maximum RMSE for each deployment (i.e. continuous timeseries of observations at a single location) in the calibration and validation datasets.</p>
+<table>
+<caption><span id="tab:table-gof-series">Table 5.6: </span>Summary statistics of model calibration and validation RMSE for each deployment</caption>
+<thead>
+<tr class="header">
+<th></th>
+<th align="right">Calibration</th>
+<th align="right">Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td># Time Series</td>
+<td align="right">8495</td>
+<td align="right">959</td>
+</tr>
+<tr class="even">
+<td>Mean RMSE (degC)</td>
+<td align="right">1.043</td>
+<td align="right">1.345</td>
+</tr>
+<tr class="odd">
+<td>Median RMSE (degC)</td>
+<td align="right">0.938</td>
+<td align="right">1.133</td>
+</tr>
+<tr class="even">
+<td>Minimum RMSE (degC)</td>
+<td align="right">0.189</td>
+<td align="right">0.152</td>
+</tr>
+<tr class="odd">
+<td>Maximum RMSE (degC)</td>
+<td align="right">8.709</td>
+<td align="right">12.401</td>
+</tr>
+</tbody>
+</table>
+<p>Figure <a href="calibration-and-validation.html#fig:plot-hist-series-rmse">5.6</a> shows the distribution of deployment RMSE.</p>
+<div class="figure"><span id="fig:plot-hist-series-rmse"></span>
+<img src="sheds-temp-model_files/figure-html/plot-hist-series-rmse-1.png" alt="Distribution of deployment RMSE" width="768" />
+<p class="caption">
+Figure 5.6: Distribution of deployment RMSE
+</p>
+</div>
+<div id="calibration-deployment-examples" class="section level4">
+<h4><span class="header-section-number">5.2.2.1</span> Calibration Deployment Examples</h4>
+<p>Figures <a href="calibration-and-validation.html#fig:plot-series-calib-best">5.7</a> to <a href="calibration-and-validation.html#fig:plot-series-calib-worst">5.8</a> show example deployments from the calibration dataset with the highest and lowest RMSE.</p>
+<div class="figure"><span id="fig:plot-series-calib-best"></span>
+<img src="sheds-temp-model_files/figure-html/plot-series-calib-best-1.png" alt="Deployments with lowest RMSE in calibration dataset and n &gt;= 30" width="768" />
+<p class="caption">
+Figure 5.7: Deployments with lowest RMSE in calibration dataset and n &gt;= 30
+</p>
+</div>
+<div class="figure"><span id="fig:plot-series-calib-worst"></span>
+<img src="sheds-temp-model_files/figure-html/plot-series-calib-worst-1.png" alt="Deployments with highest RMSE in calibration dataset and n &gt;= 30" width="768" />
+<p class="caption">
+Figure 5.8: Deployments with highest RMSE in calibration dataset and n &gt;= 30
+</p>
+</div>
+</div>
+<div id="validation-deployment-examples" class="section level4">
+<h4><span class="header-section-number">5.2.2.2</span> Validation Deployment Examples</h4>
+<p>Figures <a href="calibration-and-validation.html#fig:plot-series-valid-best">5.9</a> to <a href="calibration-and-validation.html#fig:plot-series-valid-worst">5.10</a> show example deployments from the validation dataset with the highest and lowest RMSE.</p>
+<div class="figure"><span id="fig:plot-series-valid-best"></span>
+<img src="sheds-temp-model_files/figure-html/plot-series-valid-best-1.png" alt="Deployments with lowest RMSE in validation dataset and n &gt;= 30" width="768" />
+<p class="caption">
+Figure 5.9: Deployments with lowest RMSE in validation dataset and n &gt;= 30
+</p>
+</div>
+<div class="figure"><span id="fig:plot-series-valid-worst"></span>
+<img src="sheds-temp-model_files/figure-html/plot-series-valid-worst-1.png" alt="Deployments with highest RMSE in validation dataset and n &gt;= 30" width="768" />
+<p class="caption">
+Figure 5.10: Deployments with highest RMSE in validation dataset and n &gt;= 30
+</p>
+</div>
+</div>
+</div>
+<div id="catchments" class="section level3">
+<h3><span class="header-section-number">5.2.3</span> Catchments</h3>
+<p>Table <a href="calibration-and-validation.html#tab:table-gof-catchment">5.7</a> summarises the mean, median, minimum and maximum RMSE of all catchments in the calibration and validation datasets.</p>
+<table>
+<caption><span id="tab:table-gof-catchment">Table 5.7: </span>Summary of catchment RMSE values for calibration and validation datasets</caption>
+<thead>
+<tr class="header">
+<th></th>
+<th align="right">Calibration</th>
+<th align="right">Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td># Time Series</td>
+<td align="right">3077</td>
+<td align="right">614</td>
+</tr>
+<tr class="even">
+<td>Mean RMSE (degC)</td>
+<td align="right">0.970</td>
+<td align="right">1.436</td>
+</tr>
+<tr class="odd">
+<td>Median RMSE (degC)</td>
+<td align="right">0.869</td>
+<td align="right">1.149</td>
+</tr>
+<tr class="even">
+<td>Minimum RMSE (degC)</td>
+<td align="right">0.281</td>
+<td align="right">0.394</td>
+</tr>
+<tr class="odd">
+<td>Maximum RMSE (degC)</td>
+<td align="right">4.630</td>
+<td align="right">12.401</td>
+</tr>
+</tbody>
+</table>
+<p>Figure <a href="calibration-and-validation.html#fig:plot-hist-catchment-rmse">5.11</a> shows the distribution of catchment RMSE.</p>
+<div class="figure"><span id="fig:plot-hist-catchment-rmse"></span>
+<img src="sheds-temp-model_files/figure-html/plot-hist-catchment-rmse-1.png" alt="Distribution of catchment RMSE" width="768" />
+<p class="caption">
+Figure 5.11: Distribution of catchment RMSE
+</p>
+</div>
+
+</div>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="data-processing.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="predictions.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": ["sheds-temp-model.pdf", "sheds-temp-model.epub"],
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>
