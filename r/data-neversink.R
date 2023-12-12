@@ -27,7 +27,7 @@ files_raw <- tibble(
 
 files_inst <- files_raw |>
   mutate(
-    site = str_split(basename(file), "_")[[1]][2],
+    site = map_chr(file, ~ str_split(basename(.), "_")[[1]][2]),
     cols = map(data, names),
     ncol = map_dbl(cols, length),
     col_datetime = map_chr(cols, ~ .[grepl("Date", .)]),
@@ -101,3 +101,45 @@ out <- list(
 
 out |>
   write_rds("data/neversink/data-neversink.rds")
+
+stopifnot(
+  all(!duplicated(out$sites$site)),
+  all(!is.na(out$sites))
+)
+
+out$sites |>
+  select(name = site, description, latitude, longitude) |>
+  write_csv("data/neversink/locations.csv")
+
+stopifnot(
+  all(out$data$site %in% out$sites$site),
+  all(!is.na(out$data))
+)
+
+out$data |>
+  select(site, datetime, temp_c) |>
+  mutate(datetime = format(datetime, "%Y-%m-%d %H:%M:%S")) |>
+  write_csv("data/neversink/data.csv")
+
+
+list(
+  dataset_type = "series",
+  description = "Batch upload of USGS_NEVERSINK",
+  datetime = list(
+    column = "datetime",
+    format = "YYYY-MM-DD HH:mm:ss",
+    timezone = "EST"
+  ),
+  locations = list(
+    format = "long",
+    column = "site"
+  ),
+  variables = list(
+    format = "single"
+  ),
+  values = list(
+    column = "temp_c",
+    missing = "NA"
+  )
+) %>%
+  jsonlite::write_json("data/neversink/config.json", auto_unbox = TRUE, pretty = TRUE)

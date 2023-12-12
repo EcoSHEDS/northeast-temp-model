@@ -8,7 +8,7 @@
 start <- lubridate::now(tzone = "US/Eastern")
 cat("starting model-input:", as.character(start, tz = "US/Eastern"), "\n")
 
-suppressPackageStartupMessages(library(RPostgreSQL))
+suppressPackageStartupMessages(library(RPostgres))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(jsonlite))
 suppressPackageStartupMessages(library(lubridate))
@@ -58,8 +58,9 @@ df_daymet <- df_daymet %>%
   arrange(featureid, year, date) %>%
   mutate(dOY = yday(date)) %>%
   group_by(featureid, year) %>%
+  # filter(featureid == 20628453, year == 2010) |>
   mutate(
-    airTempLagged1 = lag(airTemp, n = 1, fill = NA),
+    airTempLagged1 = lag(airTemp, n = 1),
     temp7p = rollapply(
       data = airTempLagged1,
       width = 7,
@@ -68,8 +69,8 @@ df_daymet <- df_daymet %>%
       fill = NA,
       na.rm = TRUE
     ),
-    prcp2 = rollsum(x = prcp, 2, align = "right", fill = NA),
-    prcp30 = rollsum(x = prcp, 30, align = "right", fill = NA)
+    prcp2 = rollsum(x = prcp, 2, align = "right", na.pad = TRUE),
+    prcp30 = rollsum(x = prcp, 30, align = "right", na.pad = TRUE)
   )
 cat("done\n")
 
@@ -147,6 +148,13 @@ df <- df %>%
   select(-delta_date, -new_series, -new_featureid, -new_year, -deploy_id, -n)
 cat("done (nrow = ", nrow(df), ", n excluded = ", nrow(rejects$values$n_lt_5), ")\n", sep = "")
 
+df |>
+  ggplot(aes(yday(date), temp)) +
+  geom_hex(bins = 100)
+
+df |>
+  ggplot(aes(airTemp, temp)) +
+  geom_hex(bins = 100)
 
 # standardize -------------------------------------------------------------
 

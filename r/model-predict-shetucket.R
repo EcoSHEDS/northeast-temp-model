@@ -9,7 +9,7 @@ rm(list=ls())
 start <- lubridate::now(tzone = "US/Eastern")
 cat("starting model-predictions:", as.character(start, tz = "US/Eastern"), "\n")
 
-suppressPackageStartupMessages(library(RPostgreSQL))
+suppressPackageStartupMessages(library(RPostgres))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(jsonlite))
 suppressPackageStartupMessages(library(lubridate))
@@ -80,7 +80,7 @@ n_chunks <- ceiling(n / chunk_size)
 
 cat("generated predictions for", n, "featureids ( chunk_size =", chunk_size, ", n_chunks =", n_chunks, ")\n")
 system.time({
-  df_predict_shetucket <- foreach(i = 1:n_chunks, .combine = rbind, .packages = c("RPostgreSQL", "DBI", "dplyr", "tidyr", "purrr", "zoo", "lubridate", "stringr")) %dopar% {
+  df_predict_shetucket <- foreach(i = 1:n_chunks, .combine = rbind, .packages = c("RPostgres", "DBI", "dplyr", "tidyr", "purrr", "zoo", "lubridate", "stringr")) %dopar% {
     # sink(log_file, append = TRUE)
 
     start_i <- ((i - 1) * chunk_size) + 1
@@ -91,7 +91,7 @@ system.time({
     x_featureids <- featureids[start_i:end_i]
     cat(as.character(Sys.time()), " - i = ", i, " | ", paste(x_featureids, collapse = ","), "\n", sep = "")
 
-    con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
+    con <- dbConnect(Postgres(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
     sql_daymet <- paste0("
                          WITH t1 AS (
                          SELECT

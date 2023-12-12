@@ -1,4 +1,4 @@
-suppressPackageStartupMessages(library(RPostgreSQL))
+suppressPackageStartupMessages(library(RPostgres))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(jsonlite))
 suppressPackageStartupMessages(library(lubridate))

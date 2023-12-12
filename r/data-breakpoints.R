@@ -5,7 +5,7 @@
 start <- lubridate::now(tzone = "US/Eastern")
 cat("starting data-breakpoints: ", as.character(start, tz = "US/Eastern"), "\n", sep = "")
 
-suppressPackageStartupMessages(library(RPostgreSQL))
+suppressPackageStartupMessages(library(RPostgres))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(jsonlite))
 suppressPackageStartupMessages(library(lubridate))

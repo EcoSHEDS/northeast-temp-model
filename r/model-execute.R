@@ -171,6 +171,15 @@ if (!copied) {
 }
 cat("done\n")
 
+list(
+  df = df,
+  ids = ids,
+  data = data.list,
+  params = params,
+  covs = cov.list
+) |>
+  write_rds(file.path(config$wd, "jags-input.rds"))
+
 # run model ---------------------------------------------------------------
 
 cat("running model...")

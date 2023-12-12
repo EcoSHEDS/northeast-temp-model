@@ -7,7 +7,7 @@ rm(list=ls())
 start <- lubridate::now(tzone = "US/Eastern")
 cat("starting model-diagnostics:", as.character(start, tz = "US/Eastern"), "\n")
 
-suppressPackageStartupMessages(library(RPostgreSQL))
+suppressPackageStartupMessages(library(RPostgres))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(jsonlite))
 suppressPackageStartupMessages(library(lubridate))

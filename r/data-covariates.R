@@ -4,18 +4,18 @@
 start <- lubridate::now(tzone = "US/Eastern")
 cat("starting data-covariates:", as.character(start, tz = "US/Eastern"), "\n")
 
-suppressPackageStartupMessages(library(RPostgreSQL))
+suppressPackageStartupMessages(library(RPostgres))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(jsonlite))
 
 source("functions.R")
 
-config <- load_config()
+config <- load_config("../config-trout.sh")
 
 # load data ---------------------------------------------------------------
 
 cat("connecting to db (host = ", config$db$host, ", dbname = ", config$db$dbname, ")...", sep = "")
-con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
+con <- dbConnect(Postgres(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
 cat("done\n")
 
 # upstream covariates

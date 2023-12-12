@@ -6,7 +6,7 @@
 start <- lubridate::now(tzone = "US/Eastern")
 cat("starting data-clean: ", as.character(start, tz = "US/Eastern"), "\n", sep = "")
 
-suppressPackageStartupMessages(library(RPostgreSQL))
+suppressPackageStartupMessages(library(RPostgres))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(jsonlite))
 suppressPackageStartupMessages(library(lubridate))
@@ -69,7 +69,7 @@ cat("done\n")
 
 df_series <- db_series %>%
   mutate(
-    flags = coalesce(flags, "[]"),
+    flags = coalesce(as.character(flags), "[]"),
     flags = map(flags, function(x) {
       if (x == "[]") {
         return(tibble())
@@ -103,7 +103,6 @@ cat("done\n")
 
 cat("setting up values data frame...")
 df_values_all <- db_values %>%
-  mutate(date = as.Date(date, tz = "UTC")) %>%
   filter(year(date) <= MAX_YEAR) %>%
   left_join(
     df_series_flags,
@@ -152,8 +151,9 @@ df_series_featureid <- df_series_unflagged %>%
   filter(!is.na(featureid))
 cat("done ( nrow =", nrow(df_series_featureid), ")\n")
 
-cat("connecting to db (host = ", config$db$host, ", dbname = ", config$db$dbname, ")...", sep = "")
-con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
+config_trout <- load_config("../config-trout.sh")
+cat("connecting to db (host = ", config_trout$db$host, ", dbname = ", config_trout$db$dbname, ")...", sep = "")
+con <- dbConnect(Postgres(), host = config_trout$db$host, dbname = config_trout$db$dbname, user = config_trout$db$user, password = config_trout$db$password)
 cat("done\n")
 
 cat("fetching drainage areas...")
@@ -214,7 +214,8 @@ df_values_daymet <- df_values_start %>%
   left_join(
     df_daymet,
     by = c("featureid", "date")
-  )
+  ) |>
+  filter(!is.na(airtemp))
 cat("done (nrow = ", nrow(df_values_daymet), ")\n", sep = "")
 
 # remove values where min = mean = max = 0 (represent gaps)
@@ -420,12 +421,6 @@ df_chunks_filter_9 %>%
   unnest(data) %>%
   plot_ts()
 
-df_chunks_filter_9 %>%
-  filter(series_id %in% c(744L)) %>%
-  # select(-data) %>% summary()
-  unnest(data) %>%
-  plot_ts()
-
 db_huc <- readRDS(file.path(config$wd, "data-huc.rds"))
 df_chunks_filter_9_huc <- df_chunks_filter_9 %>%
   left_join(
@@ -492,7 +487,7 @@ df_chunks_filter_9 %>%
 # filter: locations -------------------------------------------------------
 
 # which locations have overlapping series with different means?
-df_chunks_locations <- df_chunks_filter_8 %>%
+df_chunks_locations <- df_chunks_filter_9 %>%
   select(series_id, series_chunk, data) %>%
   left_join(
     db_series %>%
@@ -682,6 +677,9 @@ df_featureid_daily_location <- df_locations_near_flowline %>%
   filter(!location_id %in% rejects$locations$rank_gt_1$location_id)
 cat("done (nrow = ", nrow(df_featureid_daily_location), ", n locations excluded = ", nrow(rejects$locations$rank_gt_1), ")\n", sep = "")
 
+df_featureid_daily_location |>
+  ggplot(aes(yday(date), mean)) +
+  geom_hex(bins = 100)
 
 # export ------------------------------------------------------------------
 

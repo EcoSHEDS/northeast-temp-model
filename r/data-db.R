@@ -6,7 +6,7 @@
 start <- lubridate::now(tzone = "US/Eastern")
 cat("starting data-db: ", as.character(start, tz = "US/Eastern"), "\n", sep = "")
 
-suppressPackageStartupMessages(library(RPostgreSQL))
+suppressPackageStartupMessages(library(RPostgres))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(jsonlite))
 suppressPackageStartupMessages(library(lubridate))
@@ -30,7 +30,7 @@ locations_exclude <- read_table(
 cat("done (n = ", length(locations_exclude$location_id), ")\n", sep = "")
 
 cat("connecting to db (host = ", config$db$host, ", dbname = ", config$db$dbname, ")...", sep = "")
-con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user)
+con <- dbConnect(Postgres(), host = config$db$host, dbname = config$db$dbname, user = config$db$user)
 cat("done\n")
 
 cat("retrieving agencies...")
@@ -51,6 +51,19 @@ db_locations <- tbl(con, "locations") %>%
 df_locations <- collect(db_locations)
 cat("done (nrow = ", nrow(df_locations), ")\n", sep = "")
 
+# fill in missing catchment_id from trout
+config_trout <- load_config("../config-trout.sh")
+con_trout <- dbConnect(Postgres(), host = config_trout$db$host, dbname = config_trout$db$dbname, user = config_trout$db$user)
+trout_locations <- tbl(con_trout, "locations_temp") %>%
+  select(id, name, featureid) |>
+  collect()
+dbDisconnect(con_trout)
+
+df_locations <- df_locations |>
+  left_join(trout_locations, by = c("id", "name")) |>
+  mutate(catchment_id = featureid) |>
+  select(-featureid)
+
 cat("retrieving series...")
 suppressWarnings({
   db_series <- tbl(con, "series") %>%
@@ -69,14 +82,15 @@ db_values <- tbl(con, "values") %>%
     series_id %in% !!df_series$id
   ) %>%
   mutate(
-    date = date_trunc("day", datetime)
+    date = date(timezone("US/Eastern", datetime))
   ) %>%
   group_by(series_id, date) %>%
   summarize(
     min = min(value),
     mean = mean(value),
     max = max(value),
-    n = n()
+    n = n(),
+    .groups = "drop"
   ) %>%
   arrange(series_id, date) %>%
   ungroup()
@@ -125,7 +139,7 @@ df_daymet <- df_series %>%
   mutate(year = as.character(year)) %>%
   filter(!is.na(featureid))
 df_daymet %>%
-  write_csv(path = file.path(config$wd, "daymet-featureid_year.csv"))
+  write_csv(file.path(config$wd, "daymet-featureid_year.csv"))
 cat("done\n")
 
 

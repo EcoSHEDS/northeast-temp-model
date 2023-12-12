@@ -4,7 +4,7 @@
 start <- lubridate::now(tzone = "US/Eastern")
 cat("starting data-huc: ", as.character(start, tz = "US/Eastern"), "\n", sep = "")
 
-suppressPackageStartupMessages(library(RPostgreSQL))
+suppressPackageStartupMessages(library(RPostgres))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(jsonlite))
 suppressPackageStartupMessages(library(stringr))
@@ -16,7 +16,7 @@ config <- load_config()
 # load data ---------------------------------------------------------------
 
 cat("connecting to db (host = ", config$db$host, ", dbname = ", config$db$dbname, ")...", sep = "")
-con <- dbConnect(PostgreSQL(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
+con <- dbConnect(Postgres(), host = config$db$host, dbname = config$db$dbname, user = config$db$user, password = config$db$password)
 cat("done\n")
 
 cat("fetching featureid-huc12...")

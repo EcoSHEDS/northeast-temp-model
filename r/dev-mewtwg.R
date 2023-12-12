@@ -12,7 +12,7 @@ config <- load_config()
 #
 
 con <- DBI::dbConnect(
-  RPostgreSQL::PostgreSQL(),
+  RPostgres::Postgres(),
   host = config$db$host,
   port = config$db$port,
   dbname = config$db$dbname,

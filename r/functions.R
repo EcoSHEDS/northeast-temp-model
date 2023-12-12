@@ -1,7 +1,7 @@
-load_config <- function(path = "../") {
+load_config <- function(config_file = "../config.sh", version_file = "../version.sh") {
   # path: path to root of repo (where config.sh and version.sh are located)
-  readRenviron(file.path(path, "config.sh"))
-  readRenviron(file.path(path, "version.sh"))
+  readRenviron(config_file)
+  readRenviron(version_file)
 
   wd <- file.path(Sys.getenv("SHEDS_STM_ROOT"), Sys.getenv("SHEDS_STM_VERSION"))
 

@@ -1,4 +1,4 @@
-# USGS Potomoc Dataset (Chesapeake Bay Karst Sites)
+# USGS Potomac Dataset (Chesapeake Bay Karst Sites)
 
 library(tidyverse)
 library(glue)
@@ -7,7 +7,7 @@ library(janitor)
 # load: acwa ---------------------------------------------------------------
 
 acwa_raw <- read_csv(
-  "data/potomoc/csv/ACWA_WT2021_SHEDS.csv",
+  "data/potomac/csv/ACWA_WT2021_SHEDS.csv",
   col_types = cols(
     .default = col_character(),
     Latitude_DD = col_double(),
@@ -46,7 +46,7 @@ acwa_day |>
 
 
 ksfish_raw <- read_csv(
-  "data/potomoc/csv/KSfish_StreamTemperature_2021to2023_ecosheds.csv",
+  "data/potomac/csv/KSfish_StreamTemperature_2021to2023_ecosheds.csv",
   col_types = cols(
     .default = col_character(),
     Latitude = col_double(),
@@ -89,8 +89,8 @@ sites <- bind_rows(
 )
 
 data <- bind_rows(
-  acwa_day,
-  ksfish_day
+  acwa_inst,
+  ksfish_inst
 )
 
 out <- list(
@@ -99,4 +99,46 @@ out <- list(
 )
 
 out |>
-  write_rds("data/potomoc/data-potomoc.rds")
+  write_rds("data/potomac/data-potomac.rds")
+
+stopifnot(
+  all(!duplicated(out$sites$site)),
+  all(!is.na(out$sites))
+)
+
+out$sites |>
+  transmute(name = site, description = NA_character_, latitude, longitude) |>
+  write_csv("data/potomac/locations.csv", na = "")
+
+stopifnot(
+  all(out$data$site %in% out$sites$site),
+  all(!is.na(select(out$data, site, datetime)))
+)
+
+out$data |>
+  filter(!is.na(temp_c)) |>
+  select(site, datetime, temp_c) |>
+  mutate(datetime = format(datetime, "%Y-%m-%d %H:%M:%S")) |>
+  write_csv("data/potomac/data.csv", na = "")
+
+list(
+  dataset_type = "series",
+  description = "Batch upload of USGS_POTOMAC",
+  datetime = list(
+    column = "datetime",
+    format = "YYYY-MM-DD HH:mm:ss",
+    timezone = "EST"
+  ),
+  locations = list(
+    format = "long",
+    column = "site"
+  ),
+  variables = list(
+    format = "single"
+  ),
+  values = list(
+    column = "temp_c",
+    missing = "NA"
+  )
+) %>%
+  jsonlite::write_json("data/potomac/config.json", auto_unbox = TRUE, pretty = TRUE)

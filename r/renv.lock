@@ -96,8 +96,8 @@
       ],
       "Hash": "45f0398006e83a5b10b72a90663d8d8c"
     },
-    "RPostgreSQL": {
-      "Package": "RPostgreSQL",
+    "RPostgres": {
+      "Package": "RPostgres",
       "Version": "0.7-5",
       "Source": "Repository",
       "Repository": "CRAN",

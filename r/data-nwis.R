@@ -88,5 +88,53 @@ out <- list(
     filter(site_no %in% data_day$site_no),
   data = data_day
 )
+
 out |>
   write_rds("data/nwis/data-nwis.rds")
+
+
+stopifnot(
+  all(!duplicated(out$sites$site)),
+  all(!is.na(out$sites))
+)
+
+out$sites |>
+  transmute(name = site_no, description = station_nm, latitude = dec_lat_va, longitude = dec_long_va) |>
+  write_csv("data/nwis/locations.csv", na = "")
+
+stopifnot(
+  all(out$data$site_no %in% out$sites$site_no),
+  all(!is.na(select(out$data, site_no, date)))
+)
+
+out$data |>
+  filter(!is.na(temp_c)) |>
+  select(site = site_no, datetime = date, temp_c) |>
+  mutate(
+    datetime = force_tz(as.POSIXct(datetime, tz = "UTC"), tz = "US/Eastern"),
+    datetime = with_tz(datetime, "EST"),
+    datetime = format(datetime, "%Y-%m-%d %H:%M:%S")
+  ) |>
+  write_csv("data/nwis/data.csv", na = "")
+
+list(
+  dataset_type = "series",
+  description = "Batch upload of USGS_NWIS",
+  datetime = list(
+    column = "datetime",
+    format = "YYYY-MM-DD HH:mm:ss",
+    timezone = "EST"
+  ),
+  locations = list(
+    format = "long",
+    column = "site"
+  ),
+  variables = list(
+    format = "single"
+  ),
+  values = list(
+    column = "temp_c",
+    missing = "NA"
+  )
+) %>%
+  jsonlite::write_json("data/nwis/config.json", auto_unbox = TRUE, pretty = TRUE)
