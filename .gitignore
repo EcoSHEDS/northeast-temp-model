@@ -9,11 +9,17 @@ r/rmd/*_files
 r/rmd/*.html
 
 r/docs/_bookdown_files
-r/docs/_book
 r/docs/*.log
 
 r/csv/*.csv
 
 r/data/neversink/Raw_Data
-r/data/potomoc/csv
+r/data/neversink/**/*.csv
+r/data/neversink/**/*.json
+r/data/potomac/**/*.csv
+r/data/potomac/**/*.json
+r/data/nwis/**/*.csv
+r/data/nwis/**/*.json
 r/data/**/*.rds
+
+r/notes/20231220/

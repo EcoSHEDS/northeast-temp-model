@@ -8,6 +8,7 @@ cat("starting export-csv:", as.character(start, tz = "US/Eastern"), "\n")
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(glue))
 suppressPackageStartupMessages(library(jsonlite))
+suppressPackageStartupMessages(library(bit64))
 
 source("functions.R")
 
@@ -81,7 +82,9 @@ if (!dir.exists(file.path(config$wd, "csv"))) {
 
 fname <- paste0("sheds-temp-model-v", config$version, ".csv")
 cat("saving to csv/", fname, "...", sep = "")
-write_csv(df_out, file.path(config$wd, "csv", fname), na = "")
+df_out |>
+  mutate(featureid = str_trim(format(featureid, scientific = FALSE))) |>
+  write_csv(file.path(config$wd, "csv", fname), na = "")
 cat("done\n")
 
 # done --------------------------------------------------------------------
