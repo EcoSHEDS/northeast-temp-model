@@ -18,6 +18,7 @@ suppressPackageStartupMessages(library(zoo))
 suppressPackageStartupMessages(library(stringr))
 suppressPackageStartupMessages(library(foreach))
 suppressPackageStartupMessages(library(doParallel))
+suppressPackageStartupMessages(library(bit64))
 
 source("functions.R")
 
@@ -102,9 +103,7 @@ predict_daily <- function (featureids, adjust_air_temps = c(0, 2, 4, 6)) {
                        tmax, tmin, prcp
                        FROM t2
                        ")
-  rs <- dbSendQuery(con, sql_daymet, sprintf("%d", featureids))
-  df_daymet_raw <- dbFetch(rs)
-  dbClearResult(rs)
+  df_daymet_raw <- dbGetQuery(con, sql_daymet, format(featureids, scientific = FALSE))
   dbDisconnect(con)
 
   df_daymet <- map_df(adjust_air_temps, function (x) {
@@ -243,20 +242,26 @@ predict_daily <- function (featureids, adjust_air_temps = c(0, 2, 4, 6)) {
   df
 }
 
-# subset
-# set.seed(12345)
-# n_featureids <- 121
-# n_featureids <- 4 * 12 * 10
-# featureids <- as.integer(df_covariates$featureid) %>% sample(size = n_featureids, replace = FALSE)
+# df_huc$featureid <- str_trim(format(df_huc$featureid, scientific = FALSE))
+# df_covariates$featureid <- str_trim(format(df_covariates$featureid, scientific = FALSE))
 
-# full dataset
-# featureids <- as.integer(df_covariates$featureid)
+# test
+# x <- predict_daily(df_huc$featureid[1:2])
 
 for (huc2 in huc2s) {
   cat("huc2:", huc2, "\n")
 
   # by huc2
-  featureids <- intersect(df_huc$featureid[df_huc$huc2 == huc2], df_covariates$featureid)
+  huc2_featureids <- str_trim(format(df_huc$featureid[df_huc$huc2 == huc2], scientific = FALSE))
+  cov_featureids <- str_trim(format(df_covariates$featureid, scientific = FALSE))
+  featureids <- intersect(huc2_featureids, cov_featureids)
+
+  # subset
+  # featureids <- featureids[1:20]
+  # set.seed(12345)
+  # n_featureids <- 4 * 12 * 10
+  # featureids <- as.integer(featureids) %>% sample(size = n_featureids, replace = FALSE)
+
   stopifnot(length(featureids) > 0)
 
   n <- length(featureids)
@@ -267,7 +272,7 @@ for (huc2 in huc2s) {
 
   cat("generated predictions for ", n, " featureids (chunk_size = ", chunk_size, ", n_chunks = ", n_chunks, ")...", sep = "")
   st <- system.time({
-    df_predict_year <- foreach(i = 1:n_chunks, .combine = rbind, .packages = c("RPostgres", "DBI", "dplyr", "tidyr", "purrr", "zoo", "lubridate", "stringr")) %dopar% {
+    df_predict_year <- foreach(i = 1:n_chunks, .combine = rbind, .packages = c("bit64", "RPostgres", "DBI", "dplyr", "tidyr", "purrr", "zoo", "lubridate", "stringr")) %dopar% {
       # sink(log_file, append = TRUE)
 
       start_i <- ((i - 1) * chunk_size) + 1
@@ -318,6 +323,7 @@ for (huc2 in huc2s) {
   cat("done (elapsed = ", round(unname(st[3]) / 60, 1), " min, ", round(unname(st[3]) / 60 / 60, 1), " hr)\n", sep = "")
   # 1.0 - 13 hr
   # 20171117 - 32 hours
+  print(summary(df_predict_year))
   write_rds(df_predict_year, file.path(config$wd, paste0("model-predict-year-", huc2, ".rds")))
 }
 
