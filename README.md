@@ -197,8 +197,7 @@ The documentation can be generated from the source Rmd files using the `Build Bo
 rmarkdown::render_site(encoding = 'UTF-8')
 ```
 
-The static output files (i.e. static HTML, CSS, and JavaScript) can be found within the `r/docs/_book` sub-directory.
+The static output files (i.e. static HTML, CSS, and JavaScript) can be found within the `docs/` sub-directory, which is served by Github Pages.
 
 After the full documentation is initially generated, individual sections can be edited and re-rendered using the `Knit` button in RStudio, similar to rendering individual Rmd files.
 
-When documentation for the current model version is complete, the static output files in `r/docs/_book` can be copied to the appropriate location on the web server using FTP, scp or some other transfer protocol.
