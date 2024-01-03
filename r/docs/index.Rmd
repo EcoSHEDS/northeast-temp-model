@@ -1,15 +1,15 @@
 --- 
-title: "SHEDS Northeast Stream Temperature Model"
-author: "[Jeff Walker](https://walkerenvres.com), [Ben Letcher](https://www.lsc.usgs.gov/?q=cafb-ben-letcher), and [Dan Hocking](https://hockinglab.weebly.com/)"
-date: "v1.3.0 (Sep 7, 2021)"
+title: "EcoSHEDS Northeast Stream Temperature Model"
+author: "Developed and maintained by [Jeff Walker](https://walkerenvres.com) and [Ben Letcher](https://www.usgs.gov/staff-profiles/benjamin-h-letcher) as part of the [USGS EcoSHEDS](https://usgs.gov/apps/ecosheds/) project.<br>Initial model developed by [Dan Hocking](https://hockinglab.weebly.com/)."
+date: "Latest Version: v1.4.0 (Jan 3, 2024)"
 site: bookdown::bookdown_site
 output: bookdown::gitbook
 documentclass: book
 bibliography: [book.bib]
 biblio-style: apalike
 link-citations: yes
-github-repo: walkerjeffd/sheds-temp-model
-description: "Documentation for the SHEDS northeast stream temperature model."
+github-repo: ecosheds/northeast-temp-model
+description: "Documentation for the EcoSHEDS Northeast Stream Temperature Model."
 editor_options: 
   chunk_output_type: console
 ---
@@ -29,7 +29,7 @@ valid <- diagnostics$valid
 
 # Introduction {#intro}
 
-The SHEDS stream temperature model was developed to predict daily stream temperatures at both gaged and un-gaged catchments across the northeast U.S. based on geospatial characteristics and weather conditions.
+The EcoSHEDS northeast stream temperature model was developed to predict daily stream temperatures at both gaged and ungaged catchments across the northeast U.S. based on geospatial characteristics and weather conditions.
 
 The model is based on a linear mixed effects framework that accounts for spatial and temporal correlations using a hierachical Bayesian structure. @Letcher2016 describe the initial development of this model framework, and apply it to a small region in western Massachusetts. See the [Model Overview] section below for a brief introduction to the model, or the [Theory] section a more detailed explanation.
 
@@ -122,29 +122,31 @@ The SHEDS stream temperature model uses semantic versioning of the form: `vX.Y.Z
 
 ## Source Code
 
-The source code for the model itself and this documentation is available in the Github repository [walkerjeffd/sheds-temp-model](https://github.com/walkerjeffd/sheds-temp-model). Each version of the model will be included under the list of  [Releases](https://github.com/walkerjeffd/sheds-temp-model/releases).
+The source code for the model itself and this documentation is available in the Github repository [ecosheds/northeast-temp-model](https://github.com/ecosheds/northeast-temp-model). Each version of the model will be included under the list of  [Releases](https://github.com/ecosheds/northeast-temp-model/releases).
 
 ## Change Log {#change-log}
 
-- **[v1.3.0 (Sep 7, 2021)](https://ecosheds.org/models/stream-temperature/v1.3.0/)**  
+- **v1.4.0 (Jan 3, 2024)**  
+Add 2021-2022 daymet, add stream temperature data from USGS NWIS, re-calibrate full model.
+- **v1.3.0 (Sep 7, 2021)**  
 Add 2020 daymet, revise data screening procedures, re-calibrate full model.
-- **[v1.2.0 (Jul 10, 2020)](https://ecosheds.org/models/stream-temperature/v1.2.0/)**  
+- **v1.2.0 (Jul 10, 2020)**  
 Add 2019 daymet, re-calibrate full model.
-- **[v1.1.1 (Jan 16, 2020)](https://ecosheds.org/models/stream-temperature/v1.1.1/)**  
+- **v1.1.1 (Jan 16, 2020)**  
 Add air temperature scenarios (+2, +4, +6 degC), and # days >= 24.9 and 27 degC to prediction derived metrics.
-- **[v1.1.0 (Dec 2, 2019)](https://ecosheds.org/models/stream-temperature/v1.1.0/)**  
+- **v1.1.0 (Dec 2, 2019)**  
 Add 2018 daymet data, re-calibrated full model.
-- **[v1.0.2 (Mar 26, 2019)](https://ecosheds.org/models/stream-temperature/v1.0.2/)**  
+- **v1.0.2 (Mar 26, 2019)**  
 Update documentation, add [Download] section containing links to model predictions, catchment delineation, and covariates.
-- **[v1.0.1 (Dec 10, 2018)](https://ecosheds.org/models/stream-temperature/v1.0.1/)**  
+- **v1.0.1 (Dec 10, 2018)**  
 Update documentation, remove auto-correlation term from goodness-of-fit summaries
-- **[v1.0.0 (Oct 25, 2018)](https://ecosheds.org/models/stream-temperature/v1.0.0/)**  
+- **v1.0.0 (Oct 25, 2018)**  
 Re-calibrated model, and finished documentation.
-- **[v0.9.2 (Jul 6, 2018)](https://ecosheds.org/models/stream-temperature/v0.9.2/)**  
+- **v0.9.2 (Jul 6, 2018)**  
 Major updates to documentation (introduction, theory, calibration and validation sections).
-- **[v0.9.1 (Jun 6, 2018)](https://ecosheds.org/models/stream-temperature/v0.9.1/)**  
+- **v0.9.1 (Jun 6, 2018)**  
 Updates to model versioning and configuration framework, and minor updates to documentation (still incomplete).
-- **[v0.9.0 (May 30, 2018)](https://ecosheds.org/models/stream-temperature/v0.9.0/)**  
+- **v0.9.0 (May 30, 2018)**  
 Preliminary release of the new model framework and documentation.
 - **[Previous Versions](https://conte-ecology.github.io/conteStreamTemperature_northeast/) (prior to 2018)**  
 Previous versions of the stream temperature model can be found [here](https://conte-ecology.github.io/conteStreamTemperature_northeast/). That website is now deprecated, but will remain available for future reference. Beginning with v1.0.0 of the new framework and codebase, all model changes and results will be tracked and made available.

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Page not found | EcoSHEDS Northeast Stream Temperature Model</title>
+  <meta name="description" content="Documentation for the EcoSHEDS Northeast Stream Temperature Model." />
+  <meta name="generator" content="bookdown 0.36 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Page not found | EcoSHEDS Northeast Stream Temperature Model" />
+  <meta property="og:type" content="book" />
+  
+  <meta property="og:description" content="Documentation for the EcoSHEDS Northeast Stream Temperature Model." />
+  <meta name="github-repo" content="ecosheds/northeast-temp-model" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Page not found | EcoSHEDS Northeast Stream Temperature Model" />
+  
+  <meta name="twitter:description" content="Documentation for the EcoSHEDS Northeast Stream Temperature Model." />
+  
+
+<meta name="author" content="Developed and maintained by Jeff Walker and Ben Letcher as part of the USGS EcoSHEDS project. Initial model developed by Dan Hocking." />
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+
+
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-CBK3R7N2WQ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-CBK3R7N2WQ');
+</script>
+
+
+
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+<style type="text/css">
+/* Used with Pandoc 2.11+ new --citeproc when CSL is used */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Northeast Stream Temperature Model</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a>
+<ul>
+<li class="chapter" data-level="1.1" data-path="index.html"><a href="index.html#model-overview"><i class="fa fa-check"></i><b>1.1</b> Model Overview</a></li>
+<li class="chapter" data-level="1.2" data-path="index.html"><a href="index.html#current-snapshot"><i class="fa fa-check"></i><b>1.2</b> Current Snapshot</a></li>
+<li class="chapter" data-level="1.3" data-path="index.html"><a href="index.html#model-versioning"><i class="fa fa-check"></i><b>1.3</b> Model Versioning</a></li>
+<li class="chapter" data-level="1.4" data-path="index.html"><a href="index.html#source-code"><i class="fa fa-check"></i><b>1.4</b> Source Code</a></li>
+<li class="chapter" data-level="1.5" data-path="index.html"><a href="index.html#change-log"><i class="fa fa-check"></i><b>1.5</b> Change Log</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="theory.html"><a href="theory.html"><i class="fa fa-check"></i><b>2</b> Theory</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="theory.html"><a href="theory.html#fixed-effects"><i class="fa fa-check"></i><b>2.1</b> Fixed Effects</a></li>
+<li class="chapter" data-level="2.2" data-path="theory.html"><a href="theory.html#catchment-random-effects"><i class="fa fa-check"></i><b>2.2</b> Catchment Random Effects</a></li>
+<li class="chapter" data-level="2.3" data-path="theory.html"><a href="theory.html#huc-random-effects"><i class="fa fa-check"></i><b>2.3</b> HUC Random Effects</a></li>
+<li class="chapter" data-level="2.4" data-path="theory.html"><a href="theory.html#year-random-effects"><i class="fa fa-check"></i><b>2.4</b> Year Random Effects</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="data-sources.html"><a href="data-sources.html"><i class="fa fa-check"></i><b>3</b> Data Sources</a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="data-sources.html"><a href="data-sources.html#covariate-datasets"><i class="fa fa-check"></i><b>3.1</b> Covariate Datasets</a>
+<ul>
+<li class="chapter" data-level="3.1.1" data-path="data-sources.html"><a href="data-sources.html#catchment-delineation"><i class="fa fa-check"></i><b>3.1.1</b> Catchment Delineation</a></li>
+<li class="chapter" data-level="3.1.2" data-path="data-sources.html"><a href="data-sources.html#climate-data"><i class="fa fa-check"></i><b>3.1.2</b> Climate Data</a></li>
+<li class="chapter" data-level="3.1.3" data-path="data-sources.html"><a href="data-sources.html#geospatial-characteristics"><i class="fa fa-check"></i><b>3.1.3</b> Geospatial Characteristics</a></li>
+</ul></li>
+<li class="chapter" data-level="3.2" data-path="data-sources.html"><a href="data-sources.html#stream-temperature-observations"><i class="fa fa-check"></i><b>3.2</b> Stream Temperature Observations</a>
+<ul>
+<li class="chapter" data-level="3.2.1" data-path="data-sources.html"><a href="data-sources.html#data-summary"><i class="fa fa-check"></i><b>3.2.1</b> Data Summary</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="data-processing.html"><a href="data-processing.html"><i class="fa fa-check"></i><b>4</b> Data Processing</a>
+<ul>
+<li class="chapter" data-level="4.1" data-path="data-processing.html"><a href="data-processing.html#screen-monitoring-stations"><i class="fa fa-check"></i><b>4.1</b> Screen Monitoring Stations</a></li>
+<li class="chapter" data-level="4.2" data-path="data-processing.html"><a href="data-processing.html#screen-daily-mean-values"><i class="fa fa-check"></i><b>4.2</b> Screen Daily Mean Values</a></li>
+<li class="chapter" data-level="4.3" data-path="data-processing.html"><a href="data-processing.html#combine-overlapping-timeseries"><i class="fa fa-check"></i><b>4.3</b> Combine Overlapping Timeseries</a></li>
+<li class="chapter" data-level="4.4" data-path="data-processing.html"><a href="data-processing.html#screen-multiple-locations-within-single-catchment"><i class="fa fa-check"></i><b>4.4</b> Screen Multiple Locations within Single Catchment</a></li>
+<li class="chapter" data-level="4.5" data-path="data-processing.html"><a href="data-processing.html#remove-cold-weather-periods"><i class="fa fa-check"></i><b>4.5</b> Remove Cold Weather Periods</a></li>
+<li class="chapter" data-level="4.6" data-path="data-processing.html"><a href="data-processing.html#split-dataset-for-calibration-and-validation"><i class="fa fa-check"></i><b>4.6</b> Split Dataset for Calibration and Validation</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html"><i class="fa fa-check"></i><b>5</b> Calibration and Validation</a>
+<ul>
+<li class="chapter" data-level="5.1" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#parameter-estimates"><i class="fa fa-check"></i><b>5.1</b> Parameter Estimates</a>
+<ul>
+<li class="chapter" data-level="5.1.1" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#fixed-effects-1"><i class="fa fa-check"></i><b>5.1.1</b> Fixed Effects</a></li>
+<li class="chapter" data-level="5.1.2" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#huc8-random-effects"><i class="fa fa-check"></i><b>5.1.2</b> HUC8 Random Effects</a></li>
+<li class="chapter" data-level="5.1.3" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#catchment-random-effects-1"><i class="fa fa-check"></i><b>5.1.3</b> Catchment Random Effects</a></li>
+<li class="chapter" data-level="5.1.4" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#year-random-effects-1"><i class="fa fa-check"></i><b>5.1.4</b> Year Random Effects</a></li>
+</ul></li>
+<li class="chapter" data-level="5.2" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#goodness-of-fit"><i class="fa fa-check"></i><b>5.2</b> Goodness-of-Fit</a></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="predictions.html"><a href="predictions.html"><i class="fa fa-check"></i><b>6</b> Predictions</a>
+<ul>
+<li class="chapter" data-level="6.1" data-path="predictions.html"><a href="predictions.html#air-temperature-scenarios"><i class="fa fa-check"></i><b>6.1</b> Air Temperature Scenarios</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="download.html"><a href="download.html"><i class="fa fa-check"></i><b>7</b> Download</a>
+<ul>
+<li class="chapter" data-level="7.1" data-path="download.html"><a href="download.html#stream-temperature-model-predictions-dataset"><i class="fa fa-check"></i><b>7.1</b> Stream Temperature Model Predictions Dataset</a></li>
+<li class="chapter" data-level="7.2" data-path="download.html"><a href="download.html#catchment-delineation-shapefiles"><i class="fa fa-check"></i><b>7.2</b> Catchment Delineation Shapefiles</a></li>
+<li class="chapter" data-level="7.3" data-path="download.html"><a href="download.html#catchment-covariates-dataset"><i class="fa fa-check"></i><b>7.3</b> Catchment Covariates Dataset</a></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+<li class="divider"></li>
+<li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">EcoSHEDS Northeast Stream Temperature Model</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="page-not-found" class="section level1">
+<h1>Page not found</h1>
+<p>The page you requested cannot be found (perhaps it was moved or renamed).</p>
+<p>You may want to try searching to find the page's new location, or use
+the table of contents to find the page you are looking for.</p>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": ["northeast-temp-model.pdf", "northeast-temp-model.epub"],
+"search": {
+"engine": "fuse",
+"options": null
+},
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

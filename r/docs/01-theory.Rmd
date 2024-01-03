@@ -11,9 +11,10 @@ where $t_{h,c,y,d}$ is the mean stream temperature on day $d$ within year $y$ fo
 The expected mean is computed as:
 
 $$
-\mu_{h,c,y,d} = \left \{ \begin{array}{l l}
-  \omega_{h,c,y,d} + \delta_{h}(t_{h,c,y,d-1} - \omega_{h,c,y,d-1}) & \quad \text{for } t_{h,c,y,d-1} \text{ is real} \\
-  \omega_{h,c,y,d} & \quad \text{for } t_{h,c,y,d-1} \text{ is not real}
+\mu_{h,c,y,d} = \left \{
+  \begin{array}{l l}
+    \omega_{h,c,y,d} + \delta_{h}(t_{h,c,y,d-1} - \omega_{h,c,y,d-1}) & \quad \text{for } t_{h,c,y,d-1} \text{ is real} \\
+    \omega_{h,c,y,d} & \quad \text{for } t_{h,c,y,d-1} \text{ is not real}
   \end{array} \right.
 $$
 

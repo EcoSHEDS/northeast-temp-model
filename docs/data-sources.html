@@ -4,24 +4,23 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Section 3 Data Sources | SHEDS Northeast Stream Temperature Model</title>
-  <meta name="description" content="Documentation for the SHEDS northeast stream temperature model." />
-  <meta name="generator" content="bookdown 0.19 and GitBook 2.6.7" />
+  <title>Section 3 Data Sources | EcoSHEDS Northeast Stream Temperature Model</title>
+  <meta name="description" content="Documentation for the EcoSHEDS Northeast Stream Temperature Model." />
+  <meta name="generator" content="bookdown 0.36 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Section 3 Data Sources | SHEDS Northeast Stream Temperature Model" />
+  <meta property="og:title" content="Section 3 Data Sources | EcoSHEDS Northeast Stream Temperature Model" />
   <meta property="og:type" content="book" />
   
-  
-  <meta property="og:description" content="Documentation for the SHEDS northeast stream temperature model." />
+  <meta property="og:description" content="Documentation for the EcoSHEDS Northeast Stream Temperature Model." />
   <meta name="github-repo" content="ecosheds/northeast-temp-model" />
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Section 3 Data Sources | SHEDS Northeast Stream Temperature Model" />
+  <meta name="twitter:title" content="Section 3 Data Sources | EcoSHEDS Northeast Stream Temperature Model" />
   
-  <meta name="twitter:description" content="Documentation for the SHEDS northeast stream temperature model." />
+  <meta name="twitter:description" content="Documentation for the EcoSHEDS Northeast Stream Temperature Model." />
   
 
-<meta name="author" content="Jeff Walker, Ben Letcher, and Dan Hocking" />
+<meta name="author" content="Developed and maintained by Jeff Walker and Ben Letcher as part of the USGS EcoSHEDS project. Initial model developed by Dan Hocking." />
 
 
 
@@ -32,7 +31,8 @@
   
 <link rel="prev" href="theory.html"/>
 <link rel="next" href="data-processing.html"/>
-<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
@@ -48,7 +48,9 @@
 
 
 
-
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
 <!-- Global site tag (gtag.js) - Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-CBK3R7N2WQ"></script>
 <script>
@@ -59,6 +61,34 @@
 </script>
 
 
+
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+<style type="text/css">
+/* Used with Pandoc 2.11+ new --citeproc when CSL is used */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
 
 <link rel="stylesheet" href="style.css" type="text/css" />
 </head>
@@ -76,30 +106,36 @@
 <li><a href="./">Northeast Stream Temperature Model</a></li>
 
 <li class="divider"></li>
-<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a><ul>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a>
+<ul>
 <li class="chapter" data-level="1.1" data-path="index.html"><a href="index.html#model-overview"><i class="fa fa-check"></i><b>1.1</b> Model Overview</a></li>
 <li class="chapter" data-level="1.2" data-path="index.html"><a href="index.html#current-snapshot"><i class="fa fa-check"></i><b>1.2</b> Current Snapshot</a></li>
 <li class="chapter" data-level="1.3" data-path="index.html"><a href="index.html#model-versioning"><i class="fa fa-check"></i><b>1.3</b> Model Versioning</a></li>
 <li class="chapter" data-level="1.4" data-path="index.html"><a href="index.html#source-code"><i class="fa fa-check"></i><b>1.4</b> Source Code</a></li>
 <li class="chapter" data-level="1.5" data-path="index.html"><a href="index.html#change-log"><i class="fa fa-check"></i><b>1.5</b> Change Log</a></li>
 </ul></li>
-<li class="chapter" data-level="2" data-path="theory.html"><a href="theory.html"><i class="fa fa-check"></i><b>2</b> Theory</a><ul>
+<li class="chapter" data-level="2" data-path="theory.html"><a href="theory.html"><i class="fa fa-check"></i><b>2</b> Theory</a>
+<ul>
 <li class="chapter" data-level="2.1" data-path="theory.html"><a href="theory.html#fixed-effects"><i class="fa fa-check"></i><b>2.1</b> Fixed Effects</a></li>
 <li class="chapter" data-level="2.2" data-path="theory.html"><a href="theory.html#catchment-random-effects"><i class="fa fa-check"></i><b>2.2</b> Catchment Random Effects</a></li>
 <li class="chapter" data-level="2.3" data-path="theory.html"><a href="theory.html#huc-random-effects"><i class="fa fa-check"></i><b>2.3</b> HUC Random Effects</a></li>
 <li class="chapter" data-level="2.4" data-path="theory.html"><a href="theory.html#year-random-effects"><i class="fa fa-check"></i><b>2.4</b> Year Random Effects</a></li>
 </ul></li>
-<li class="chapter" data-level="3" data-path="data-sources.html"><a href="data-sources.html"><i class="fa fa-check"></i><b>3</b> Data Sources</a><ul>
-<li class="chapter" data-level="3.1" data-path="data-sources.html"><a href="data-sources.html#covariate-datasets"><i class="fa fa-check"></i><b>3.1</b> Covariate Datasets</a><ul>
+<li class="chapter" data-level="3" data-path="data-sources.html"><a href="data-sources.html"><i class="fa fa-check"></i><b>3</b> Data Sources</a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="data-sources.html"><a href="data-sources.html#covariate-datasets"><i class="fa fa-check"></i><b>3.1</b> Covariate Datasets</a>
+<ul>
 <li class="chapter" data-level="3.1.1" data-path="data-sources.html"><a href="data-sources.html#catchment-delineation"><i class="fa fa-check"></i><b>3.1.1</b> Catchment Delineation</a></li>
 <li class="chapter" data-level="3.1.2" data-path="data-sources.html"><a href="data-sources.html#climate-data"><i class="fa fa-check"></i><b>3.1.2</b> Climate Data</a></li>
 <li class="chapter" data-level="3.1.3" data-path="data-sources.html"><a href="data-sources.html#geospatial-characteristics"><i class="fa fa-check"></i><b>3.1.3</b> Geospatial Characteristics</a></li>
 </ul></li>
-<li class="chapter" data-level="3.2" data-path="data-sources.html"><a href="data-sources.html#stream-temperature-observations"><i class="fa fa-check"></i><b>3.2</b> Stream Temperature Observations</a><ul>
+<li class="chapter" data-level="3.2" data-path="data-sources.html"><a href="data-sources.html#stream-temperature-observations"><i class="fa fa-check"></i><b>3.2</b> Stream Temperature Observations</a>
+<ul>
 <li class="chapter" data-level="3.2.1" data-path="data-sources.html"><a href="data-sources.html#data-summary"><i class="fa fa-check"></i><b>3.2.1</b> Data Summary</a></li>
 </ul></li>
 </ul></li>
-<li class="chapter" data-level="4" data-path="data-processing.html"><a href="data-processing.html"><i class="fa fa-check"></i><b>4</b> Data Processing</a><ul>
+<li class="chapter" data-level="4" data-path="data-processing.html"><a href="data-processing.html"><i class="fa fa-check"></i><b>4</b> Data Processing</a>
+<ul>
 <li class="chapter" data-level="4.1" data-path="data-processing.html"><a href="data-processing.html#screen-monitoring-stations"><i class="fa fa-check"></i><b>4.1</b> Screen Monitoring Stations</a></li>
 <li class="chapter" data-level="4.2" data-path="data-processing.html"><a href="data-processing.html#screen-daily-mean-values"><i class="fa fa-check"></i><b>4.2</b> Screen Daily Mean Values</a></li>
 <li class="chapter" data-level="4.3" data-path="data-processing.html"><a href="data-processing.html#combine-overlapping-timeseries"><i class="fa fa-check"></i><b>4.3</b> Combine Overlapping Timeseries</a></li>
@@ -107,23 +143,23 @@
 <li class="chapter" data-level="4.5" data-path="data-processing.html"><a href="data-processing.html#remove-cold-weather-periods"><i class="fa fa-check"></i><b>4.5</b> Remove Cold Weather Periods</a></li>
 <li class="chapter" data-level="4.6" data-path="data-processing.html"><a href="data-processing.html#split-dataset-for-calibration-and-validation"><i class="fa fa-check"></i><b>4.6</b> Split Dataset for Calibration and Validation</a></li>
 </ul></li>
-<li class="chapter" data-level="5" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html"><i class="fa fa-check"></i><b>5</b> Calibration and Validation</a><ul>
-<li class="chapter" data-level="5.1" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#parameter-estimates"><i class="fa fa-check"></i><b>5.1</b> Parameter Estimates</a><ul>
+<li class="chapter" data-level="5" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html"><i class="fa fa-check"></i><b>5</b> Calibration and Validation</a>
+<ul>
+<li class="chapter" data-level="5.1" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#parameter-estimates"><i class="fa fa-check"></i><b>5.1</b> Parameter Estimates</a>
+<ul>
 <li class="chapter" data-level="5.1.1" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#fixed-effects-1"><i class="fa fa-check"></i><b>5.1.1</b> Fixed Effects</a></li>
 <li class="chapter" data-level="5.1.2" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#huc8-random-effects"><i class="fa fa-check"></i><b>5.1.2</b> HUC8 Random Effects</a></li>
 <li class="chapter" data-level="5.1.3" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#catchment-random-effects-1"><i class="fa fa-check"></i><b>5.1.3</b> Catchment Random Effects</a></li>
 <li class="chapter" data-level="5.1.4" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#year-random-effects-1"><i class="fa fa-check"></i><b>5.1.4</b> Year Random Effects</a></li>
 </ul></li>
-<li class="chapter" data-level="5.2" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#goodness-of-fit"><i class="fa fa-check"></i><b>5.2</b> Goodness-of-Fit</a><ul>
-<li class="chapter" data-level="5.2.1" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#all-observations"><i class="fa fa-check"></i><b>5.2.1</b> All Observations</a></li>
-<li class="chapter" data-level="5.2.2" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#deployments"><i class="fa fa-check"></i><b>5.2.2</b> Deployments</a></li>
-<li class="chapter" data-level="5.2.3" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#catchments"><i class="fa fa-check"></i><b>5.2.3</b> Catchments</a></li>
+<li class="chapter" data-level="5.2" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#goodness-of-fit"><i class="fa fa-check"></i><b>5.2</b> Goodness-of-Fit</a></li>
 </ul></li>
-</ul></li>
-<li class="chapter" data-level="6" data-path="predictions.html"><a href="predictions.html"><i class="fa fa-check"></i><b>6</b> Predictions</a><ul>
+<li class="chapter" data-level="6" data-path="predictions.html"><a href="predictions.html"><i class="fa fa-check"></i><b>6</b> Predictions</a>
+<ul>
 <li class="chapter" data-level="6.1" data-path="predictions.html"><a href="predictions.html#air-temperature-scenarios"><i class="fa fa-check"></i><b>6.1</b> Air Temperature Scenarios</a></li>
 </ul></li>
-<li class="chapter" data-level="7" data-path="download.html"><a href="download.html"><i class="fa fa-check"></i><b>7</b> Download</a><ul>
+<li class="chapter" data-level="7" data-path="download.html"><a href="download.html"><i class="fa fa-check"></i><b>7</b> Download</a>
+<ul>
 <li class="chapter" data-level="7.1" data-path="download.html"><a href="download.html#stream-temperature-model-predictions-dataset"><i class="fa fa-check"></i><b>7.1</b> Stream Temperature Model Predictions Dataset</a></li>
 <li class="chapter" data-level="7.2" data-path="download.html"><a href="download.html#catchment-delineation-shapefiles"><i class="fa fa-check"></i><b>7.2</b> Catchment Delineation Shapefiles</a></li>
 <li class="chapter" data-level="7.3" data-path="download.html"><a href="download.html#catchment-covariates-dataset"><i class="fa fa-check"></i><b>7.3</b> Catchment Covariates Dataset</a></li>
@@ -141,7 +177,7 @@
       <div class="body-inner">
         <div class="book-header" role="navigation">
           <h1>
-            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">SHEDS Northeast Stream Temperature Model</a>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">EcoSHEDS Northeast Stream Temperature Model</a>
           </h1>
         </div>
 
@@ -149,32 +185,39 @@
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="data-sources" class="section level1">
-<h1><span class="header-section-number">Section 3</span> Data Sources</h1>
-<div id="covariate-datasets" class="section level2">
-<h2><span class="header-section-number">3.1</span> Covariate Datasets</h2>
-<div id="catchment-delineation" class="section level3">
-<h3><span class="header-section-number">3.1.1</span> Catchment Delineation</h3>
-<p>The stream temperature model uses the EcoSHEDS <a href="https://ecosheds.github.io/necd/">Northeast Catchment Delineation (NECD)</a> catchment delineation.</p>
-<p>Shapefiles of the catchments can be downloaded from: <a href="https://ecosheds.github.io/necd/downloads.html" class="uri">https://ecosheds.github.io/necd/downloads.html</a></p>
+<div id="data-sources" class="section level1 hasAnchor" number="3">
+<h1><span class="header-section-number">Section 3</span> Data Sources<a href="data-sources.html#data-sources" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div id="covariate-datasets" class="section level2 hasAnchor" number="3.1">
+<h2><span class="header-section-number">3.1</span> Covariate Datasets<a href="data-sources.html#covariate-datasets" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="catchment-delineation" class="section level3 hasAnchor" number="3.1.1">
+<h3><span class="header-section-number">3.1.1</span> Catchment Delineation<a href="data-sources.html#catchment-delineation" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>The stream temperature model uses the <a href="https://ecosheds.github.io/necd/">National Hydrography Dataset High Resolution Delineation Version 2 (NHDHRDV2)</a> catchment delineation.</p>
+<p>Shapefiles of the catchments can be downloaded from: <a href="https://ecosheds.org/assets/nhdhrd/v2/" class="uri">https://ecosheds.org/assets/nhdhrd/v2/</a></p>
 <p>The <code>spatial_XX.zip</code> files contain pre-staged datasets for each HUC2 region (e.g. spatial_01.zip contains the catchments for the HUC2 region 01).</p>
 </div>
-<div id="climate-data" class="section level3">
-<h3><span class="header-section-number">3.1.2</span> Climate Data</h3>
-<p>Daily air temperature and precipitation were obtained from the <a href="https://daymet.ornl.gov/">Daymet V3</a> gridded estimates of daily weather parameters for North America. The raw Daymet datasets (NetCDF4 files) were processed using the code in <a href="https://github.com/EcoSHEDS/necd/tree/main/daymet"><code>EcoSHEDS/necd</code></a>.</p>
+<div id="climate-data" class="section level3 hasAnchor" number="3.1.2">
+<h3><span class="header-section-number">3.1.2</span> Climate Data<a href="data-sources.html#climate-data" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Daily air temperature and precipitation were obtained from the <a href="https://daymet.ornl.gov/">Daymet V3</a> gridded estimates of daily weather parameters for North America. The raw Daymet datasets (NetCDF4 files) were processed using the code in <a href="https://github.com/walkerjeffd/sheds-daymet"><code>walkerjeffd/sheds-daymet</code></a>.</p>
 </div>
-<div id="geospatial-characteristics" class="section level3">
-<h3><span class="header-section-number">3.1.3</span> Geospatial Characteristics</h3>
-<p>Geospatial characteristics of each catchment were generated as part of the EcoSHEDS NECD catchment delineation <a href="https://ecosheds.github.io/necd/basin-characteristics.html">Basin Characteristics</a>. More information can be found on the <a href="https://ecosheds.github.io/necd/">EcoSHEDS NECD</a> website.</p>
+<div id="geospatial-characteristics" class="section level3 hasAnchor" number="3.1.3">
+<h3><span class="header-section-number">3.1.3</span> Geospatial Characteristics<a href="data-sources.html#geospatial-characteristics" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Geospatial characteristics of each catchment were generated using the code in <a href="https://github.com/Conte-Ecology/shedsGisData/tree/master/basinCharacteristics">basinCharacteristics</a>. More information can be found on the <a href="https://ecosheds.github.io/necd/">SHEDS GIS Data</a> page.</p>
 </div>
 </div>
-<div id="stream-temperature-observations" class="section level2">
-<h2><span class="header-section-number">3.2</span> Stream Temperature Observations</h2>
-<p>Temperature observations extractd from the <a href="http://db.ecosheds.org">Northeast Stream Temperature Database</a>, which contains data uploaded from numerous state and federal agencies, universities, and non-profit organizations.</p>
-<div id="data-summary" class="section level3">
-<h3><span class="header-section-number">3.2.1</span> Data Summary</h3>
+<div id="stream-temperature-observations" class="section level2 hasAnchor" number="3.2">
+<h2><span class="header-section-number">3.2</span> Stream Temperature Observations<a href="data-sources.html#stream-temperature-observations" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Temperature observations extractd from the <a href="http://db.ecosheds.org">SHEDS Stream Temperature Database</a>, which contains data uploaded from numerous state and federal agencies, universities, and non-profit organizations.</p>
+<div id="data-summary" class="section level3 hasAnchor" number="3.2.1">
+<h3><span class="header-section-number">3.2.1</span> Data Summary<a href="data-sources.html#data-summary" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>The following table summarizes the number of monitoring stations, deployments, and total observations for each agency and organization.</p>
 <table>
+<colgroup>
+<col width="10%" />
+<col width="58%" />
+<col width="8%" />
+<col width="10%" />
+<col width="11%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Agency ID</th>
@@ -186,431 +229,487 @@
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">ARA</td>
-<td align="left">Ausable River Association</td>
-<td align="right">18</td>
-<td align="right">9</td>
-<td align="right">275,493</td>
-</tr>
-<tr class="even">
 <td align="left">ARWC</td>
 <td align="left">Androscoggin River Watershed Council</td>
 <td align="right">44</td>
 <td align="right">18</td>
-<td align="right">629,831</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">AsRA</td>
+<td align="left">Ausable River Association</td>
+<td align="right">18</td>
+<td align="right">9</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">BCDEPS</td>
 <td align="left">Baltimore County Department of Environmental Protection and Sustainability</td>
 <td align="right">28</td>
 <td align="right">23</td>
-<td align="right">223,674</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">BSP</td>
 <td align="left">Baxter State Park</td>
-<td align="right">166</td>
-<td align="right">10</td>
-<td align="right">2,496,265</td>
+<td align="right">184</td>
+<td align="right">11</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">CTDEEP</td>
 <td align="left">CT Department of Energy and Environmental Protection</td>
 <td align="right">5,064</td>
 <td align="right">1,128</td>
-<td align="right">16,301,707</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">CTVOLMON</td>
 <td align="left">CT Volunteer Monitoring</td>
-<td align="right">779</td>
-<td align="right">318</td>
-<td align="right">3,404,004</td>
+<td align="right">808</td>
+<td align="right">324</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">FRITSCHIE</td>
 <td align="left">Keith Fritschie, Dartmouth</td>
 <td align="right">67</td>
 <td align="right">67</td>
-<td align="right">164,581</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
-<td align="left">HAYDEN</td>
-<td align="left">Michael Hayden</td>
-<td align="right">56</td>
-<td align="right">6</td>
-<td align="right">653,675</td>
+<td align="left">GOMRHN</td>
+<td align="left">Gulf of Maine River Herring Network</td>
+<td align="right">16</td>
+<td align="right">15</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
+<td align="left">HAYDEN</td>
+<td align="left">Michael Hayden</td>
+<td align="right">75</td>
+<td align="right">7</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
 <td align="left">HBM</td>
 <td align="left">Houlton Band of Malisset</td>
 <td align="right">1</td>
 <td align="right">1</td>
-<td align="right">5,025</td>
+<td align="right">0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">HCSWCD</td>
 <td align="left">Hancock County Soil and Water Conservation District</td>
 <td align="right">19</td>
 <td align="right">10</td>
-<td align="right">239,006</td>
+<td align="right">0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">HMF</td>
 <td align="left">Hopkins Memorial Forest</td>
 <td align="right">4</td>
 <td align="right">4</td>
-<td align="right">22,136</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">HVA_BERKSHIRE</td>
+<td align="left">Housatonic Valley Association, Berkshires</td>
+<td align="right">17</td>
+<td align="right">17</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">JMU</td>
 <td align="left">James Madison University</td>
 <td align="right">7</td>
 <td align="right">7</td>
-<td align="right">20,477</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">MADEP</td>
 <td align="left">MA Department of Environmental Protection</td>
 <td align="right">1,768</td>
 <td align="right">548</td>
-<td align="right">1,228,324</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">MAFW</td>
 <td align="left">MA Fish and Wildlife</td>
 <td align="right">48</td>
 <td align="right">48</td>
-<td align="right">24,127</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">MAFW_RQ</td>
 <td align="left">MA Division of Fish and Wildlife, Rebecca Quinones</td>
 <td align="right">37</td>
 <td align="right">35</td>
-<td align="right">150,687</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">MBSS</td>
 <td align="left">Maryland Biological Stream Survey</td>
 <td align="right">474</td>
 <td align="right">474</td>
-<td align="right">43,278</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">MEDEP</td>
 <td align="left">ME Department of Environmental Protection</td>
-<td align="right">1,133</td>
-<td align="right">521</td>
-<td align="right">4,281,264</td>
+<td align="right">1,368</td>
+<td align="right">544</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">MEDMR</td>
 <td align="left">Maine Department of Marine Resources</td>
-<td align="right">56</td>
+<td align="right">57</td>
 <td align="right">29</td>
-<td align="right">228,314</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">MEDOT</td>
 <td align="left">ME Department of Transportation</td>
 <td align="right">3</td>
 <td align="right">3</td>
-<td align="right">85,848</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">MEIFW</td>
 <td align="left">ME Inland Fisheries and Wildlife</td>
-<td align="right">217</td>
-<td align="right">127</td>
-<td align="right">3,798,765</td>
+<td align="right">290</td>
+<td align="right">158</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">ME_MC</td>
 <td align="left">Midcoast Conservancy</td>
 <td align="right">29</td>
 <td align="right">17</td>
-<td align="right">275,379</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">MRWC</td>
 <td align="left">Miller’s River Watershed Council</td>
-<td align="right">30</td>
+<td align="right">38</td>
 <td align="right">18</td>
-<td align="right">920,749</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">NHDES</td>
 <td align="left">NH Department of Environmental Services</td>
 <td align="right">18</td>
 <td align="right">18</td>
-<td align="right">1,641</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">NHFG</td>
 <td align="left">NH Department of Fish and Game</td>
 <td align="right">25</td>
 <td align="right">25</td>
-<td align="right">2,831</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">NJDEP</td>
 <td align="left">New Jersey Department of Environmental Protection</td>
 <td align="right">8</td>
 <td align="right">8</td>
-<td align="right">35,904</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">NJDFW</td>
 <td align="left">NJ Dept of Environmental Protection, Div of Fish and Wildlife</td>
 <td align="right">154</td>
 <td align="right">154</td>
-<td align="right">1,100,988</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">NOAA</td>
 <td align="left">National Oceanic and Atmospheric Administration</td>
-<td align="right">274</td>
+<td align="right">292</td>
 <td align="right">29</td>
-<td align="right">1,142,388</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
+<td align="left">NPS_SNHA</td>
+<td align="left">National Park Service, Susquehanna National Heritage Area</td>
+<td align="right">31</td>
+<td align="right">31</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
 <td align="left">NPS_UDR</td>
 <td align="left">National Park Service, Upper Delaware River</td>
 <td align="right">20</td>
 <td align="right">16</td>
-<td align="right">290,014</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">NRWA</td>
+<td align="left">Nashua River Watershed Association</td>
+<td align="right">15</td>
+<td align="right">13</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">NYDEC</td>
 <td align="left">NY Department of Environmental Conservation</td>
-<td align="right">1,011</td>
-<td align="right">419</td>
-<td align="right">2,999,485</td>
+<td align="right">1,110</td>
+<td align="right">444</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">OARS</td>
 <td align="left">OARS</td>
-<td align="right">8</td>
-<td align="right">8</td>
-<td align="right">1,032,728</td>
+<td align="right">12</td>
+<td align="right">7</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">PINDNR</td>
 <td align="left">Penobscot Indian Nation Department of Natural Resources</td>
 <td align="right">84</td>
 <td align="right">37</td>
-<td align="right">401,621</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">PSU</td>
 <td align="left">Plymouth State University</td>
 <td align="right">134</td>
 <td align="right">117</td>
-<td align="right">17,964,253</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">RIDEM</td>
 <td align="left">Rhode Island Department of Environmental Management</td>
-<td align="right">119</td>
-<td align="right">85</td>
-<td align="right">239,019</td>
+<td align="right">225</td>
+<td align="right">175</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">SRBC</td>
 <td align="left">Susquehanna River Basin Commission</td>
 <td align="right">351</td>
 <td align="right">60</td>
-<td align="right">18,926,101</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">SRCC</td>
 <td align="left">Saco River Corridor Commission</td>
 <td align="right">8</td>
 <td align="right">8</td>
-<td align="right">8,927</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">SVWA</td>
 <td align="left">Southeastern Vermont Watershed Alliance</td>
 <td align="right">5</td>
 <td align="right">5</td>
-<td align="right">99,417</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">TNC_NJ</td>
 <td align="left">The Nature Conservancy, New Jersey</td>
-<td align="right">14</td>
-<td align="right">14</td>
-<td align="right">774,921</td>
+<td align="right">46</td>
+<td align="right">15</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
+<td align="left">TU</td>
+<td align="left">Trout Unlimited</td>
+<td align="right">22</td>
+<td align="right">12</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
 <td align="left">TU_ADK</td>
 <td align="left">Trout Unlimited, Adirondacks</td>
 <td align="right">62</td>
 <td align="right">61</td>
-<td align="right">170,416</td>
+<td align="right">0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">TU_AF</td>
 <td align="left">Trout Unlimited, Art Flick Chapter</td>
 <td align="right">22</td>
 <td align="right">8</td>
-<td align="right">150,135</td>
-</tr>
-<tr class="even">
-<td align="left">TU_CLEARWATER</td>
-<td align="left">Trout Unlimited, Clearwater Chapter</td>
-<td align="right">38</td>
-<td align="right">24</td>
-<td align="right">136,693</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
+<td align="left">TU_CLEARWATER</td>
+<td align="left">Trout Unlimited, Clearwater Chapter</td>
+<td align="right">61</td>
+<td align="right">30</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
 <td align="left">TU_DW</td>
 <td align="left">Trout Unlimited, Deerfield Watershed</td>
-<td align="right">29</td>
-<td align="right">11</td>
-<td align="right">289,641</td>
+<td align="right">35</td>
+<td align="right">13</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">TU_HOME</td>
+<td align="left">Trout Unlimited, Homewaters Chapter</td>
+<td align="right">10</td>
+<td align="right">10</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">TU_HR</td>
 <td align="left">Trout Unlimited, Housatonic River</td>
 <td align="right">7</td>
 <td align="right">2</td>
-<td align="right">20,497</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">TU_KV</td>
 <td align="left">Trout Unlimited, Kennebec Valley</td>
 <td align="right">13</td>
 <td align="right">13</td>
-<td align="right">67,271</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">TU_MMB</td>
 <td align="left">Trout Unlimited, Merry Meeting Bay</td>
-<td align="right">62</td>
-<td align="right">20</td>
-<td align="right">896,381</td>
+<td align="right">81</td>
+<td align="right">21</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">TU_NJ</td>
 <td align="left">Trout Unlimited, New Jersey Chapter</td>
-<td align="right">61</td>
-<td align="right">61</td>
-<td align="right">555,272</td>
+<td align="right">62</td>
+<td align="right">62</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">TU_NY</td>
 <td align="left">Trout Unlimited, New York Chapter</td>
 <td align="right">43</td>
 <td align="right">43</td>
-<td align="right">111,284</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">UMAINE</td>
 <td align="left">University of Maine</td>
 <td align="right">12</td>
 <td align="right">6</td>
-<td align="right">112,100</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">UMASS_USGS</td>
 <td align="left">UMass USGS Cooperative Unit</td>
-<td align="right">397</td>
+<td align="right">505</td>
 <td align="right">179</td>
-<td align="right">19,991,386</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">UNITY</td>
 <td align="left">Unity College</td>
 <td align="right">8</td>
 <td align="right">4</td>
-<td align="right">263,184</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">USFS</td>
 <td align="left">US Forest Service</td>
-<td align="right">518</td>
+<td align="right">521</td>
 <td align="right">136</td>
-<td align="right">6,135,136</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">USFS_SRS</td>
 <td align="left">US Forest Service Southern Research Station</td>
 <td align="right">8</td>
 <td align="right">8</td>
-<td align="right">40,983</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">USFWS_LGL</td>
 <td align="left">US Fish and Wildlife Service, Lower Great Lakes FWCO</td>
 <td align="right">11</td>
 <td align="right">11</td>
-<td align="right">59,232</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">USFWS_ME</td>
 <td align="left">US Fish and Wildlife Service, Maine Field Office</td>
-<td align="right">449</td>
-<td align="right">324</td>
-<td align="right">12,989,371</td>
+<td align="right">470</td>
+<td align="right">336</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">USFWS_MNWR</td>
 <td align="left">US Fish and Wildlife Service, Moosehorn National Wildlife Refuge</td>
 <td align="right">16</td>
 <td align="right">15</td>
-<td align="right">86,657</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">USGS</td>
 <td align="left">U.S. Geological Survey</td>
 <td align="right">310</td>
 <td align="right">57</td>
-<td align="right">3,965,147</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">USGS_BRD</td>
 <td align="left">US Geological Survey BRD</td>
 <td align="right">11</td>
 <td align="right">11</td>
-<td align="right">11,421</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">USGS_Conte</td>
-<td align="left">USGS Conte Lab</td>
-<td align="right">129</td>
-<td align="right">33</td>
-<td align="right">2,623,727</td>
+<td align="left">USGS S.O. Conte Anadromous Fish Research Lab</td>
+<td align="right">383</td>
+<td align="right">84</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">USGS_Leetown</td>
 <td align="left">USGS Leetown Science Center</td>
 <td align="right">115</td>
 <td align="right">114</td>
-<td align="right">457,000</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
+<td align="left">USGS_POTOMAC</td>
+<td align="left">USGS Eastern Ecological Science Center, Potomac Watershed</td>
+<td align="right">10</td>
+<td align="right">10</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
 <td align="left">VAHUDY</td>
 <td align="left">VA HUDY</td>
 <td align="right">33</td>
 <td align="right">33</td>
-<td align="right">136,266</td>
+<td align="right">0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">VTFWD</td>
 <td align="left">VT Fish and Wildlife Department</td>
 <td align="right">489</td>
 <td align="right">421</td>
-<td align="right">3,549,632</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">WVDEP</td>
+<td align="left">West Virginia, Dept. of Environmental Protection</td>
+<td align="right">68</td>
+<td align="right">42</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">WVDNR</td>
 <td align="left">WV Department of Natural Resources</td>
 <td align="right">214</td>
 <td align="right">214</td>
-<td align="right">835,882</td>
+<td align="right">0</td>
 </tr>
 </tbody>
 </table>
@@ -628,7 +727,6 @@
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
-<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
 <script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
 <script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
 <script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
@@ -647,6 +745,7 @@ gitbook.start({
 "weibo": false,
 "instapaper": false,
 "vk": false,
+"whatsapp": false,
 "all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
 },
 "fontsettings": {
@@ -666,7 +765,11 @@ gitbook.start({
 "link": null,
 "text": null
 },
-"download": ["sheds-temp-model.pdf", "sheds-temp-model.epub"],
+"download": ["northeast-temp-model.pdf", "northeast-temp-model.epub"],
+"search": {
+"engine": "fuse",
+"options": null
+},
 "toc": {
 "collapse": "subsection"
 }
@@ -680,7 +783,7 @@ gitbook.start({
     var script = document.createElement("script");
     script.type = "text/javascript";
     var src = "true";
-    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
     if (location.protocol !== "file:")
       if (/^https?:/.test(src))
         src = src.replace(/^https?:/, '');

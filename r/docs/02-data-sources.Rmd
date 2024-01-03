@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, comment = 
 
 ### Catchment Delineation
 
-The stream temperature model uses the [National Hydrography Dataset High Resolution Delineation Version 2 (NHDHRDV2)](https://conte-ecology.github.io/shedsGisData/) catchment delineation.
+The stream temperature model uses the [National Hydrography Dataset High Resolution Delineation Version 2 (NHDHRDV2)](https://ecosheds.github.io/necd/) catchment delineation.
 
 Shapefiles of the catchments can be downloaded from: https://ecosheds.org/assets/nhdhrd/v2/
 
@@ -23,7 +23,7 @@ Daily air temperature and precipitation were obtained from the [Daymet V3](https
 
 ### Geospatial Characteristics
 
-Geospatial characteristics of each catchment were generated using the code in [basinCharacteristics](https://github.com/Conte-Ecology/shedsGisData/tree/master/basinCharacteristics). More information can be found on the [SHEDS GIS Data](https://conte-ecology.github.io/shedsGisData/) page.
+Geospatial characteristics of each catchment were generated using the code in [basinCharacteristics](https://github.com/Conte-Ecology/shedsGisData/tree/master/basinCharacteristics). More information can be found on the [SHEDS GIS Data](https://ecosheds.github.io/necd/) page.
 
 ## Stream Temperature Observations
 

@@ -4,24 +4,23 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Section 2 Theory | SHEDS Northeast Stream Temperature Model</title>
-  <meta name="description" content="Documentation for the SHEDS northeast stream temperature model." />
-  <meta name="generator" content="bookdown 0.19 and GitBook 2.6.7" />
+  <title>Section 2 Theory | EcoSHEDS Northeast Stream Temperature Model</title>
+  <meta name="description" content="Documentation for the EcoSHEDS Northeast Stream Temperature Model." />
+  <meta name="generator" content="bookdown 0.36 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Section 2 Theory | SHEDS Northeast Stream Temperature Model" />
+  <meta property="og:title" content="Section 2 Theory | EcoSHEDS Northeast Stream Temperature Model" />
   <meta property="og:type" content="book" />
   
-  
-  <meta property="og:description" content="Documentation for the SHEDS northeast stream temperature model." />
+  <meta property="og:description" content="Documentation for the EcoSHEDS Northeast Stream Temperature Model." />
   <meta name="github-repo" content="ecosheds/northeast-temp-model" />
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Section 2 Theory | SHEDS Northeast Stream Temperature Model" />
+  <meta name="twitter:title" content="Section 2 Theory | EcoSHEDS Northeast Stream Temperature Model" />
   
-  <meta name="twitter:description" content="Documentation for the SHEDS northeast stream temperature model." />
+  <meta name="twitter:description" content="Documentation for the EcoSHEDS Northeast Stream Temperature Model." />
   
 
-<meta name="author" content="Jeff Walker, Ben Letcher, and Dan Hocking" />
+<meta name="author" content="Developed and maintained by Jeff Walker and Ben Letcher as part of the USGS EcoSHEDS project. Initial model developed by Dan Hocking." />
 
 
 
@@ -32,7 +31,8 @@
   
 <link rel="prev" href="index.html"/>
 <link rel="next" href="data-sources.html"/>
-<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
@@ -48,7 +48,9 @@
 
 
 
-
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
 <!-- Global site tag (gtag.js) - Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-CBK3R7N2WQ"></script>
 <script>
@@ -59,6 +61,34 @@
 </script>
 
 
+
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+<style type="text/css">
+/* Used with Pandoc 2.11+ new --citeproc when CSL is used */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
 
 <link rel="stylesheet" href="style.css" type="text/css" />
 </head>
@@ -76,30 +106,36 @@
 <li><a href="./">Northeast Stream Temperature Model</a></li>
 
 <li class="divider"></li>
-<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a><ul>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a>
+<ul>
 <li class="chapter" data-level="1.1" data-path="index.html"><a href="index.html#model-overview"><i class="fa fa-check"></i><b>1.1</b> Model Overview</a></li>
 <li class="chapter" data-level="1.2" data-path="index.html"><a href="index.html#current-snapshot"><i class="fa fa-check"></i><b>1.2</b> Current Snapshot</a></li>
 <li class="chapter" data-level="1.3" data-path="index.html"><a href="index.html#model-versioning"><i class="fa fa-check"></i><b>1.3</b> Model Versioning</a></li>
 <li class="chapter" data-level="1.4" data-path="index.html"><a href="index.html#source-code"><i class="fa fa-check"></i><b>1.4</b> Source Code</a></li>
 <li class="chapter" data-level="1.5" data-path="index.html"><a href="index.html#change-log"><i class="fa fa-check"></i><b>1.5</b> Change Log</a></li>
 </ul></li>
-<li class="chapter" data-level="2" data-path="theory.html"><a href="theory.html"><i class="fa fa-check"></i><b>2</b> Theory</a><ul>
+<li class="chapter" data-level="2" data-path="theory.html"><a href="theory.html"><i class="fa fa-check"></i><b>2</b> Theory</a>
+<ul>
 <li class="chapter" data-level="2.1" data-path="theory.html"><a href="theory.html#fixed-effects"><i class="fa fa-check"></i><b>2.1</b> Fixed Effects</a></li>
 <li class="chapter" data-level="2.2" data-path="theory.html"><a href="theory.html#catchment-random-effects"><i class="fa fa-check"></i><b>2.2</b> Catchment Random Effects</a></li>
 <li class="chapter" data-level="2.3" data-path="theory.html"><a href="theory.html#huc-random-effects"><i class="fa fa-check"></i><b>2.3</b> HUC Random Effects</a></li>
 <li class="chapter" data-level="2.4" data-path="theory.html"><a href="theory.html#year-random-effects"><i class="fa fa-check"></i><b>2.4</b> Year Random Effects</a></li>
 </ul></li>
-<li class="chapter" data-level="3" data-path="data-sources.html"><a href="data-sources.html"><i class="fa fa-check"></i><b>3</b> Data Sources</a><ul>
-<li class="chapter" data-level="3.1" data-path="data-sources.html"><a href="data-sources.html#covariate-datasets"><i class="fa fa-check"></i><b>3.1</b> Covariate Datasets</a><ul>
+<li class="chapter" data-level="3" data-path="data-sources.html"><a href="data-sources.html"><i class="fa fa-check"></i><b>3</b> Data Sources</a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="data-sources.html"><a href="data-sources.html#covariate-datasets"><i class="fa fa-check"></i><b>3.1</b> Covariate Datasets</a>
+<ul>
 <li class="chapter" data-level="3.1.1" data-path="data-sources.html"><a href="data-sources.html#catchment-delineation"><i class="fa fa-check"></i><b>3.1.1</b> Catchment Delineation</a></li>
 <li class="chapter" data-level="3.1.2" data-path="data-sources.html"><a href="data-sources.html#climate-data"><i class="fa fa-check"></i><b>3.1.2</b> Climate Data</a></li>
 <li class="chapter" data-level="3.1.3" data-path="data-sources.html"><a href="data-sources.html#geospatial-characteristics"><i class="fa fa-check"></i><b>3.1.3</b> Geospatial Characteristics</a></li>
 </ul></li>
-<li class="chapter" data-level="3.2" data-path="data-sources.html"><a href="data-sources.html#stream-temperature-observations"><i class="fa fa-check"></i><b>3.2</b> Stream Temperature Observations</a><ul>
+<li class="chapter" data-level="3.2" data-path="data-sources.html"><a href="data-sources.html#stream-temperature-observations"><i class="fa fa-check"></i><b>3.2</b> Stream Temperature Observations</a>
+<ul>
 <li class="chapter" data-level="3.2.1" data-path="data-sources.html"><a href="data-sources.html#data-summary"><i class="fa fa-check"></i><b>3.2.1</b> Data Summary</a></li>
 </ul></li>
 </ul></li>
-<li class="chapter" data-level="4" data-path="data-processing.html"><a href="data-processing.html"><i class="fa fa-check"></i><b>4</b> Data Processing</a><ul>
+<li class="chapter" data-level="4" data-path="data-processing.html"><a href="data-processing.html"><i class="fa fa-check"></i><b>4</b> Data Processing</a>
+<ul>
 <li class="chapter" data-level="4.1" data-path="data-processing.html"><a href="data-processing.html#screen-monitoring-stations"><i class="fa fa-check"></i><b>4.1</b> Screen Monitoring Stations</a></li>
 <li class="chapter" data-level="4.2" data-path="data-processing.html"><a href="data-processing.html#screen-daily-mean-values"><i class="fa fa-check"></i><b>4.2</b> Screen Daily Mean Values</a></li>
 <li class="chapter" data-level="4.3" data-path="data-processing.html"><a href="data-processing.html#combine-overlapping-timeseries"><i class="fa fa-check"></i><b>4.3</b> Combine Overlapping Timeseries</a></li>
@@ -107,23 +143,23 @@
 <li class="chapter" data-level="4.5" data-path="data-processing.html"><a href="data-processing.html#remove-cold-weather-periods"><i class="fa fa-check"></i><b>4.5</b> Remove Cold Weather Periods</a></li>
 <li class="chapter" data-level="4.6" data-path="data-processing.html"><a href="data-processing.html#split-dataset-for-calibration-and-validation"><i class="fa fa-check"></i><b>4.6</b> Split Dataset for Calibration and Validation</a></li>
 </ul></li>
-<li class="chapter" data-level="5" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html"><i class="fa fa-check"></i><b>5</b> Calibration and Validation</a><ul>
-<li class="chapter" data-level="5.1" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#parameter-estimates"><i class="fa fa-check"></i><b>5.1</b> Parameter Estimates</a><ul>
+<li class="chapter" data-level="5" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html"><i class="fa fa-check"></i><b>5</b> Calibration and Validation</a>
+<ul>
+<li class="chapter" data-level="5.1" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#parameter-estimates"><i class="fa fa-check"></i><b>5.1</b> Parameter Estimates</a>
+<ul>
 <li class="chapter" data-level="5.1.1" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#fixed-effects-1"><i class="fa fa-check"></i><b>5.1.1</b> Fixed Effects</a></li>
 <li class="chapter" data-level="5.1.2" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#huc8-random-effects"><i class="fa fa-check"></i><b>5.1.2</b> HUC8 Random Effects</a></li>
 <li class="chapter" data-level="5.1.3" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#catchment-random-effects-1"><i class="fa fa-check"></i><b>5.1.3</b> Catchment Random Effects</a></li>
 <li class="chapter" data-level="5.1.4" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#year-random-effects-1"><i class="fa fa-check"></i><b>5.1.4</b> Year Random Effects</a></li>
 </ul></li>
-<li class="chapter" data-level="5.2" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#goodness-of-fit"><i class="fa fa-check"></i><b>5.2</b> Goodness-of-Fit</a><ul>
-<li class="chapter" data-level="5.2.1" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#all-observations"><i class="fa fa-check"></i><b>5.2.1</b> All Observations</a></li>
-<li class="chapter" data-level="5.2.2" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#deployments"><i class="fa fa-check"></i><b>5.2.2</b> Deployments</a></li>
-<li class="chapter" data-level="5.2.3" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#catchments"><i class="fa fa-check"></i><b>5.2.3</b> Catchments</a></li>
+<li class="chapter" data-level="5.2" data-path="calibration-and-validation.html"><a href="calibration-and-validation.html#goodness-of-fit"><i class="fa fa-check"></i><b>5.2</b> Goodness-of-Fit</a></li>
 </ul></li>
-</ul></li>
-<li class="chapter" data-level="6" data-path="predictions.html"><a href="predictions.html"><i class="fa fa-check"></i><b>6</b> Predictions</a><ul>
+<li class="chapter" data-level="6" data-path="predictions.html"><a href="predictions.html"><i class="fa fa-check"></i><b>6</b> Predictions</a>
+<ul>
 <li class="chapter" data-level="6.1" data-path="predictions.html"><a href="predictions.html#air-temperature-scenarios"><i class="fa fa-check"></i><b>6.1</b> Air Temperature Scenarios</a></li>
 </ul></li>
-<li class="chapter" data-level="7" data-path="download.html"><a href="download.html"><i class="fa fa-check"></i><b>7</b> Download</a><ul>
+<li class="chapter" data-level="7" data-path="download.html"><a href="download.html"><i class="fa fa-check"></i><b>7</b> Download</a>
+<ul>
 <li class="chapter" data-level="7.1" data-path="download.html"><a href="download.html#stream-temperature-model-predictions-dataset"><i class="fa fa-check"></i><b>7.1</b> Stream Temperature Model Predictions Dataset</a></li>
 <li class="chapter" data-level="7.2" data-path="download.html"><a href="download.html#catchment-delineation-shapefiles"><i class="fa fa-check"></i><b>7.2</b> Catchment Delineation Shapefiles</a></li>
 <li class="chapter" data-level="7.3" data-path="download.html"><a href="download.html#catchment-covariates-dataset"><i class="fa fa-check"></i><b>7.3</b> Catchment Covariates Dataset</a></li>
@@ -141,7 +177,7 @@
       <div class="body-inner">
         <div class="book-header" role="navigation">
           <h1>
-            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">SHEDS Northeast Stream Temperature Model</a>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">EcoSHEDS Northeast Stream Temperature Model</a>
           </h1>
         </div>
 
@@ -149,17 +185,18 @@
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="theory" class="section level1">
-<h1><span class="header-section-number">Section 2</span> Theory</h1>
+<div id="theory" class="section level1 hasAnchor" number="2">
+<h1><span class="header-section-number">Section 2</span> Theory<a href="theory.html#theory" class="anchor-section" aria-label="Anchor link to header"></a></h1>
 <p>The stream temperature model is a nested hierarchical Bayesian model that predicts daily stream temperature based on catchment characteristics and climate conditions. An early version of this model can be found in <span class="citation">Letcher et al. (<a href="#ref-Letcher2016">2016</a>)</span>.</p>
 <p>Daily mean stream temperature for each catchment is assumed to be a normally distributed random variable:</p>
 <p><span class="math display">\[t_{h,c,y,d} \sim \mathcal{N}(\mu_{h,c,y,d},\sigma_{[t]})\]</span></p>
 <p>where <span class="math inline">\(t_{h,c,y,d}\)</span> is the mean stream temperature on day <span class="math inline">\(d\)</span> within year <span class="math inline">\(y\)</span> for catchment <span class="math inline">\(c\)</span>, which is located within HUC8 <span class="math inline">\(h\)</span>. This random variable is normally distributed with an expected mean <span class="math inline">\(\mu_{h,c,y,d}\)</span> and standard deviation <span class="math inline">\(\sigma_{[t]}\)</span>.</p>
 <p>The expected mean is computed as:</p>
 <p><span class="math display">\[
-\mu_{h,c,y,d} = \left \{ \begin{array}{l l}
-  \omega_{h,c,y,d} + \delta_{h}(t_{h,c,y,d-1} - \omega_{h,c,y,d-1}) &amp; \quad \text{for } t_{h,c,y,d-1} \text{ is real} \\
-  \omega_{h,c,y,d} &amp; \quad \text{for } t_{h,c,y,d-1} \text{ is not real}
+\mu_{h,c,y,d} = \left \{
+  \begin{array}{l l}
+    \omega_{h,c,y,d} + \delta_{h}(t_{h,c,y,d-1} - \omega_{h,c,y,d-1}) &amp; \quad \text{for } t_{h,c,y,d-1} \text{ is real} \\
+    \omega_{h,c,y,d} &amp; \quad \text{for } t_{h,c,y,d-1} \text{ is not real}
   \end{array} \right.
 \]</span></p>
 <p>where <span class="math inline">\(\delta_h\)</span> is an autoregressive [AR(1)] coefficient and <span class="math inline">\(\omega_{h,c,y,d}\)</span> is the expected temperature before accounting for temporal autocorrelation in the error structure.</p>
@@ -173,8 +210,8 @@
 <li><span class="math inline">\(B_{y}\)</span> is a vector of random effect coefficients for year <span class="math inline">\(y\)</span></li>
 </ul>
 <p>Each of these vectors is multiplied by a corresponding matrix containing the corresponding predictor values (<span class="math inline">\(X\)</span>) of each catchment <span class="math inline">\(c\)</span> (located within HUC <span class="math inline">\(h\)</span>) and on each day <span class="math inline">\(d\)</span> (within year <span class="math inline">\(y\)</span>).</p>
-<div id="fixed-effects" class="section level2">
-<h2><span class="header-section-number">2.1</span> Fixed Effects</h2>
+<div id="fixed-effects" class="section level2 hasAnchor" number="2.1">
+<h2><span class="header-section-number">2.1</span> Fixed Effects<a href="theory.html#fixed-effects" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>The fixed effects are shared among all catchments within the model domain. They include the following terms:</p>
 <table>
 <thead>
@@ -220,6 +257,10 @@
 </table>
 <p>The fixed effects also include the following interaction terms.</p>
 <table>
+<colgroup>
+<col width="36%" />
+<col width="63%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Interaction Term</th>
@@ -274,8 +315,8 @@
 </tbody>
 </table>
 </div>
-<div id="catchment-random-effects" class="section level2">
-<h2><span class="header-section-number">2.2</span> Catchment Random Effects</h2>
+<div id="catchment-random-effects" class="section level2 hasAnchor" number="2.2">
+<h2><span class="header-section-number">2.2</span> Catchment Random Effects<a href="theory.html#catchment-random-effects" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>The random effects for each catchment (<span class="math inline">\(c\)</span>) include the following variables:</p>
 <table>
 <thead>
@@ -300,8 +341,8 @@
 </tbody>
 </table>
 </div>
-<div id="huc-random-effects" class="section level2">
-<h2><span class="header-section-number">2.3</span> HUC Random Effects</h2>
+<div id="huc-random-effects" class="section level2 hasAnchor" number="2.3">
+<h2><span class="header-section-number">2.3</span> HUC Random Effects<a href="theory.html#huc-random-effects" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>The random effects for each HUC (<span class="math inline">\(h\)</span>) include the following variables:</p>
 <table>
 <thead>
@@ -326,8 +367,8 @@
 </tbody>
 </table>
 </div>
-<div id="year-random-effects" class="section level2">
-<h2><span class="header-section-number">2.4</span> Year Random Effects</h2>
+<div id="year-random-effects" class="section level2 hasAnchor" number="2.4">
+<h2><span class="header-section-number">2.4</span> Year Random Effects<a href="theory.html#year-random-effects" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>The random effects for each year (<span class="math inline">\(y\)</span>) include the following variables:</p>
 <table>
 <thead>
@@ -346,10 +387,10 @@
 
 </div>
 </div>
-<h3>References</h3>
-<div id="refs" class="references">
-<div id="ref-Letcher2016">
-<p>Letcher, Benjamin H., Daniel J. Hocking, Kyle O’Neil, Andrew R. Whiteley, Keith H. Nislow, and Matthew J. O’Donnell. 2016. “A Hierarchical Model of Daily Stream Temperature Using Air-Water Temperature Synchronization, Autocorrelation, and Time Lags.” <em>PeerJ</em> 4: e1727. <a href="https://doi.org/10.7717/peerj.1727">https://doi.org/10.7717/peerj.1727</a>.</p>
+<h3>References<a href="references.html#references" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="ref-Letcher2016" class="csl-entry">
+Letcher, Benjamin H., Daniel J. Hocking, Kyle O’Neil, Andrew R. Whiteley, Keith H. Nislow, and Matthew J. O’Donnell. 2016. <span>“A Hierarchical Model of Daily Stream Temperature Using Air-Water Temperature Synchronization, Autocorrelation, and Time Lags.”</span> <em>PeerJ</em> 4: e1727. <a href="https://doi.org/10.7717/peerj.1727">https://doi.org/10.7717/peerj.1727</a>.
 </div>
 </div>
             </section>
@@ -362,7 +403,6 @@
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
-<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
 <script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
 <script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
 <script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
@@ -381,6 +421,7 @@ gitbook.start({
 "weibo": false,
 "instapaper": false,
 "vk": false,
+"whatsapp": false,
 "all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
 },
 "fontsettings": {
@@ -400,7 +441,11 @@ gitbook.start({
 "link": null,
 "text": null
 },
-"download": ["sheds-temp-model.pdf", "sheds-temp-model.epub"],
+"download": ["northeast-temp-model.pdf", "northeast-temp-model.epub"],
+"search": {
+"engine": "fuse",
+"options": null
+},
 "toc": {
 "collapse": "subsection"
 }
@@ -414,7 +459,7 @@ gitbook.start({
     var script = document.createElement("script");
     script.type = "text/javascript";
     var src = "true";
-    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
     if (location.protocol !== "file:")
       if (/^https?:/.test(src))
         src = src.replace(/^https?:/, '');

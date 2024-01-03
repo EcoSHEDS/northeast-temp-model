@@ -1,0 +1,1172 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{book}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+\usepackage{booktabs}
+\usepackage{amsthm}
+\makeatletter
+\def\thm@space@setup{%
+  \thm@preskip=8pt plus 2pt minus 4pt
+  \thm@postskip=\thm@preskip
+}
+\makeatother
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\usepackage[]{natbib}
+\bibliographystyle{apalike}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={EcoSHEDS Northeast Stream Temperature Model},
+  pdfauthor={Developed and maintained by Jeff Walker and Ben Letcher as part of the USGS EcoSHEDS project. Initial model developed by Dan Hocking.},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{EcoSHEDS Northeast Stream Temperature Model}
+\author{Developed and maintained by \href{https://walkerenvres.com}{Jeff Walker} and \href{https://www.usgs.gov/staff-profiles/benjamin-h-letcher}{Ben Letcher} as part of the \href{https://usgs.gov/apps/ecosheds/}{USGS EcoSHEDS} project.Initial model developed by \href{https://hockinglab.weebly.com/}{Dan Hocking}.}
+\date{Latest Version: v1.4.0 (Jan 3, 2024)}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{1}
+\tableofcontents
+}
+\begin{verbatim}
+## -- Attaching core tidyverse packages ------------------------ tidyverse 2.0.0 --
+## v dplyr     1.1.4     v readr     2.1.4
+## v forcats   1.0.0     v stringr   1.5.1
+## v ggplot2   3.4.4     v tibble    3.2.1
+## v lubridate 1.9.3     v tidyr     1.3.0
+## v purrr     1.0.2     
+## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()
+## i Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in readRenviron(version_file): file '../version.sh' cannot be opened
+## for reading
+\end{verbatim}
+
+\chapter{Introduction}\label{intro}
+
+The EcoSHEDS northeast stream temperature model was developed to predict daily stream temperatures at both gaged and ungaged catchments across the northeast U.S. based on geospatial characteristics and weather conditions.
+
+The model is based on a linear mixed effects framework that accounts for spatial and temporal correlations using a hierachical Bayesian structure. \citet{Letcher2016} describe the initial development of this model framework, and apply it to a small region in western Massachusetts. See the \hyperref[model-overview]{Model Overview} section below for a brief introduction to the model, or the \hyperref[theory]{Theory} section a more detailed explanation.
+
+The documentation is divided into the following sections:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \hyperref[intro]{Introduction} : provides an overview the stream temperature model and documentation, as well as a snapshot of the current calibration
+\item
+  \hyperref[theory]{Theory} : describes how the model works including the underlying structure and theory
+\item
+  \hyperref[data-sources]{Data Sources} : describes the datasets used as inputs to the model
+\item
+  \hyperref[data-processing]{Data Processing} : describes how input datasets are processed prior to model fitting (i.e.~QAQC procedures)
+\item
+  \hyperref[calibration-and-validation]{Calibration and Validation} : describes how well the model predicts stream temperature based on observations that were included (calibration) and excluded (validation) from the model fitting process
+\item
+  \hyperref[predictions]{Predictions} : describes how predictions are generated after the model is calibrated and describes the various summary metrics that are computed for each catchment
+\item
+  \hyperref[download]{Download} : provides links to download the model predictions, catchment delineation (shapefiles), and covariates dataset.
+\end{enumerate}
+
+The model will be periodically updated and re-calibrated (approximately once every 6 months) to incorporate any new temperature observations, and to make any necessary revisions to the data processing and/or model structure. With each update, a new version will be assigned to the model, and this documentation website will be updated to reflect the most recent performance of the model. A brief summary of the changes associated with each new version is provided in the \hyperref[change-log]{Change Log} below.
+
+\section{Model Overview}\label{model-overview}
+
+The SHEDS stream temperature model predicts daily mean stream temperature based on geospatial characteristics and daily weather conditions. Predictions are made at a relatively fine spatial resolution based on a customized catchment delineation (average size about 2 km\textsuperscript{2}) across the northeast U.S. from Maine to Virginia. Predictions are limited to streams and rivers with drainage areas less than 200 km\textsuperscript{2}. Heavily impounded rivers are also excluded from the model.
+
+The model uses a hierarchical Bayesian structure to account for spatial correlation in temperature between near-by locations through random effects for both the individual catchments and the larger watershed (HUC8) containing that catchment. Therefore, catchments within the same HUC8 watershed share a set of HUC-specific coefficients. Year to year variations in temperature are also accounted for using a random effect for the year.
+
+\section{Current Snapshot}\label{current-snapshot}
+
+Table \ref{tab:table-intro-gof} provides a snapshot of the calibration and validation performance for the current version of the model (v1.4.0). More details about the model performance can be found in the \hyperref[calibration-and-validation]{Calibration and Validation} section.
+
+\begin{table}
+
+\caption{\label{tab:table-intro-gof}Summary statistics of model calibration and validation}
+\centering
+\begin{tabular}[t]{l|r|r}
+\hline
+ & Calibration & Validation\\
+\hline
+\# Daily Observations & 705,509 & 80,035\\
+\hline
+\# Time Series & 7,814 & 863\\
+\hline
+\# Catchments & 2,971 & 566\\
+\hline
+\# HUC8s & 144 & 109\\
+\hline
+\# Years & 31 & 27\\
+\hline
+RMSE (degC) & 1.061 & 1.342\\
+\hline
+Mean Residual (degC) & 0.061 & 0.079\\
+\hline
+Median Residual (degC) & 0.075 & 0.062\\
+\hline
+Mean Absolute Residual (degC) & 0.813 & 1.021\\
+\hline
+Median Absolute Residual (degC) & 0.649 & 0.805\\
+\hline
+Minimum Residual (degC) & -7.570 & -7.665\\
+\hline
+1st Percentile Residual (degC) & -2.674 & -3.225\\
+\hline
+99th Percentile Residual (degC) & 2.659 & 3.697\\
+\hline
+Maximum Residual (degC) & 9.196 & 7.411\\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Model Versioning}\label{model-versioning}
+
+The SHEDS stream temperature model uses semantic versioning of the form: \texttt{vX.Y.Z}
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{X} is the \textbf{major} version, which will be incremented when there is a major change to the model theory, code, or datasets.
+\item
+  \texttt{Y} is the \textbf{minor} version, which will be incremented when there is a new set of results due to changes in the model code, datasets, processing procedures, etc.
+\item
+  \texttt{Z} is the \textbf{patch} version, which will be incremented only when there is a change to the documentation or code that \emph{does not} yield different results.
+\end{itemize}
+
+\section{Source Code}\label{source-code}
+
+The source code for the model itself and this documentation is available in the Github repository \href{https://github.com/ecosheds/northeast-temp-model}{ecosheds/northeast-temp-model}. Each version of the model will be included under the list of \href{https://github.com/ecosheds/northeast-temp-model/releases}{Releases}.
+
+\section{Change Log}\label{change-log}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{v1.4.0 (Jan 3, 2024)}\\
+  Add 2021-2022 daymet, add stream temperature data from USGS NWIS, re-calibrate full model.
+\item
+  \textbf{v1.3.0 (Sep 7, 2021)}\\
+  Add 2020 daymet, revise data screening procedures, re-calibrate full model.
+\item
+  \textbf{v1.2.0 (Jul 10, 2020)}\\
+  Add 2019 daymet, re-calibrate full model.
+\item
+  \textbf{v1.1.1 (Jan 16, 2020)}\\
+  Add air temperature scenarios (+2, +4, +6 degC), and \# days \textgreater= 24.9 and 27 degC to prediction derived metrics.
+\item
+  \textbf{v1.1.0 (Dec 2, 2019)}\\
+  Add 2018 daymet data, re-calibrated full model.
+\item
+  \textbf{v1.0.2 (Mar 26, 2019)}\\
+  Update documentation, add \hyperref[download]{Download} section containing links to model predictions, catchment delineation, and covariates.
+\item
+  \textbf{v1.0.1 (Dec 10, 2018)}\\
+  Update documentation, remove auto-correlation term from goodness-of-fit summaries
+\item
+  \textbf{v1.0.0 (Oct 25, 2018)}\\
+  Re-calibrated model, and finished documentation.
+\item
+  \textbf{v0.9.2 (Jul 6, 2018)}\\
+  Major updates to documentation (introduction, theory, calibration and validation sections).
+\item
+  \textbf{v0.9.1 (Jun 6, 2018)}\\
+  Updates to model versioning and configuration framework, and minor updates to documentation (still incomplete).
+\item
+  \textbf{v0.9.0 (May 30, 2018)}\\
+  Preliminary release of the new model framework and documentation.
+\item
+  \textbf{\href{https://conte-ecology.github.io/conteStreamTemperature_northeast/}{Previous Versions} (prior to 2018)}\\
+  Previous versions of the stream temperature model can be found \href{https://conte-ecology.github.io/conteStreamTemperature_northeast/}{here}. That website is now deprecated, but will remain available for future reference. Beginning with v1.0.0 of the new framework and codebase, all model changes and results will be tracked and made available.
+\end{itemize}
+
+\chapter{Theory}\label{theory}
+
+The stream temperature model is a nested hierarchical Bayesian model that predicts daily stream temperature based on catchment characteristics and climate conditions. An early version of this model can be found in \citet{Letcher2016}.
+
+Daily mean stream temperature for each catchment is assumed to be a normally distributed random variable:
+
+\[t_{h,c,y,d} \sim \mathcal{N}(\mu_{h,c,y,d},\sigma_{[t]})\]
+
+where \(t_{h,c,y,d}\) is the mean stream temperature on day \(d\) within year \(y\) for catchment \(c\), which is located within HUC8 \(h\). This random variable is normally distributed with an expected mean \(\mu_{h,c,y,d}\) and standard deviation \(\sigma_{[t]}\).
+
+The expected mean is computed as:
+
+\[
+\mu_{h,c,y,d} = \left \{
+  \begin{array}{l l}
+    \omega_{h,c,y,d} + \delta_{h}(t_{h,c,y,d-1} - \omega_{h,c,y,d-1}) & \quad \text{for } t_{h,c,y,d-1} \text{ is real} \\
+    \omega_{h,c,y,d} & \quad \text{for } t_{h,c,y,d-1} \text{ is not real}
+  \end{array} \right.
+\]
+
+where \(\delta_h\) is an autoregressive {[}AR(1){]} coefficient and \(\omega_{h,c,y,d}\) is the expected temperature before accounting for temporal autocorrelation in the error structure.
+
+The expected temperature is computed as a linear equation with four sets of terms:
+
+\[\omega_{h,c,y,d} = X_{[0]} B_{[0]} + X_{h,c} B_{h,c} + X_{h} B_{h} + X_{y} B_{y}\]
+
+where
+
+\begin{itemize}
+\tightlist
+\item
+  \(B_{[0]}\) is a vector of fixed effect coefficients
+\item
+  \(B_{h,c}\) is a vector of random effect coefficients for catchment \(c\)
+\item
+  \(B_{h}\) is a vector of random effect coefficients for HUC \(h\)
+\item
+  \(B_{y}\) is a vector of random effect coefficients for year \(y\)
+\end{itemize}
+
+Each of these vectors is multiplied by a corresponding matrix containing the corresponding predictor values (\(X\)) of each catchment \(c\) (located within HUC \(h\)) and on each day \(d\) (within year \(y\)).
+
+\section{Fixed Effects}\label{fixed-effects}
+
+The fixed effects are shared among all catchments within the model domain. They include the following terms:
+
+\begin{longtable}[]{@{}ll@{}}
+\toprule\noalign{}
+Variable & Description \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{intercept} & Intercept \\
+\texttt{AreaSqKM} & Total Drainage Area (km2) \\
+\texttt{impoundArea} & Impounded Drainage Area (km2) \\
+\texttt{agriculture} & Agricultural Land Cover (\%) \\
+\texttt{devel\_hi} & High Development Land Cover (\%) \\
+\texttt{forest} & Riparian (200 ft Buffer) Forest Cover (\%) \\
+\texttt{prcp2} & 2-day Precipitation (mm) \\
+\texttt{prcp30} & 30-day Precipitation (mm) \\
+\end{longtable}
+
+The fixed effects also include the following interaction terms.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.3684}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.6316}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Interaction Term
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Description
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{prcp2.da} & 2-day Precipitaation x Drainage Area \\
+\texttt{prcp30.da} & 30-day Precipitaation x Drainage Area \\
+\texttt{airTemp.da} & Air Temperature x Total Drainage Area \\
+\texttt{airTemp.impoundArea} & Air Temperature x Impounded Drainage Area \\
+\texttt{airTemp.agriculture} & Air Temperature x Agricultural Land Cover \\
+\texttt{airTemp.forest} & Air Temperature x Riparian (200 ft Buffer) Forest Cover \\
+\texttt{airTemp.devel\_hi} & Air Temperature x High Development Land Cover \\
+\texttt{airTemp.prcp2} & Air Temperature x 2-day Precipitation \\
+\texttt{airTemp.prcp30} & Air Temperature x 30-day Precipitation \\
+\texttt{airTemp.prcp2.da} & Air Temperature x 2-day Precipitation x Drainage Area \\
+\texttt{airTemp.prcp30.da} & Air Temperature x 30-day Precipitation x Drainage Area \\
+\end{longtable}
+
+\section{Catchment Random Effects}\label{catchment-random-effects}
+
+The random effects for each catchment (\(c\)) include the following variables:
+
+\begin{longtable}[]{@{}ll@{}}
+\toprule\noalign{}
+Variable & Description \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{intercept} & Intercept \\
+\texttt{airTemp} & Air Temperature (degC) \\
+\texttt{temp7p} & 7-day Mean Air Temperature (degC) \\
+\end{longtable}
+
+\section{HUC Random Effects}\label{huc-random-effects}
+
+The random effects for each HUC (\(h\)) include the following variables:
+
+\begin{longtable}[]{@{}ll@{}}
+\toprule\noalign{}
+Variable & Description \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{intercept} & Intercept \\
+\texttt{airTemp} & Air Temperature (degC) \\
+\texttt{temp7p} & 7-day Mean Air Temperature (degC) \\
+\end{longtable}
+
+\section{Year Random Effects}\label{year-random-effects}
+
+The random effects for each year (\(y\)) include the following variables:
+
+\begin{longtable}[]{@{}ll@{}}
+\toprule\noalign{}
+Variable & Description \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{intercept} & Intercept \\
+\end{longtable}
+
+\chapter{Data Sources}\label{data-sources}
+
+\section{Covariate Datasets}\label{covariate-datasets}
+
+\subsection{Catchment Delineation}\label{catchment-delineation}
+
+The stream temperature model uses the \href{https://ecosheds.github.io/necd/}{National Hydrography Dataset High Resolution Delineation Version 2 (NHDHRDV2)} catchment delineation.
+
+Shapefiles of the catchments can be downloaded from: \url{https://ecosheds.org/assets/nhdhrd/v2/}
+
+The \texttt{spatial\_XX.zip} files contain pre-staged datasets for each HUC2 region (e.g.~spatial\_01.zip contains the catchments for the HUC2 region 01).
+
+\subsection{Climate Data}\label{climate-data}
+
+Daily air temperature and precipitation were obtained from the \href{https://daymet.ornl.gov/}{Daymet V3} gridded estimates of daily weather parameters for North America. The raw Daymet datasets (NetCDF4 files) were processed using the code in \href{https://github.com/walkerjeffd/sheds-daymet}{\texttt{walkerjeffd/sheds-daymet}}.
+
+\subsection{Geospatial Characteristics}\label{geospatial-characteristics}
+
+Geospatial characteristics of each catchment were generated using the code in \href{https://github.com/Conte-Ecology/shedsGisData/tree/master/basinCharacteristics}{basinCharacteristics}. More information can be found on the \href{https://ecosheds.github.io/necd/}{SHEDS GIS Data} page.
+
+\section{Stream Temperature Observations}\label{stream-temperature-observations}
+
+Temperature observations extractd from the \href{http://db.ecosheds.org}{SHEDS Stream Temperature Database}, which contains data uploaded from numerous state and federal agencies, universities, and non-profit organizations.
+
+\subsection{Data Summary}\label{data-summary}
+
+The following table summarizes the number of monitoring stations, deployments, and total observations for each agency and organization.
+
+\begin{tabular}{l|l|r|r|r}
+\hline
+Agency ID & Agency Description & \# Stations & \# Deployments & \# Observations\\
+\hline
+ARWC & Androscoggin River Watershed Council & 44 & 18 & 0\\
+\hline
+AsRA & Ausable River Association & 18 & 9 & 0\\
+\hline
+BCDEPS & Baltimore County Department of Environmental Protection and Sustainability & 28 & 23 & 0\\
+\hline
+BSP & Baxter State Park & 184 & 11 & 0\\
+\hline
+CTDEEP & CT Department of Energy and Environmental Protection & 5,064 & 1,128 & 0\\
+\hline
+CTVOLMON & CT Volunteer Monitoring & 808 & 324 & 0\\
+\hline
+FRITSCHIE & Keith Fritschie, Dartmouth & 67 & 67 & 0\\
+\hline
+GOMRHN & Gulf of Maine River Herring Network & 16 & 15 & 0\\
+\hline
+HAYDEN & Michael Hayden & 75 & 7 & 0\\
+\hline
+HBM & Houlton Band of Malisset & 1 & 1 & 0\\
+\hline
+HCSWCD & Hancock County Soil and Water Conservation District & 19 & 10 & 0\\
+\hline
+HMF & Hopkins Memorial Forest & 4 & 4 & 0\\
+\hline
+HVA\_BERKSHIRE & Housatonic Valley Association, Berkshires & 17 & 17 & 0\\
+\hline
+JMU & James Madison University & 7 & 7 & 0\\
+\hline
+MADEP & MA Department of Environmental Protection & 1,768 & 548 & 0\\
+\hline
+MAFW & MA Fish and Wildlife & 48 & 48 & 0\\
+\hline
+MAFW\_RQ & MA Division of Fish and Wildlife, Rebecca Quinones & 37 & 35 & 0\\
+\hline
+MBSS & Maryland Biological Stream Survey & 474 & 474 & 0\\
+\hline
+MEDEP & ME Department of Environmental Protection & 1,368 & 544 & 0\\
+\hline
+MEDMR & Maine Department of Marine Resources & 57 & 29 & 0\\
+\hline
+MEDOT & ME Department of Transportation & 3 & 3 & 0\\
+\hline
+MEIFW & ME Inland Fisheries and Wildlife & 290 & 158 & 0\\
+\hline
+ME\_MC & Midcoast Conservancy & 29 & 17 & 0\\
+\hline
+MRWC & Miller's River Watershed Council & 38 & 18 & 0\\
+\hline
+NHDES & NH Department of Environmental Services & 18 & 18 & 0\\
+\hline
+NHFG & NH Department of Fish and Game & 25 & 25 & 0\\
+\hline
+NJDEP & New Jersey Department of Environmental Protection & 8 & 8 & 0\\
+\hline
+NJDFW & NJ Dept of Environmental Protection, Div of Fish and Wildlife & 154 & 154 & 0\\
+\hline
+NOAA & National Oceanic and Atmospheric Administration & 292 & 29 & 0\\
+\hline
+NPS\_SNHA & National Park Service, Susquehanna National Heritage Area & 31 & 31 & 0\\
+\hline
+NPS\_UDR & National Park Service, Upper Delaware River & 20 & 16 & 0\\
+\hline
+NRWA & Nashua River Watershed Association & 15 & 13 & 0\\
+\hline
+NYDEC & NY Department of Environmental Conservation & 1,110 & 444 & 0\\
+\hline
+OARS & OARS & 12 & 7 & 0\\
+\hline
+PINDNR & Penobscot Indian Nation Department of Natural Resources & 84 & 37 & 0\\
+\hline
+PSU & Plymouth State University & 134 & 117 & 0\\
+\hline
+RIDEM & Rhode Island Department of Environmental Management & 225 & 175 & 0\\
+\hline
+SRBC & Susquehanna River Basin Commission & 351 & 60 & 0\\
+\hline
+SRCC & Saco River Corridor Commission & 8 & 8 & 0\\
+\hline
+SVWA & Southeastern Vermont Watershed Alliance & 5 & 5 & 0\\
+\hline
+TNC\_NJ & The Nature Conservancy, New Jersey & 46 & 15 & 0\\
+\hline
+TU & Trout Unlimited & 22 & 12 & 0\\
+\hline
+TU\_ADK & Trout Unlimited, Adirondacks & 62 & 61 & 0\\
+\hline
+TU\_AF & Trout Unlimited, Art Flick Chapter & 22 & 8 & 0\\
+\hline
+TU\_CLEARWATER & Trout Unlimited, Clearwater Chapter & 61 & 30 & 0\\
+\hline
+TU\_DW & Trout Unlimited, Deerfield Watershed & 35 & 13 & 0\\
+\hline
+TU\_HOME & Trout Unlimited, Homewaters Chapter & 10 & 10 & 0\\
+\hline
+TU\_HR & Trout Unlimited, Housatonic River & 7 & 2 & 0\\
+\hline
+TU\_KV & Trout Unlimited, Kennebec Valley & 13 & 13 & 0\\
+\hline
+TU\_MMB & Trout Unlimited, Merry Meeting Bay & 81 & 21 & 0\\
+\hline
+TU\_NJ & Trout Unlimited, New Jersey Chapter & 62 & 62 & 0\\
+\hline
+TU\_NY & Trout Unlimited, New York Chapter & 43 & 43 & 0\\
+\hline
+UMAINE & University of Maine & 12 & 6 & 0\\
+\hline
+UMASS\_USGS & UMass USGS Cooperative Unit & 505 & 179 & 0\\
+\hline
+UNITY & Unity College & 8 & 4 & 0\\
+\hline
+USFS & US Forest Service & 521 & 136 & 0\\
+\hline
+USFS\_SRS & US Forest Service Southern Research Station & 8 & 8 & 0\\
+\hline
+USFWS\_LGL & US Fish and Wildlife Service, Lower Great Lakes FWCO & 11 & 11 & 0\\
+\hline
+USFWS\_ME & US Fish and Wildlife Service, Maine Field Office & 470 & 336 & 0\\
+\hline
+USFWS\_MNWR & US Fish and Wildlife Service, Moosehorn National Wildlife Refuge & 16 & 15 & 0\\
+\hline
+USGS & U.S. Geological Survey & 310 & 57 & 0\\
+\hline
+USGS\_BRD & US Geological Survey BRD & 11 & 11 & 0\\
+\hline
+USGS\_Conte & USGS S.O. Conte Anadromous Fish Research Lab & 383 & 84 & 0\\
+\hline
+USGS\_Leetown & USGS Leetown Science Center & 115 & 114 & 0\\
+\hline
+USGS\_POTOMAC & USGS Eastern Ecological Science Center, Potomac Watershed & 10 & 10 & 0\\
+\hline
+VAHUDY & VA HUDY & 33 & 33 & 0\\
+\hline
+VTFWD & VT Fish and Wildlife Department & 489 & 421 & 0\\
+\hline
+WVDEP & West Virginia, Dept. of Environmental Protection & 68 & 42 & 0\\
+\hline
+WVDNR & WV Department of Natural Resources & 214 & 214 & 0\\
+\hline
+\end{tabular}
+
+\chapter{Data Processing}\label{data-processing}
+
+A series of automated data screening and QA/QC procedures are used to process the raw stream temperature observations, and generate the final input dataset of mean daily stream temperatures, which is then used to calibrate and validate the model.
+
+Processing of the raw stream temperature observations involves the following steps:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Screen monitoring stations based on location and drainage area characteristics
+\item
+  Aggregate instantaneous observations to daily time steps
+\item
+  Screen daily mean temperature values and time series according to various QA/QC tests
+\item
+  Aggregate daily time series measured at multiple stations within a single catchment
+\item
+  Screen time series to exclude cold weather conditions when air temperature and water temperature are de-coupled
+\item
+  Split the final dataset into subsets for calibration (90\% of time series) and validation (10\% of time series)
+\end{enumerate}
+
+\section{Screen Monitoring Stations}\label{screen-monitoring-stations}
+
+The full set of monitoring stations are first screened to exclude those that meet the following criteria:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Located within 100 m of an impoundment
+\item
+  Located within a tidal zone
+\item
+  Located within a catchment having a drainage area greater than 200 sq km
+\item
+  Located within a catchment having a drainage area with greater than 50\% coverage by open water or wetlands
+\end{enumerate}
+
+\section{Screen Daily Mean Values}\label{screen-daily-mean-values}
+
+After screening for the monitoring stations, the remaining time series are screened according to the following criteria:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Remove daily values that have user-defined flag stored in the database
+\item
+  Remove daily values with mean temp \textless{} -25 degC
+\item
+  Remove daily values with mean or max temp \textgreater{} 35 degC
+\item
+  Remove time series with a high correlation between daily mean water and air temperature, which are suspected to be measurements of air temperature
+\item
+  Remove time series with fewer than 5 days of observations
+\item
+  Remove first and/or last day of each timeseries if the number of observations on those days is less than the median number of observations per day for the whole series (i.e.~the first and/or last day are incomplete)
+\end{enumerate}
+
+\section{Combine Overlapping Timeseries}\label{combine-overlapping-timeseries}
+
+If there are two or more overlapping time series at a single monitoring station, then those time series are combined by:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Compute the overall mean value on each date of the overlapping time series.
+\item
+  Remove any daily values having more than one time series and a difference in mean observed temperature greater than 5 deg C between those time series
+\end{enumerate}
+
+\section{Screen Multiple Locations within Single Catchment}\label{screen-multiple-locations-within-single-catchment}
+
+If there are multiple stations within a single catchment, then only one station is retained to represent that catchment based on the following criteria:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Exclude stations located more than 60 m from the main flowline of the catchment
+\item
+  If more than one station remains, choose the stations with greatest number of observations between April and October
+\item
+  If more than one station still remains, choose the station located nearest to the pour point of the catchment
+\end{enumerate}
+
+\section{Remove Cold Weather Periods}\label{remove-cold-weather-periods}
+
+Lastly, each time series are truncated to the seasonal period during which water temperature and air temperature are coupled to exclude observations during cold weather periods.
+
+\section{Split Dataset for Calibration and Validation}\label{split-dataset-for-calibration-and-validation}
+
+The final dataset of mean daily stream temperature observations are then split for calibration and validation. The split is performed by randomly selecting 90\% of the time series for calibration, and using the remaining 10\% for validation.
+
+\chapter{Calibration and Validation}\label{calibration-and-validation}
+
+After processing all of the data, the model was fitted using jags. The observation dataset was split into 80\% for calibration, 20\% for validation.
+
+\section{Parameter Estimates}\label{parameter-estimates}
+
+\subsection{Fixed Effects}\label{fixed-effects-1}
+
+Figure \ref{fig:plot-params-fixed} and Table \ref{tab:table-params-fixed} present the estimated mean and 95\% credible region interval (CRI) of each fixed effect parameter. The intercept term is not shown in the figure because the values are much larger than the other parameters, and would thus skew the scale.
+
+\begin{figure}
+\centering
+\includegraphics{northeast-temp-model_files/figure-latex/plot-params-fixed-1.pdf}
+\caption{\label{fig:plot-params-fixed}Estimated Mean and 95\% CRI of Fixed Effects}
+\end{figure}
+
+\textbackslash begin\{table\}
+
+\textbackslash caption\{\label{tab:table-params-fixed}Estimated Mean and 95\% CRI of Fixed Effects\}
+\centering
+
+\begin{tabular}[t]{l|r|r|r}
+\hline
+Variable & Mean & Lower CRI & Upper CRI\\
+\hline
+intercept & 16.831668438 & 16.682524667 & 16.975449785\\
+\hline
+AreaSqKM & 0.290520111 & 0.214532987 & 0.367534804\\
+\hline
+impoundArea & 0.456016628 & 0.380017105 & 0.532435569\\
+\hline
+agriculture & -0.180179569 & -0.237304212 & -0.124162093\\
+\hline
+devel\_hi & -0.123342802 & -0.174409953 & -0.070354748\\
+\hline
+forest & -0.453606158 & -0.521601617 & -0.385848596\\
+\hline
+prcp2 & 0.037368478 & 0.035442637 & 0.039230802\\
+\hline
+prcp30 & 0.033889432 & 0.027601220 & 0.039870142\\
+\hline
+prcp2.da & -0.044082207 & -0.045919083 & -0.042220414\\
+\hline
+prcp30.da & -0.080723453 & -0.086901209 & -0.074180702\\
+\hline
+airTemp.da & 0.025152719 & 0.001480242 & 0.047233232\\
+\hline
+airTemp.impoundArea & -0.054816312 & -0.077282009 & -0.031984213\\
+\hline
+airTemp.agriculture & -0.001544660 & -0.019411269 & 0.015453974\\
+\hline
+airTemp.forest & -0.026747107 & -0.046134745 & -0.006951219\\
+\hline
+airTemp.devel\_hi & -0.018879464 & -0.033975352 & -0.003815090\\
+\hline
+airTemp.prcp2 & 0.015308325 & 0.013553468 & 0.017116532\\
+\hline
+airTemp.prcp30 & -0.058429824 & -0.061922872 & -0.054993205\\
+\hline
+airTemp.prcp2.da & -0.007801793 & -0.009506454 & -0.006054510\\
+\hline
+airTemp.prcp30.da & -0.011195140 & -0.014792829 & -0.007682154\\
+\hline
+\end{tabular}
+
+\textbackslash end\{table\}
+
+\subsection{HUC8 Random Effects}\label{huc8-random-effects}
+
+Figure \ref{fig:plot-params-huc8} shows the estimated mean and 95\% credible region interval (CRI) for each random effect and HUC8. Table \ref{tab:table-params-huc8} lists the estimated mean and 95\% CRI of each parameter averaged over all HUC8s (mean value with standard deviation in parentheses).
+
+\begin{figure}
+\centering
+\includegraphics{northeast-temp-model_files/figure-latex/plot-params-huc8-1.pdf}
+\caption{\label{fig:plot-params-huc8}Estimated Mean and 95\% CRI of HUC Random Effects for Each HUC8}
+\end{figure}
+
+\textbackslash begin\{table\}
+
+\textbackslash caption\{\label{tab:table-params-huc8}Mean and 95\% CRI of HUC8 Random Effects Averaged Over All HUC8s (Mean Value and Std. Dev. in Parentheses)\}
+\centering
+
+\begin{tabular}[t]{l|r|r|r|r}
+\hline
+Variable & Count & Mean & Lower CRI & Upper CRI\\
+\hline
+intercept.huc & 144 & -0.001 (0.467) & -0.680 (0.538) & 0.677 (0.512)\\
+\hline
+airTemp & 144 & 2.009 (0.169) & 1.781 (0.210) & 2.236 (0.180)\\
+\hline
+temp7p & 144 & 1.552 (0.335) & 1.200 (0.371) & 1.906 (0.377)\\
+\hline
+\end{tabular}
+
+\textbackslash end\{table\}
+
+\subsection{Catchment Random Effects}\label{catchment-random-effects-1}
+
+Figure \ref{fig:plot-params-catchment} shows the distribution of the estimated mean for each random effect term over all catchments. CRIs are not shown due to the large number of individual catchments (8913). Table \ref{tab:table-params-catchment} lists the estimated mean and 95\% CRI of each parameter averaged over all catchments (mean value with standard deviation in parentheses).
+
+\begin{figure}
+\centering
+\includegraphics{northeast-temp-model_files/figure-latex/plot-params-catchment-1.pdf}
+\caption{\label{fig:plot-params-catchment}Distribution of estimated mean for each random effect over all catchments}
+\end{figure}
+
+\textbackslash begin\{table\}
+
+\textbackslash caption\{\label{tab:table-params-catchment}Estimated mean and 95\% CRI for each random effect averaged over all catchments (mean value with std. dev. in parentheses)\}
+\centering
+
+\begin{tabular}[t]{l|r|r|r|r}
+\hline
+Variable & Count & Mean & Lower CRI & Upper CRI\\
+\hline
+intercept.site & 2,971 & -0.000 (1.254) & -0.721 (1.267) & 0.721 (1.281)\\
+\hline
+airTemp & 2,971 & 0.000 (0.319) & -0.283 (0.331) & 0.283 (0.336)\\
+\hline
+temp7p & 2,971 & -0.000 (0.366) & -0.500 (0.433) & 0.499 (0.370)\\
+\hline
+\end{tabular}
+
+\textbackslash end\{table\}
+
+\subsection{Year Random Effects}\label{year-random-effects-1}
+
+Figure \ref{fig:plot-params-year} and Table \ref{tab:table-params-year} present the mean and 95\% CRI of the intercept term for each year. Recall that there are no random effects for years other than the intercept.
+
+\begin{figure}
+\centering
+\includegraphics{northeast-temp-model_files/figure-latex/plot-params-year-1.pdf}
+\caption{\label{fig:plot-params-year}Estimated Mean and 95\% CRI of Intercept Random Effect for Each Year}
+\end{figure}
+
+\textbackslash begin\{table\}
+
+\textbackslash caption\{\label{tab:table-params-year}Estimated Mean and 95\% CRI of Intercept Random Effect for Each Year\}
+\centering
+
+\begin{tabular}[t]{l|r|r|r}
+\hline
+Year & Mean & Lower CRI & Upper CRI\\
+\hline
+1991 & 0.012 & -0.317 & 0.324\\
+\hline
+1993 & 0.181 & -0.100 & 0.500\\
+\hline
+1994 & 0.162 & -0.122 & 0.486\\
+\hline
+1995 & -0.069 & -0.314 & 0.160\\
+\hline
+1996 & -0.129 & -0.352 & 0.088\\
+\hline
+1997 & 0.074 & -0.119 & 0.280\\
+\hline
+1998 & 0.006 & -0.214 & 0.222\\
+\hline
+1999 & -0.032 & -0.198 & 0.143\\
+\hline
+2000 & -0.322 & -0.439 & -0.209\\
+\hline
+2001 & 0.186 & 0.084 & 0.287\\
+\hline
+2002 & -0.014 & -0.119 & 0.090\\
+\hline
+2003 & -0.070 & -0.174 & 0.031\\
+\hline
+2004 & 0.061 & -0.039 & 0.161\\
+\hline
+2005 & 0.050 & -0.056 & 0.154\\
+\hline
+2006 & -0.178 & -0.268 & -0.087\\
+\hline
+2007 & -0.179 & -0.276 & -0.085\\
+\hline
+2008 & 0.098 & -0.001 & 0.194\\
+\hline
+2009 & -0.126 & -0.218 & -0.036\\
+\hline
+2010 & 0.071 & -0.011 & 0.152\\
+\hline
+2011 & -0.086 & -0.168 & -0.011\\
+\hline
+2012 & 0.208 & 0.132 & 0.284\\
+\hline
+2013 & 0.135 & 0.059 & 0.208\\
+\hline
+2014 & -0.024 & -0.097 & 0.049\\
+\hline
+2015 & -0.214 & -0.291 & -0.143\\
+\hline
+2016 & 0.162 & 0.088 & 0.235\\
+\hline
+2017 & -0.152 & -0.226 & -0.080\\
+\hline
+2018 & 0.205 & 0.126 & 0.282\\
+\hline
+2019 & -0.072 & -0.151 & 0.007\\
+\hline
+2020 & 0.044 & -0.036 & 0.123\\
+\hline
+2021 & -0.035 & -0.119 & 0.047\\
+\hline
+2022 & 0.043 & -0.049 & 0.132\\
+\hline
+\end{tabular}
+
+\textbackslash end\{table\}
+
+\section{Goodness-of-Fit}\label{goodness-of-fit}
+
+Table \ref{tab:table-gof} summarizes the model goodness-of-fit for all observations in the calibration and validation datasets.
+
+\begin{table}
+
+\caption{\label{tab:table-gof}Summary statistics of model calibration and validation}
+\centering
+\begin{tabular}[t]{l|r|r}
+\hline
+ & Calibration & Validation\\
+\hline
+\# Daily Observations & 705,509 & 80,035\\
+\hline
+\# Time Series & 7,814 & 863\\
+\hline
+\# Catchments & 2,971 & 566\\
+\hline
+\# HUC8s & 144 & 109\\
+\hline
+\# Years & 31 & 27\\
+\hline
+RMSE (degC) & 1.061 & 1.342\\
+\hline
+Mean Residual (degC) & 0.061 & 0.079\\
+\hline
+Median Residual (degC) & 0.075 & 0.062\\
+\hline
+Mean Absolute Residual (degC) & 0.813 & 1.021\\
+\hline
+Median Absolute Residual (degC) & 0.649 & 0.805\\
+\hline
+Minimum Residual (degC) & -7.570 & -7.665\\
+\hline
+1st Percentile Residual (degC) & -2.674 & -3.225\\
+\hline
+99th Percentile Residual (degC) & 2.659 & 3.697\\
+\hline
+Maximum Residual (degC) & 9.196 & 7.411\\
+\hline
+\end{tabular}
+\end{table}
+
+Figure \ref{fig:splot-calib-valid-pred} presents scatterplots of predicted vs.~observed daily mean temperature for the calibration and validation datasets. The black line is the 1:1 line of equality. The red line is a linear regression trend line.
+
+\begin{figure}
+\centering
+\includegraphics{northeast-temp-model_files/figure-latex/splot-calib-valid-pred-1.pdf}
+\caption{\label{fig:splot-calib-valid-pred}Predicted versus Observed Daily Mean Temperature (degC) for Calibration and Validation Datasets}
+\end{figure}
+
+\chapter{Predictions}\label{predictions}
+
+Once calibrated, the model is used to generate stream temperature predictions for all catchments in the region having drainage areas less than 200 sq km and less than 70\% open water coverage.
+
+First, daily time series of predicted mean temperature are generated for each catchment. The daily predictions are then aggregated by year by calculated various metrics such as mean monthly temperatures and frequencies of exceeding various thresholds. Lastly, the annual temperature metrics are aggregated by catchment over all years in the historical period of record.
+
+For each catchment, predictions are generated by the following steps:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Calculate the predicted daily mean stream temperature for each year in the historical period of record (1980 - 2022) during the months of June, July and August
+\item
+  For each month and year, calculate the following metrics:
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Mean monthly temperature (June, July, August)
+  \item
+    Mean and maximum summer temperature (June 1 - August 31)
+  \item
+    Maximum 30-day rolling mean temperature
+  \item
+    Number of days with temperature exceeding 18, 20, and 22 deg C
+  \item
+    Resistivity computed as the sum of the absolute difference between the predicted stream temperature and the daily mean air temperature (June 1 to August 31)
+  \end{itemize}
+\item
+  For each catchment, the annual metrics from the previous step are aggregated by calculating the following metrics over all years:
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Mean monthly (June, July, August) and summer (June 1 - August 31) temperature
+  \item
+    Mean and maximum of the annual maximum summer temperature
+  \item
+    Mean of the annual maximum 30-dy rolling mean temperature
+  \item
+    Mean number of days per year exceeding 18, 20, and 22 deg C
+  \item
+    Mean resistivity
+  \end{itemize}
+\end{enumerate}
+
+Figure \ref{fig:plot-pred-hist} shows the distribution (histogram) of each final metric for all catchments.
+
+\begin{figure}
+\centering
+\includegraphics{northeast-temp-model_files/figure-latex/plot-pred-hist-1.pdf}
+\caption{\label{fig:plot-pred-hist}Distributions of Catchment Derived Metrics}
+\end{figure}
+
+\section{Air Temperature Scenarios}\label{air-temperature-scenarios}
+
+Beginning with \texttt{v1.1.1}, the prediction metrics described above are generated for a series of climate change scenarios with air temperatures increasing by 2, 4, and 6 degC. These scenarios are calculated by increasing each daily air temperature by the respective amount. In other words, these scenarios assume a uniform increase in air temperature, which does not vary seasonally.
+
+Figure \ref{fig:plot-pred-air-temp} shows the distribution of mean July stream temperature among all catchments for each air temperature scenario.
+
+\begin{figure}
+\centering
+\includegraphics{northeast-temp-model_files/figure-latex/plot-pred-air-temp-1.pdf}
+\caption{\label{fig:plot-pred-air-temp}Distributions of Mean July Stream Temperature with Varying Air Temperature Increases}
+\end{figure}
+
+\chapter{Download}\label{download}
+
+\section{Stream Temperature Model Predictions Dataset}\label{stream-temperature-model-predictions-dataset}
+
+The stream temperature model predictions can be downloaded as a static CSV file from the following link.
+
+\begin{quote}
+\textbf{\href{https://ecosheds.s3.amazonaws.com/northeast-temp-model/output/sheds-temp-model-v1.4.0.csv}{Stream Temperature Predictions v1.4.0 (csv)}}
+\end{quote}
+
+This file contains the following columns:
+
+\begin{tabular}{r|l}
+\hline
+CSV Column & Description\\
+\hline
+featureid & Catchment ID\\
+\hline
+max\_max\_temp & Maximum Temp (degC)\\
+\hline
+max\_max\_temp\_air2 & Maximum Temp (degC) w/ Air Temp +2 degC\\
+\hline
+max\_max\_temp\_air4 & Maximum Temp (degC) w/ Air Temp +4 degC\\
+\hline
+max\_max\_temp\_air6 & Maximum Temp (degC) w/ Air Temp +6 degC\\
+\hline
+max\_temp\_30d & Max 30-day Mean Temp (degC)\\
+\hline
+max\_temp\_30d\_air2 & Max 30-day Mean Temp (degC) w/ Air Temp +2 degC\\
+\hline
+max\_temp\_30d\_air4 & Max 30-day Mean Temp (degC) w/ Air Temp +4 degC\\
+\hline
+max\_temp\_30d\_air6 & Max 30-day Mean Temp (degC) w/ Air Temp +6 degC\\
+\hline
+mean\_aug\_temp & Mean August Temp (degC)\\
+\hline
+mean\_aug\_temp\_air2 & Mean August Temp (degC) w/ Air Temp +2 degC\\
+\hline
+mean\_aug\_temp\_air4 & Mean August Temp (degC) w/ Air Temp +4 degC\\
+\hline
+mean\_aug\_temp\_air6 & Mean August Temp (degC) w/ Air Temp +6 degC\\
+\hline
+mean\_jul\_temp & Mean July Temp (degC)\\
+\hline
+mean\_jul\_temp\_air2 & Mean July Temp (degC) w/ Air Temp +2 degC\\
+\hline
+mean\_jul\_temp\_air4 & Mean July Temp (degC) w/ Air Temp +4 degC\\
+\hline
+mean\_jul\_temp\_air6 & Mean July Temp (degC) w/ Air Temp +6 degC\\
+\hline
+mean\_jun\_temp & Mean June Temp (degC)\\
+\hline
+mean\_jun\_temp\_air2 & Mean June Temp (degC) w/ Air Temp +2 degC\\
+\hline
+mean\_jun\_temp\_air4 & Mean June Temp (degC) w/ Air Temp +4 degC\\
+\hline
+mean\_jun\_temp\_air6 & Mean June Temp (degC) w/ Air Temp +6 degC\\
+\hline
+mean\_max\_temp & Mean Annual Max Temp (degC)\\
+\hline
+mean\_max\_temp\_air2 & Mean Annual Max Temp (degC) w/ Air Temp +2 degC\\
+\hline
+mean\_max\_temp\_air4 & Mean Annual Max Temp (degC) w/ Air Temp +4 degC\\
+\hline
+mean\_max\_temp\_air6 & Mean Annual Max Temp (degC) w/ Air Temp +6 degC\\
+\hline
+mean\_summer\_temp & Mean Summer Temp (degC)\\
+\hline
+mean\_summer\_temp\_air2 & Mean Summer Temp (degC) w/ Air Temp +2 degC\\
+\hline
+mean\_summer\_temp\_air4 & Mean Summer Temp (degC) w/ Air Temp +4 degC\\
+\hline
+mean\_summer\_temp\_air6 & Mean Summer Temp (degC) w/ Air Temp +6 degC\\
+\hline
+n\_day\_temp\_gt\_18 & Mean \# Days per Year Temp > 18 C\\
+\hline
+n\_day\_temp\_gt\_18\_air2 & Mean \# Days per Year Temp > 18 C w/ Air Temp +2 degC\\
+\hline
+n\_day\_temp\_gt\_18\_air4 & Mean \# Days per Year Temp > 18 C w/ Air Temp +4 degC\\
+\hline
+n\_day\_temp\_gt\_18\_air6 & Mean \# Days per Year Temp > 18 C w/ Air Temp +6 degC\\
+\hline
+n\_day\_temp\_gt\_20 & Mean \# Days per Year Temp > 20 C\\
+\hline
+n\_day\_temp\_gt\_20\_air2 & Mean \# Days per Year Temp > 20 C w/ Air Temp +2 degC\\
+\hline
+n\_day\_temp\_gt\_20\_air4 & Mean \# Days per Year Temp > 20 C w/ Air Temp +4 degC\\
+\hline
+n\_day\_temp\_gt\_20\_air6 & Mean \# Days per Year Temp > 20 C w/ Air Temp +6 degC\\
+\hline
+n\_day\_temp\_gt\_22 & Mean \# Days per Year Temp > 22 C\\
+\hline
+n\_day\_temp\_gt\_22\_air2 & Mean \# Days per Year Temp > 22 C w/ Air Temp +2 degC\\
+\hline
+n\_day\_temp\_gt\_22\_air4 & Mean \# Days per Year Temp > 22 C w/ Air Temp +4 degC\\
+\hline
+n\_day\_temp\_gt\_22\_air6 & Mean \# Days per Year Temp > 22 C w/ Air Temp +6 degC\\
+\hline
+n\_day\_temp\_gte\_24\_9 & Mean \# Days per Year Temp >= 24.9 C\\
+\hline
+n\_day\_temp\_gte\_24\_9\_air2 & Mean \# Days per Year Temp >= 24.9 C w/ Air Temp +2 degC\\
+\hline
+n\_day\_temp\_gte\_24\_9\_air4 & Mean \# Days per Year Temp >= 24.9 C w/ Air Temp +4 degC\\
+\hline
+n\_day\_temp\_gte\_24\_9\_air6 & Mean \# Days per Year Temp >= 24.9 C w/ Air Temp +6 degC\\
+\hline
+n\_day\_temp\_gte\_27 & Mean \# Days per Year Temp >= 27 C\\
+\hline
+n\_day\_temp\_gte\_27\_air2 & Mean \# Days per Year Temp >= 27 C w/ Air Temp +2 degC\\
+\hline
+n\_day\_temp\_gte\_27\_air4 & Mean \# Days per Year Temp >= 27 C w/ Air Temp +4 degC\\
+\hline
+n\_day\_temp\_gte\_27\_air6 & Mean \# Days per Year Temp >= 27 C w/ Air Temp +6 degC\\
+\hline
+resist & Resistivity\\
+\hline
+resist\_air2 & Resistivity w/ Air Temp +2 degC\\
+\hline
+resist\_air4 & Resistivity w/ Air Temp +4 degC\\
+\hline
+resist\_air6 & Resistivity w/ Air Temp +6 degC\\
+\hline
+\end{tabular}
+
+\section{Catchment Delineation Shapefiles}\label{catchment-delineation-shapefiles}
+
+The \href{https://ecosheds.github.io/necd/}{EcoSHEDS Northeast Catchment Delineation (NECD)} is available as a series of shapefiles, pre-staged by 2-digit hydrologic unit codes (HUCs). The model predictions and covariates CSV files can be joined to these shapefiles using the mutual \texttt{featureid} column.
+
+\includegraphics[width=4.08in]{img/hydrologic-regions}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{https://ecosheds.s3.amazonaws.com/necd/delineation/spatial_01.zip}{Region 01 Catchments (zipped shp)}
+\item
+  \href{https://ecosheds.s3.amazonaws.com/necd/delineation/spatial_02.zip}{Region 02 Catchments (zipped shp)}
+\item
+  \href{https://ecosheds.s3.amazonaws.com/necd/delineation/spatial_03.zip}{Region 03 Catchments (zipped shp)}
+\item
+  \href{https://ecosheds.s3.amazonaws.com/necd/delineation/spatial_04.zip}{Region 04 Catchments (zipped shp)}
+\item
+  \href{https://ecosheds.s3.amazonaws.com/necd/delineation/spatial_05.zip}{Region 05 Catchments (zipped shp)}
+\item
+  \href{https://ecosheds.s3.amazonaws.com/necd/delineation/spatial_06.zip}{Region 06 Catchments (zipped shp)}
+\end{itemize}
+
+The documentation for the catchment delineation is also available:
+
+\begin{quote}
+\textbf{\href{https://ecosheds.s3.amazonaws.com/necd/docs/NHDHRDV2_Documentation.docx}{Catchment Delineation (NHDHRDV2) Documentation (docx)}}
+\end{quote}
+
+\section{Catchment Covariates Dataset}\label{catchment-covariates-dataset}
+
+The \href{https://ecosheds.github.io/necd/}{SHEDS catchment covariates} are available as a series of CSV files, pre-staged by 2-digit hydrologic unit codes (HUCs). The covariates contain the catchment characteristics that are used as input variables to the stream temperature model.
+
+\begin{itemize}
+\tightlist
+\item
+  \href{https://ecosheds.s3.amazonaws.com/necd/covariates/covariates_01.zip}{Region 01 Covariates (zipped csv)}
+\item
+  \href{https://ecosheds.s3.amazonaws.com/necd/covariates/covariates_02.zip}{Region 02 Covariates (zipped csv)}
+\item
+  \href{https://ecosheds.s3.amazonaws.com/necd/covariates/covariates_03.zip}{Region 03 Covariates (zipped csv)}
+\item
+  \href{https://ecosheds.s3.amazonaws.com/necd/covariates/covariates_04.zip}{Region 04 Covariates (zipped csv)}
+\item
+  \href{https://ecosheds.s3.amazonaws.com/necd/covariates/covariates_05.zip}{Region 05 Covariates (zipped csv)}
+\item
+  \href{https://ecosheds.s3.amazonaws.com/necd/covariates/covariates_06.zip}{Region 06 Covariates (zipped csv)}
+\end{itemize}
+
+The documentation for catchment covariates is also available:
+
+\begin{quote}
+\textbf{\href{https://ecosheds.s3.amazonaws.com/necd/docs/NHDHRDV2_Covariate_Documentation.xlsx}{Catchment Covariates Documentation (docx)}}
+\end{quote}
+
+\chapter*{References}\label{references}
+\addcontentsline{toc}{chapter}{References}
+
+  \bibliography{book.bib}
+
+\end{document}
