@@ -1,20 +1,15 @@
-SHEDS Stream Temperature Model
-==============================
+EcoSHEDS Northeast Stream Temperature Model
+===========================================
 
-Jeffrey D. Walker, PhD  
-[Walker Environmental Research LLC](https://walkerenvres.com/)
+Developed and maintained by [Jeff Walker](https://walkerenvres.com/) and [Ben Letcher](https://www.usgs.gov/staff-profiles/benjamin-h-letcher) as part of the [USGS EcoSHEDS](https://usgs.gov/apps/ecosheds/) project.
 
-Ben Letcher, PhD  
-[USGS](https://www.lsc.usgs.gov/?q=cafb-research), [UMass](https://eco.umass.edu/people/faculty/letcher-ben/)
+Initial model development by [Dan Hocking](http://hockinglab.weebly.com/) (see [Conte-Ecology/conteStreamTemperature_northeast](https://github.com/Conte-Ecology/conteStreamTemperature_northeast)).
 
-Dan Hocking, PhD  
-[Frostburg State University](http://hockinglab.weebly.com/)
-
-*Adapted from*: [Northeast Temperature Model](https://github.com/Conte-Ecology/conteStreamTemperature_northeast)
+Model Documentation: https://ecosheds.github.io/northeast-temp-model
 
 ## About
 
-This repo contains the source code for the [SHEDS Stream Temperature Model](http://ecosheds.org/models/stream-temperature/latest).
+This repo contains the source code for the EcoSHEDS [Northeast Stream Temperature Model](https://ecosheds.github.io/northeast-temp-model).
 
 ## Quick Start
 

@@ -30,13 +30,5 @@ When a new version of the stream temperature model is released, follow this chec
 
 ## Deploying
 
-After completing an update, deploy the compiled files to ecosheds.org.
-
-- [ ] Deploy the output (`_book/`) to the web server under the new version number
-```txt
-scp -r _book/* jeff@ecosheds.org:/conte/www/static/models/temp-model/<vX.Y.Z>/
-```
-- [ ] Update the stream temperature model homepage to list the newest version
-- [ ] Update the `/latest` redirect in the web server to point to the newest version
-- [ ] Add tag in github
+The documentation is hosted by GitHub pages based on the `docs/` folder.
 
