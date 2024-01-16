@@ -25,6 +25,58 @@ df <- readRDS(file.path(config$wd, "model-predict-derived.rds"))
 cat("done\n")
 
 
+
+# export: db -------------------------------------------------------------
+
+db <- readRDS(file.path(config$wd, "data-db.rds"))
+huc <- read_rds(file.path(config$wd, "data-huc.rds"))
+db_locations <- db$locations |>
+  left_join(
+    db$agencies |>
+      select(agency_id = id, agency_name = name),
+    by = "agency_id"
+  ) |>
+  left_join(
+    huc |>
+      select(catchment_id = featureid, huc12),
+    by = "catchment_id"
+  ) |>
+  relocate(agency_name) |>
+  relocate(huc12, .after = "catchment_id") |>
+  select(-created_at, -updated_at, -agency_id) |>
+  mutate(catchment_id = str_trim(format(catchment_id, scientific = FALSE)))
+db_locations |>
+  write_csv(file.path(config$wd, "db-locations.csv"))
+
+db_values <- db$values |>
+  left_join(
+    db$series |>
+      select(series_id = id, location_id),
+    by = "series_id"
+  ) |>
+  arrange(location_id, date) |>
+  relocate(location_id) |>
+  print()
+db_values |>
+  write_csv(file.path(config$wd, "db-values.csv"))
+
+
+
+# export: model inp -------------------------------------------------------
+
+inp <- read_rds(file.path(config$wd, "model-input.rds"))
+
+inp_values <- bind_rows(
+  calid = inp$train |>
+    select(featureid, date, temp),
+  valid = inp$test |>
+    select(featureid, date, temp),
+  .id = "split"
+) |>
+  rename(catchment_id = featureid, temp_c = temp)
+inp_values |>
+  write_csv(file.path(config$wd, "model-input.csv"))
+
 # export: year ------------------------------------------------------------
 #
 # dir.create(file.path(config$wd, "csv", "predict-year"), showWarnings = FALSE, recursive = TRUE)
